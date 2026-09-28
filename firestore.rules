@@ -49,11 +49,13 @@ service cloud.firestore {
           && textoValido(dp.grauParentesco);
     }
 
+    // `disciplina` é opcional: coordenação/direção não leciona. Se vier,
+    // precisa ser texto válido (a tela omite o campo quando fica vazio)
     function perfilEscolaValido(dp) {
       return dp.keys().hasOnly(['nomeEscola', 'cargo', 'disciplina'])
           && textoValido(dp.nomeEscola)
           && textoValido(dp.cargo)
-          && textoValido(dp.disciplina);
+          && (!('disciplina' in dp) || textoValido(dp.disciplina));
     }
 
     function perfilMedicoValido(dp) {

@@ -60,7 +60,8 @@ const validationSchema = Yup.object({
 
     nomeEscola: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
     cargo: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
-    disciplina: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
+    // Opcional: coordenação/direção não leciona disciplina
+    disciplina: Yup.string().trim().max(MAX, MSG_MAX),
 
     crm: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
     especialidade: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
@@ -88,7 +89,12 @@ export default function CadastroForm() {
             case 'mae':
                 return { nomeCrianca: values.nomeCrianca.trim(), grauParentesco: values.grauParentesco.trim() };
             case 'escola':
-                return { nomeEscola: values.nomeEscola.trim(), cargo: values.cargo.trim(), disciplina: values.disciplina.trim() };
+                // Disciplina vazia não é gravada (as regras só aceitam texto preenchido)
+                return {
+                    nomeEscola: values.nomeEscola.trim(),
+                    cargo: values.cargo.trim(),
+                    ...(values.disciplina.trim() && { disciplina: values.disciplina.trim() }),
+                };
             case 'medico':
                 return { crm: values.crm.trim(), especialidade: values.especialidade.trim(), unidadeSUS: values.unidadeSUS.trim() };
             default:
@@ -145,7 +151,7 @@ export default function CadastroForm() {
                     {values.role === 'escola' && <>
                         <AppInput label="Nome da escola:" placeholder="Nome da instituição" name="nomeEscola" onChange={handleChange} icon="home" error={errors.nomeEscola} />
                         <AppInput label="Cargo:" placeholder="Ex: professor(a), coordenador(a)..." name="cargo" onChange={handleChange} icon="briefcase" error={errors.cargo} />
-                        <AppInput label="Disciplina:" placeholder="Disciplina lecionada" name="disciplina" onChange={handleChange} icon="ios-book" error={errors.disciplina} />
+                        <AppInput label="Disciplina (se for professor):" placeholder="Deixe em branco se não leciona" name="disciplina" onChange={handleChange} icon="ios-book" error={errors.disciplina} />
                     </>}
 
                     {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}

@@ -30,7 +30,7 @@ const ROTULOS: Record<keyof FormValues, string> = {
     grauParentesco: 'Grau de parentesco',
     nomeEscola: 'Nome da escola',
     cargo: 'Cargo',
-    disciplina: 'Disciplina',
+    disciplina: 'Disciplina (se for professor)',
     crm: 'CRM (registro do médico)',
     especialidade: 'Especialidade',
     unidadeSUS: 'Unidade SUS (posto ou hospital)',
@@ -57,7 +57,7 @@ function montarSchema(role: UserRole) {
 
         nomeEscola: obrigatorioSe('escola'),
         cargo: obrigatorioSe('escola'),
-        disciplina: obrigatorioSe('escola'),
+        disciplina: texto(), // opcional: coordenação/direção não leciona
 
         crm: obrigatorioSe('medico'),
         especialidade: obrigatorioSe('medico'),
@@ -86,7 +86,12 @@ function montarDadosPerfil(role: UserRole, values: FormValues): DadosPerfil {
         case 'mae':
             return { nomeCrianca: values.nomeCrianca.trim(), grauParentesco: values.grauParentesco.trim() };
         case 'escola':
-            return { nomeEscola: values.nomeEscola.trim(), cargo: values.cargo.trim(), disciplina: values.disciplina.trim() };
+            // Disciplina vazia não é gravada (as regras só aceitam texto preenchido)
+            return {
+                nomeEscola: values.nomeEscola.trim(),
+                cargo: values.cargo.trim(),
+                ...(values.disciplina.trim() && { disciplina: values.disciplina.trim() }),
+            };
         case 'medico':
             return { crm: values.crm.trim(), especialidade: values.especialidade.trim(), unidadeSUS: values.unidadeSUS.trim() };
         default:
@@ -208,7 +213,7 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
                         {perfil.role === 'escola' && <>
                             <AppInput label={`${ROTULOS.nomeEscola}:`} placeholder="Nome da instituição" name="nomeEscola" value={values.nomeEscola} onChange={handleChange} icon="home" error={errors.nomeEscola} />
                             <AppInput label={`${ROTULOS.cargo}:`} placeholder="Ex: professor(a), coordenador(a)..." name="cargo" value={values.cargo} onChange={handleChange} icon="briefcase" error={errors.cargo} />
-                            <AppInput label={`${ROTULOS.disciplina}:`} placeholder="Disciplina lecionada" name="disciplina" value={values.disciplina} onChange={handleChange} icon="ios-book" error={errors.disciplina} />
+                            <AppInput label={`${ROTULOS.disciplina}:`} placeholder="Deixe em branco se não leciona" name="disciplina" value={values.disciplina} onChange={handleChange} icon="ios-book" error={errors.disciplina} />
                         </>}
 
                         {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}

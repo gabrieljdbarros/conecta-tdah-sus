@@ -33,6 +33,13 @@ const MEDICO = {
     dadosPerfil: { crm: "00000", especialidade: "psiquiatria infantil", unidadeSUS: "UBS Fictícia" },
     criadoEm: 1700000000000,
 };
+const ESCOLA = {
+    nome: "Coordenadora Fictícia",
+    email: "escola.ficticia@exemplo.com",
+    role: "escola",
+    dadosPerfil: { nomeEscola: "Escola Fictícia", cargo: "professora", disciplina: "Matemática" },
+    criadoEm: 1700000000000,
+};
 const ADMIN = {
     nome: "Admin Fictício",
     email: "admin.ficticio@exemplo.com",
@@ -44,6 +51,7 @@ const ADMIN = {
 // Contextos autenticados como cada usuário
 const comoMae = () => testEnv.authenticatedContext("mae1", { email: MAE.email }).firestore();
 const comoMedico = () => testEnv.authenticatedContext("medico1", { email: MEDICO.email }).firestore();
+const comoEscola = () => testEnv.authenticatedContext("escola1", { email: ESCOLA.email }).firestore();
 const comoAdmin = () => testEnv.authenticatedContext("admin1", { email: ADMIN.email }).firestore();
 const semLogin = () => testEnv.unauthenticatedContext().firestore();
 
@@ -64,6 +72,7 @@ beforeEach(async () => {
         const db = ctx.firestore();
         await setDoc(doc(db, "users/mae1"), MAE);
         await setDoc(doc(db, "users/medico1"), MEDICO);
+        await setDoc(doc(db, "users/escola1"), ESCOLA);
         await setDoc(doc(db, "users/admin1"), ADMIN);
     });
 });
@@ -173,6 +182,40 @@ describe("update — validação do conteúdo do perfil", () => {
 });
 
 // =============================================================================
+// Coordenação/direção não leciona: `disciplina` é opcional para escola
+describe("escola — disciplina opcional", () => {
+    const editarEscola = (dadosPerfil) => updateDoc(doc(comoEscola(), "users/escola1"), { dadosPerfil });
+
+    test("pode remover a disciplina (virou coordenadora)", async () => {
+        await assertSucceeds(editarEscola({ nomeEscola: "Escola Fictícia", cargo: "coordenadora" }));
+    });
+
+    test("pode manter a disciplina", async () => {
+        await assertSucceeds(editarEscola({ ...ESCOLA.dadosPerfil, disciplina: "Português" }));
+    });
+
+    test("NÃO aceita disciplina vazia (a tela omite o campo em vez de mandar vazio)", async () => {
+        await assertFails(editarEscola({ ...ESCOLA.dadosPerfil, disciplina: "" }));
+    });
+
+    test("NÃO aceita escola sem cargo (continua obrigatório)", async () => {
+        await assertFails(editarEscola({ nomeEscola: "Escola Fictícia", disciplina: "Matemática" }));
+    });
+
+    test("cadastro de coordenação sem disciplina", async () => {
+        const email = "coordenacao.ficticia@exemplo.com";
+        const db = testEnv.authenticatedContext("coord1", { email }).firestore();
+        await assertSucceeds(setDoc(doc(db, "users/coord1"), {
+            nome: "Coordenação Fictícia",
+            email,
+            role: "escola",
+            dadosPerfil: { nomeEscola: "Escola Fictícia", cargo: "coordenador(a)" },
+            criadoEm: 1700000000000,
+        }));
+    });
+});
+
+// =============================================================================
 describe("create — validação do cadastro", () => {
     const EMAIL = "novo.ficticio@exemplo.com";
     const novoUsuario = () => testEnv.authenticatedContext("novo1", { email: EMAIL }).firestore();
@@ -244,9 +287,9 @@ describe("regressão — leitura e cadastro", () => {
     });
 
     test("cadastro do próprio documento continua funcionando", async () => {
-        const email = "escola.ficticia@exemplo.com";
-        const db = testEnv.authenticatedContext("escola1", { email }).firestore();
-        await assertSucceeds(setDoc(doc(db, "users/escola1"), {
+        const email = "professora.ficticia@exemplo.com";
+        const db = testEnv.authenticatedContext("escola2", { email }).firestore();
+        await assertSucceeds(setDoc(doc(db, "users/escola2"), {
             nome: "Escola Fictícia",
             email,
             role: "escola",
