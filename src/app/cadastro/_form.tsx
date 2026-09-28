@@ -44,23 +44,27 @@ const initialValues: FormValues = {
     unidadeSUS: '',
 };
 
+// Limite igual ao das Security Rules (textoValido em firestore.rules)
+const MAX = 100;
+const MSG_MAX = `Use no máximo ${MAX} caracteres`;
+
 const validationSchema = Yup.object({
     role: Yup.string().oneOf(['mae', 'escola', 'medico'], 'Selecione um perfil').required('Selecione um perfil'),
-    nome: Yup.string().required('Campo obrigatório'),
+    nome: Yup.string().trim().max(MAX, MSG_MAX).required('Campo obrigatório'),
     email: Yup.string().email('Campo precisa ser um email').required('Campo obrigatório'),
     password: Yup.string().min(6, 'A senha precisa ter pelo menos 6 caracteres').required('Campo obrigatório'),
     confirmarSenha: Yup.string().oneOf([Yup.ref('password')], 'As senhas não coincidem').required('Campo obrigatório'),
 
-    nomeCrianca: Yup.string().when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
-    grauParentesco: Yup.string().when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
+    nomeCrianca: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
+    grauParentesco: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
 
-    nomeEscola: Yup.string().when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
-    cargo: Yup.string().when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
-    disciplina: Yup.string().when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
+    nomeEscola: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
+    cargo: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
+    disciplina: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
 
-    crm: Yup.string().when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
-    especialidade: Yup.string().when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
-    unidadeSUS: Yup.string().when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
+    crm: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
+    especialidade: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
+    unidadeSUS: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'medico', then: (s) => s.required('Campo obrigatório') }),
 });
 
 // ===========================================================================
@@ -82,11 +86,11 @@ export default function CadastroForm() {
     const montarDadosPerfil = (values: FormValues): DadosPerfil => {
         switch (values.role) {
             case 'mae':
-                return { nomeCrianca: values.nomeCrianca, grauParentesco: values.grauParentesco };
+                return { nomeCrianca: values.nomeCrianca.trim(), grauParentesco: values.grauParentesco.trim() };
             case 'escola':
-                return { nomeEscola: values.nomeEscola, cargo: values.cargo, disciplina: values.disciplina };
+                return { nomeEscola: values.nomeEscola.trim(), cargo: values.cargo.trim(), disciplina: values.disciplina.trim() };
             case 'medico':
-                return { crm: values.crm, especialidade: values.especialidade, unidadeSUS: values.unidadeSUS };
+                return { crm: values.crm.trim(), especialidade: values.especialidade.trim(), unidadeSUS: values.unidadeSUS.trim() };
             default:
                 return {};
         }
@@ -96,7 +100,7 @@ export default function CadastroForm() {
         setError(null);
 
         const { success, message } = await UserServices.cadastrar({
-            nome: values.nome,
+            nome: values.nome.trim(),
             email: values.email,
             password: values.password,
             role: values.role as UserRole,
@@ -146,9 +150,9 @@ export default function CadastroForm() {
 
                     {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}
                     {values.role === 'medico' && <>
-                        <AppInput label="CRM:" placeholder="Número do CRM" name="crm" onChange={handleChange} icon="clipboard" error={errors.crm} />
+                        <AppInput label="CRM (registro do médico):" placeholder="Número do CRM" name="crm" onChange={handleChange} icon="clipboard" error={errors.crm} />
                         <AppInput label="Especialidade:" placeholder="Ex: psiquiatria infantil" name="especialidade" onChange={handleChange} icon="medkit" error={errors.especialidade} />
-                        <AppInput label="Unidade SUS:" placeholder="Nome da unidade de saúde" name="unidadeSUS" onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
+                        <AppInput label="Unidade SUS (posto ou hospital):" placeholder="Nome da unidade de saúde" name="unidadeSUS" onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
                     </>}
 
                     {error && <p className="text-[tomato] ff-default text-[15px] text-center mt-3">{error}</p>}
