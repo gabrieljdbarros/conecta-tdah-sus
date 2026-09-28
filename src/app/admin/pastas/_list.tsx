@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import PastaServices from "@/services/pasta";
 import { AppButton, AppLoader } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,18 +11,30 @@ import { Pasta, SERIE_LABELS } from "@/types/pasta";
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
 
+const CLASSE_TH = "py-2 px-4 border-b border-gray-200 text-left text-[16px] font-semibold text-gray-700";
+const CLASSE_TD = "py-2 px-4 border-b border-gray-200 text-[16px]";
+
 export default function PastaList() {
     const { user, loading: carregandoSessao } = useAuth();
     const [pastas, setPastas] = useState<Pasta[]>([]);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState(false);
     const [sucesso, setSucesso] = useState<string | null>(null);
+    const sucessoRef = useRef<HTMLParagraphElement>(null);
 
     // ======================================================================
     useEffect(() => {
-        // Mensagem deixada pela tela de criação ("Pasta criada")
+        // Mensagem deixada pela tela de criação ("Pasta criada com sucesso")
         const flash = getFlashData();
         if (flash) setSucesso(flash);
+    }, []);
+
+    const carregar = useCallback(async (uid: string) => {
+        setCarregando(true);
+        const { success, pastas } = await PastaServices.minhas(uid);
+        setPastas(pastas);
+        setErro(!success);
+        setCarregando(false);
     }, []);
 
     useEffect(() => {
@@ -31,13 +44,14 @@ export default function PastaList() {
             setCarregando(false);
             return;
         }
-        (async () => {
-            const { success, pastas } = await PastaServices.minhas(user.uid);
-            setPastas(pastas);
-            setErro(!success);
-            setCarregando(false);
-        })();
-    }, [carregandoSessao, user]);
+        carregar(user.uid);
+    }, [carregandoSessao, user, carregar]);
+
+    // A mensagem de sucesso chega junto com a página inteira, e muitos
+    // leitores de tela não a anunciam; levar o foco até ela garante a leitura
+    useEffect(() => {
+        if (sucesso && !carregando) sucessoRef.current?.focus();
+    }, [sucesso, carregando]);
     // ======================================================================
     if (carregandoSessao || carregando)
         return (
@@ -48,47 +62,62 @@ export default function PastaList() {
         );
 
     if (user?.role === 'admin')
-        return <p className="ff-default text-[16px]">Administradores não acessam as pastas dos alunos, para proteger os dados de saúde das crianças.</p>;
+        return (
+            <div className="flex flex-col">
+                <p className="ff-default text-[16px]">Administradores não acessam as pastas dos alunos, para proteger os dados de saúde das crianças.</p>
+                <Link href="/admin/dashboard" className="self-start mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]">
+                    Voltar ao painel
+                </Link>
+            </div>
+        );
 
     const ehMae = user?.role === 'mae';
 
     return (
         <>
             <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <h1 className="font-bold text-[20px]">
-                    {ehMae ? 'Pastas dos seus filhos' : 'Pastas em que você foi incluído(a)'}
-                </h1>
+                <h2 className="font-bold text-[20px]">
+                    {ehMae ? 'Pastas dos seus filhos' : 'Pastas que você pode ver'}
+                </h2>
                 {ehMae && <AppButton title="Nova pasta" icon="plus" href="/admin/pastas/nova" form="round" />}
             </div>
 
-            <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] mb-3`}>
+            <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] mb-3`}>
                 {sucesso && `Pronto: ${sucesso}`}
             </p>
 
-            {erro && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] mb-3`}>Erro: não foi possível carregar as pastas. Tente novamente mais tarde</p>}
+            {erro && (
+                <div className="flex flex-col items-start gap-3 mb-3">
+                    <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: não deu para carregar as pastas. Toque em &quot;Tentar de novo&quot;.</p>
+                    {user && <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar(user.uid)} form="round" />}
+                </div>
+            )}
 
             {!erro && pastas.length === 0 && (
                 <p className="ff-default text-[16px]">
                     {ehMae
                         ? 'Você ainda não criou nenhuma pasta. Toque em "Nova pasta" para começar.'
-                        : 'Você ainda não foi incluído(a) em nenhuma pasta. Peça à família o link de convite.'}
+                        : 'Você ainda não tem nenhuma pasta. Peça à família o link de convite.'}
                 </p>
             )}
 
+            {/* TODO (branch do convite): o nome do aluno vira link para a tela
+                da pasta, de onde a mãe convida escola e médico */}
             {pastas.length > 0 && <div className="overflow-x-auto">
                 <table className="min-w-full bg-white">
+                    <caption className="sr-only">Lista das pastas dos alunos</caption>
                     <thead>
                         <tr>
-                            <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">Aluno</th>
-                            <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">Série</th>
+                            <th scope="col" className={CLASSE_TH}>Aluno</th>
+                            <th scope="col" className={CLASSE_TH}>Série</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         {pastas.map(pasta => (
                             <tr key={pasta.id}>
-                                <td className="py-2 px-4 border-b border-gray-200 text-[16px]">{pasta.nomeAluno}</td>
-                                <td className="py-2 px-4 border-b border-gray-200 text-[16px]">{SERIE_LABELS[pasta.serie] ?? '-'}</td>
+                                <th scope="row" className={`${CLASSE_TD} text-left font-normal`}>{pasta.nomeAluno}</th>
+                                <td className={CLASSE_TD}>{SERIE_LABELS[pasta.serie] ?? '-'}</td>
                             </tr>
                         ))}
                     </tbody>
