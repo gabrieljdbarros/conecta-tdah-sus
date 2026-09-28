@@ -10,13 +10,32 @@ interface AuthContextValue {
     user: AppUser | null;
     loading: boolean;
     logout: () => Promise<void>;
+    recarregarUsuario: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
     user: null,
     loading: true,
     logout: async () => {},
+    recarregarUsuario: async () => {},
 });
+
+/**
+ * Lê `users/{uid}` no Firestore e monta o AppUser (null se não existir)
+ */
+async function buscarPerfil(uid: string): Promise<AppUser | null> {
+    const snapshot = await getDoc(doc(db, "users", uid));
+    if (!snapshot.exists()) return null;
+
+    const data = snapshot.data();
+    return {
+        uid,
+        nome: data.nome,
+        email: data.email,
+        role: data.role,
+        dadosPerfil: data.dadosPerfil ?? {},
+    };
+}
 
 /**
  * PROVEDOR DE AUTENTICAÇÃO
@@ -41,9 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             try {
-                const snapshot = await getDoc(doc(db, "users", firebaseUser.uid));
+                const perfil = await buscarPerfil(firebaseUser.uid);
 
-                if (!snapshot.exists()) {
+                if (!perfil) {
                     // Usuário existe no Auth mas não tem perfil no Firestore ainda
                     setUser(null);
                     Cookies.remove("session");
@@ -51,14 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     return;
                 }
 
-                const data = snapshot.data();
-                setUser({
-                    uid: firebaseUser.uid,
-                    nome: data.nome,
-                    email: data.email,
-                    role: data.role,
-                    dadosPerfil: data.dadosPerfil ?? {},
-                });
+                setUser(perfil);
                 Cookies.set("session", "1");
             } catch (error) {
                 console.error("Erro ao carregar dados do usuário:", error);
@@ -77,8 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
+    // Chamado depois de editar o perfil, para o menu refletir o nome novo
+    // sem precisar sair e entrar de novo
+    const recarregarUsuario = async () => {
+        if (!auth.currentUser) return;
+        const perfil = await buscarPerfil(auth.currentUser.uid);
+        if (perfil) setUser(perfil);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, logout }}>
+        <AuthContext.Provider value={{ user, loading, logout, recarregarUsuario }}>
             {children}
         </AuthContext.Provider>
     );

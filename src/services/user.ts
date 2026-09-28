@@ -4,7 +4,7 @@ import {
     sendPasswordResetEmail,
     signOut,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 import Cookies from "js-cookie";
 import { auth, db } from "@/services/firebase";
@@ -133,6 +133,26 @@ const UserServices = {
                 dadosPerfil: data.dadosPerfil ?? {},
             },
         };
+    },
+
+    /**
+     * Edição do próprio perfil: envia SOMENTE `nome` e `dadosPerfil`.
+     * `role`, `email` e `criadoEm` nunca saem daqui — e as Security Rules
+     * recusam qualquer update do próprio usuário que tente mexer neles.
+     */
+    atualizarPerfil: async (
+        uid: string,
+        dados: { nome: string; dadosPerfil: DadosPerfil }
+    ): Promise<{ success: boolean; message?: string }> => {
+        try {
+            await updateDoc(doc(db, "users", uid), {
+                nome: dados.nome,
+                dadosPerfil: dados.dadosPerfil,
+            });
+            return { success: true };
+        } catch {
+            return { success: false, message: "Não foi possível salvar as alterações. Tente novamente" };
+        }
     },
 
     /**
