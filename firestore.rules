@@ -8,10 +8,10 @@ rules_version = '2';
  * Estas regras são a aplicação real do RBAC — o app só reflete o que elas
  * permitem, então qualquer checagem feita na tela é apenas UX.
  *
- * Cobre apenas a coleção `users` (cadastro), que é o escopo atual do
- * desenvolvimento. As coleções de "pasta do estudante", convites e chat
- * (RN01, RN02, RN05, RN06) serão adicionadas aqui quando esse desenho for
- * implementado.
+ * Coleções cobertas: `users` (cadastro/perfil) e `pastas` (pasta do aluno,
+ * RF03). Convites (RN01, RN02), relatórios (RN06) e chat (RN05) serão
+ * adicionados aqui quando forem implementados — até lá, o bloqueio geral no
+ * fim do arquivo nega qualquer acesso a eles.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -108,6 +108,46 @@ service cloud.firestore {
                             && perfilValido(request.resource.data, resource.data.role)));
 
       allow delete: if souAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // PASTA DO ALUNO (RF03) — decisões travadas 6 e 8
+    // ---------------------------------------------------------------------
+    function serieValida(serie) {
+      return serie in ['infantil', 'ef1', 'ef2', 'ef3', 'ef4', 'ef5', 'ef6',
+                       'ef7', 'ef8', 'ef9', 'em1', 'em2', 'em3'];
+    }
+
+    match /pastas/{pastaId} {
+      // Só quem é membro da pasta lê. O admin NÃO lê: a pasta vai guardar
+      // laudos e relatos de crianças, e o admin não participa do
+      // acompanhamento (LGPD — acesso só por necessidade).
+      // Consultas de lista precisam filtrar por `membrosUids array-contains`
+      allow read: if estaLogado() && meuUid() in resource.data.membrosUids;
+
+      // Só a mãe/responsável cria, como dona e única membro inicial
+      allow create: if estaLogado()
+                    && papelDoUsuario(meuUid()) == 'mae'
+                    && request.resource.data.keys().hasOnly(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'criadoEm'])
+                    && request.resource.data.keys().hasAll(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'criadoEm'])
+                    && request.resource.data.donoUid == meuUid()
+                    && request.resource.data.membrosUids == [meuUid()]
+                    && textoValido(request.resource.data.nomeAluno)
+                    && serieValida(request.resource.data.serie)
+                    && request.resource.data.criadoEm is int;
+
+      // A dona só altera nome e série (a série muda todo ano).
+      // `membrosUids` nunca muda pelo navegador: quem adiciona escola/médico
+      // é a Cloud Function do convite (RN01, RN02), que usa o Admin SDK
+      allow update: if estaLogado()
+                    && resource.data.donoUid == meuUid()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nomeAluno', 'serie'])
+                    && textoValido(request.resource.data.nomeAluno)
+                    && serieValida(request.resource.data.serie);
+
+      // TODO: exclusão da pasta a pedido da família (direito do titular na
+      // LGPD) — definir fluxo, inclusive o que acontece com os relatórios
+      allow delete: if false;
     }
 
     // Bloqueia qualquer coleção ainda não modelada explicitamente
