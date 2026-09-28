@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   
-    if (!request.cookies.has('user'))
+    if (!request.cookies.has('session'))
         return NextResponse.redirect(new URL('/', request.url))
 
     return NextResponse.next();

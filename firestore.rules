@@ -1,0 +1,61 @@
+rules_version = '2';
+
+/**
+ * REGRAS DE SEGURANÇA — CONECTA TDAH SUS
+ *
+ * Decisão travada: o `role` (admin | mae | escola | medico) fica em um campo
+ * no Firestore (`users/{uid}.role`), não em custom claims do Firebase Auth.
+ * Estas regras são a aplicação real do RBAC — o app só reflete o que elas
+ * permitem, então qualquer checagem feita na tela é apenas UX.
+ *
+ * Cobre apenas a coleção `users` (cadastro), que é o escopo atual do
+ * desenvolvimento. As coleções de "pasta do estudante", convites e chat
+ * (RN01, RN02, RN05, RN06) serão adicionadas aqui quando esse desenho for
+ * implementado.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaLogado() {
+      return request.auth != null;
+    }
+
+    function meuUid() {
+      return request.auth.uid;
+    }
+
+    function papelDoUsuario(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.role;
+    }
+
+    function souAdmin() {
+      return estaLogado() && papelDoUsuario(meuUid()) == 'admin';
+    }
+
+    match /users/{userId} {
+      // Qualquer pessoa autenticada pode ler o próprio perfil; admin lê todos
+      // (necessário para a listagem do painel admin)
+      allow read: if estaLogado() && (meuUid() == userId || souAdmin());
+
+      // Cadastro: só é permitido criar o próprio documento, no momento do
+      // signup (createUserWithEmailAndPassword + setDoc acontecem em sequência)
+      allow create: if estaLogado()
+                    && meuUid() == userId
+                    && request.resource.data.role in ['mae', 'escola', 'medico']
+                    && request.resource.data.email == request.auth.token.email;
+
+      // Edição: o próprio usuário edita seu perfil; admin pode editar qualquer um.
+      // Ninguém pode alterar o próprio `role` depois de criado (evita
+      // auto-promoção a admin)
+      allow update: if estaLogado()
+                    && (souAdmin() || (meuUid() == userId && request.resource.data.role == resource.data.role));
+
+      allow delete: if souAdmin();
+    }
+
+    // Bloqueia qualquer coleção ainda não modelada explicitamente
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,37 +2,49 @@
 import { AppButton, AppInput, AppModal } from "@/themes/components";
 import { Formik } from "formik";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as Yup from 'yup';
 import UserServices from "@/services/user";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 
 export default function LoginForm() {
     const [ showResetPasswordModal, setShowResetPasswordModal ] = useState(false);
     const [ email, setEmail ] = useState('');
     const [ errorLogin, setErrorLogin ] = useState<string|null>(null);
     const [ messageResetPassword, setMessageResetPassword ] = useState<{success: boolean, message: string}|null>(null);
+    const [ aguardandoSessao, setAguardandoSessao ] = useState(false);
     const router = useRouter();
+    const { user } = useAuth();
+
+    // Só redireciona depois que o AuthContext confirmar a sessão (perfil
+    // carregado do Firestore + cookie setado) — evita o middleware barrar
+    // a navegação por falta do cookie ainda não gravado
+    useEffect(() => {
+        if (aguardandoSessao && user)
+            router.push('/admin/dashboard');
+    }, [aguardandoSessao, user, router]);
     // ======================================================
     const onSubmitLogin = async ({email, password}: any) => {
-        
+
         setErrorLogin(null);
-        const { success } = await UserServices.login(email, password);
-        if (success) 
-            router.push('/admin/dashboard');
+        const { success, message } = await UserServices.login(email, password);
+        if (success)
+            setAguardandoSessao(true);
         else
-            setErrorLogin('Login ou senha incorreta');
+            setErrorLogin(message ?? 'Login ou senha incorreta');
     }
     // -------
     const onSubmitResetPassword = async () => {
 
         setErrorLogin(null);
         setEmail('');
-        const { success } = await UserServices.resetPassword(email);
-        if (success) 
+        const { success, message } = await UserServices.resetPassword(email);
+        if (success)
             setMessageResetPassword({success: true, message: 'Olhe a sua caixa de email para reseta a senha'});
         else
-            setMessageResetPassword({success: false, message: 'Não foi possível resetar a senha'});
+            setMessageResetPassword({success: false, message: message ?? 'Não foi possível resetar a senha'});
     }
     // --------
     const closeModal = () => {
@@ -65,7 +77,9 @@ export default function LoginForm() {
 
                             <AppButton title="Entrar" onClick={handleSubmit} disabled={isSubmitting || !isValid} form="round" />
 
-                            <p className="ff-default text-center"> Não tem conta? Entre em contato com o desenvolvedor</p>
+                            <Link href="/cadastro">
+                                <p className="ff-default text-center text-[#4703D0] cursor-pointer"> Não tem conta? Cadastre-se</p>
+                            </Link>
                         </div>
                     </form>
                 )}

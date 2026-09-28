@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "firebase": "^12.19.0",
     "formik": "^2.4.6",
     "js-cookie": "^3.0.5",
     "next": "15.5.5",

@@ -1,117 +1,160 @@
-import Cookies from 'js-cookie';
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
+    signOut,
+} from "firebase/auth";
+import { doc, setDoc, getDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
+import Cookies from "js-cookie";
+import { auth, db } from "@/services/firebase";
+import { AppUser, DadosPerfil, UserRole } from "@/types/user";
 
 /**
- * SERVICES DE GERENCIAMENTO DE USUÁRIOS
+ * Traduz os códigos de erro do Firebase Auth para mensagens em português,
+ * legíveis para quem está preenchendo o formulário.
+ */
+function mensagemErroFirebase(error: unknown): string {
+    const codigo = error instanceof FirebaseError ? error.code : '';
+    switch (codigo) {
+        case "auth/invalid-email":
+            return "E-mail inválido";
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+            return "E-mail ou senha incorretos";
+        case "auth/email-already-in-use":
+            return "Já existe uma conta com este e-mail";
+        case "auth/weak-password":
+            return "A senha precisa ter pelo menos 6 caracteres";
+        case "auth/too-many-requests":
+            return "Muitas tentativas. Tente novamente em alguns minutos";
+        default:
+            return "Não foi possível concluir a operação. Tente novamente";
+    }
+}
+
+/**
+ * SERVICES DE GERENCIAMENTO DE USUÁRIOS (Firebase Authentication + Firestore)
  */
 const UserServices = {
-
     /**
      * Autenticação de usuário
      */
-    login: async (email: string, password: string): Promise<{ success: boolean, message?: string }> => {
-        //Simula um atrasado de 1seg
-        await new Promise((resolve) => setInterval(resolve, 1000));
-
-        if (email == 'teste@teste.com' && password == '123456') {
-            const user = { email, id: 1, name: 'Teste' };
-            Cookies.set('user', JSON.stringify(user));
-            return { success: true }
-        } else
-            return { success: false, message: 'Login incorreto' };
-    },
-
-    /**
-     * Retorna o usuário autenticado
-     * @returns 
-     */
-    getCurrentUser: () => {
-        const user = Cookies.get('user');
-        return user ? JSON.parse(user) : null;
-    },
-
-    /**
-     * Solicita ao servidor uma nova senha  
-     */
-    resetPassword: async (email: string): Promise<{ success: boolean }> => {
-        //Simula um atrasado de 1seg
-        await new Promise((resolve) => setInterval(resolve, 1000));
-        return { success: true };
-    },
-
-    /**
-     * Remove todos os vinculos do usuário com o back-end
-     */
-    logout: async (): Promise<{ success: boolean }> => {
-        //Simula um atrasado de 1seg
-        new Promise((resolve) => setInterval(resolve, 1000));
-        Cookies.remove('user');
-        return { success: true };
-    },
-
-    /**
-     * Retorna todos os usuários do sistema
-     * @returns 
-     */
-    getAll: async (page: number, filter: any = {}): Promise<{ success: boolean, users?: any[], pagination?: any }> => {
-        await new Promise((resolve) => setInterval(resolve, 2000));
-
-        return {
-            success: true, users: [
-                { id: 1, name: 'Teste', email: 'teste@teste.com', admin: false },
-                { id: 2, name: 'Admin', email: 'admin@teste.com', admin: true },
-                { id: 3, name: 'Carlos', email: 'carlos@teste.com', admin: false }
-            ],
-            pagination: {
-                firstPage: false,
-                lastPage: false,
-            }
-
+    login: async (
+        email: string,
+        password: string
+    ): Promise<{ success: boolean; message?: string }> => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            // O AuthContext assume a partir daqui (onAuthStateChanged carrega o
+            // perfil no Firestore e seta o cookie de sessão)
+            return { success: true };
+        } catch (error: unknown) {
+            return { success: false, message: mensagemErroFirebase(error) };
         }
     },
 
     /**
-     * Retorna dados de um unico usuário
-     * @returns 
+     * Cadastro multiperfil: cria o usuário no Firebase Authentication e o
+     * documento correspondente em `users/{uid}` no Firestore, já com o
+     * `role` e os campos específicos do perfil em `dadosPerfil`.
      */
-    getById: async (id: number): Promise<{ success: boolean, user: any }> => {
-        new Promise((resolve) => setInterval(resolve, 1000));
-        if (id == 1)
-            return { success: true, user: { id: 1, name: 'Teste', email: 'teste@teste.com', admin: false } }
-        else
-            return { success: false, user: null }
+    cadastrar: async (dados: {
+        nome: string;
+        email: string;
+        password: string;
+        role: UserRole;
+        dadosPerfil: DadosPerfil;
+    }): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const credential = await createUserWithEmailAndPassword(
+                auth,
+                dados.email,
+                dados.password
+            );
+
+            await setDoc(doc(db, "users", credential.user.uid), {
+                nome: dados.nome,
+                email: dados.email,
+                role: dados.role,
+                dadosPerfil: dados.dadosPerfil,
+                criadoEm: Date.now(),
+            });
+
+            return { success: true };
+        } catch (error: unknown) {
+            return { success: false, message: mensagemErroFirebase(error) };
+        }
     },
 
     /**
-     * Cria um usuário
-     * @param user 
-     * @returns 
+     * Retorna o usuário autenticado (síncrono, a partir do cookie de sessão).
+     * Para os dados completos (role, dadosPerfil) use o hook `useAuth()`.
      */
-    create: async (user: any): Promise<{ success: boolean, error?: string }> => {
-        new Promise((resolve) => setInterval(resolve, 1000));
-        return { success: true };
+    getCurrentUser: () => {
+        return auth.currentUser;
     },
 
     /**
-     * Atualiza um usuário
-     * @param user 
-     * @returns 
+     * Lista todos os usuários cadastrados (uso do painel admin).
+     * Sem paginação por ora — volume esperado é baixo neste estágio do TCC.
      */
-    update: async (user: any): Promise<{ success: boolean, error?: string }> => {
-        new Promise((resolve) => setInterval(resolve, 1000));
-        return { success: true };
+    getAll: async (): Promise<{ success: boolean; users: AppUser[] }> => {
+        const snapshot = await getDocs(query(collection(db, "users"), orderBy("nome")));
+        const users: AppUser[] = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return {
+                uid: docSnap.id,
+                nome: data.nome,
+                email: data.email,
+                role: data.role,
+                dadosPerfil: data.dadosPerfil ?? {},
+            };
+        });
+        return { success: true, users };
     },
 
     /**
-     * Remove um usuário
-     * @param user 
-     * @returns 
+     * Busca o documento completo (`role` + `dadosPerfil`) de um usuário
      */
-    delete: async (id: number): Promise<{ success: boolean }> => {
-        new Promise((resolve) => setInterval(resolve, 1000));
+    getById: async (uid: string): Promise<{ success: boolean; user?: AppUser }> => {
+        const snapshot = await getDoc(doc(db, "users", uid));
+        if (!snapshot.exists()) return { success: false };
+
+        const data = snapshot.data();
+        return {
+            success: true,
+            user: {
+                uid,
+                nome: data.nome,
+                email: data.email,
+                role: data.role,
+                dadosPerfil: data.dadosPerfil ?? {},
+            },
+        };
+    },
+
+    /**
+     * Solicita ao Firebase o envio de e-mail de redefinição de senha
+     */
+    resetPassword: async (email: string): Promise<{ success: boolean; message?: string }> => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+            return { success: true };
+        } catch (error: unknown) {
+            return { success: false, message: mensagemErroFirebase(error) };
+        }
+    },
+
+    /**
+     * Encerra a sessão do usuário
+     */
+    logout: async (): Promise<{ success: boolean }> => {
+        await signOut(auth);
+        Cookies.remove("session");
         return { success: true };
-    }
-
-
-}
+    },
+};
 
 export default UserServices;

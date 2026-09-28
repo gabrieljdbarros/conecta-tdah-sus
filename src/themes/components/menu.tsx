@@ -1,30 +1,27 @@
 "use client";
 import { useRouter } from "next/navigation";
 import AppMenuItem from "./menu-item";
-import UserServices from "@/services/user";
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { ROLE_LABELS } from "@/types/user";
 
 export default function AppMenu() {
     const router = useRouter();
-    const [ user, setUser ] = useState<any>(null);
+    const { user, logout } = useAuth();
     // ==============================================================================
     const handleLogout = async () => {
-        UserServices.logout();
+        await logout();
         router.replace('/');
     }
-    // --------------------------
-    useEffect(() => {
-        setUser(UserServices.getCurrentUser());
-    }, []);
     // ==============================================================================
     return (
          <div className="w-[60px] md:w-[300px] bg-(--background-primary) flex flex-col pt-[50px]">
             <div className="hidden md:flex flex-col">
                 <h1 className="text-[20px] font-bold text-center">GERENCIADOR WEB</h1>
                 <h2 className="text-center">Bem vindo!</h2>
-                <h2 className="text-center font-bold">{user?.name} ({user?.email})</h2>
-                <Link href={`/admin/usuarios/editar/${user?.id}`}>
+                <h2 className="text-center font-bold">{user?.nome} ({user?.email})</h2>
+                {user && <p className="text-center text-[13px] text-[grey]">{ROLE_LABELS[user.role]}</p>}
+                <Link href={`/admin/usuarios/editar/${user?.uid}`}>
                     <p className="text-center">Editar perfil</p>
                 </Link>
 
