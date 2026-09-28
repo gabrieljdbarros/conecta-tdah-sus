@@ -150,6 +150,10 @@ describe("update — validação do conteúdo do perfil", () => {
         await assertFails(editarMae({ nome: "" }));
     });
 
+    test("NÃO aceita nome só com espaços", async () => {
+        await assertFails(editarMae({ nome: "   " }));
+    });
+
     test("NÃO aceita nome que não é texto", async () => {
         await assertFails(editarMae({ nome: 123 }));
     });

@@ -120,6 +120,10 @@ describe("criar pasta", () => {
         await assertFails(criar("mae1", { ...novaPasta("mae1"), nomeAluno: "" }));
     });
 
+    test("NÃO: nome do aluno só com espaços", async () => {
+        await assertFails(criar("mae1", { ...novaPasta("mae1"), nomeAluno: "   " }));
+    });
+
     test("NÃO: nome do aluno com mais de 100 caracteres", async () => {
         await assertFails(criar("mae1", { ...novaPasta("mae1"), nomeAluno: "a".repeat(101) }));
     });
@@ -200,6 +204,13 @@ describe("editar pasta", () => {
 
     test("NÃO: não membro edita", async () => {
         await assertFails(editar("mae2", { serie: "ef4" }));
+    });
+
+    test("NÃO: dona que não é mais membro edita", async () => {
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(doc(ctx.firestore(), "pastas/pasta2"), { ...PASTA, membrosUids: ["escola1"] });
+        });
+        await assertFails(updateDoc(doc(como("mae1"), "pastas/pasta2"), { serie: "ef4" }));
     });
 });
 

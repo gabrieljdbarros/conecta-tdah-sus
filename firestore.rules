@@ -38,8 +38,9 @@ service cloud.firestore {
     // mandaria (chaves de outro perfil, tipos errados, textos gigantes),
     // mesmo que alguém chame o SDK direto, sem passar pela tela.
     // ---------------------------------------------------------------------
+    // trim(): texto feito só de espaços não conta como preenchido
     function textoValido(valor) {
-      return valor is string && valor.size() > 0 && valor.size() <= 100;
+      return valor is string && valor.trim().size() > 0 && valor.size() <= 100;
     }
 
     // Exatamente os campos do perfil (decisão travada nº 4), todos texto
@@ -139,8 +140,11 @@ service cloud.firestore {
       // A dona só altera nome e série (a série muda todo ano).
       // `membrosUids` nunca muda pelo navegador: quem adiciona escola/médico
       // é a Cloud Function do convite (RN01, RN02), que usa o Admin SDK
+      // A dona também precisa continuar membro: se um dia for removida de
+      // `membrosUids`, perde a edição junto com a leitura
       allow update: if estaLogado()
                     && resource.data.donoUid == meuUid()
+                    && meuUid() in resource.data.membrosUids
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nomeAluno', 'serie'])
                     && textoValido(request.resource.data.nomeAluno)
                     && serieValida(request.resource.data.serie);
