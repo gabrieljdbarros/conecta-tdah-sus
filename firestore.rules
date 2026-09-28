@@ -44,11 +44,14 @@ service cloud.firestore {
                     && request.resource.data.role in ['mae', 'escola', 'medico']
                     && request.resource.data.email == request.auth.token.email;
 
-      // Edição: o próprio usuário edita seu perfil; admin pode editar qualquer um.
-      // Ninguém pode alterar o próprio `role` depois de criado (evita
-      // auto-promoção a admin)
+      // Edição: admin pode editar qualquer um. O próprio usuário só pode
+      // alterar `nome` e `dadosPerfil` — `role` (evita auto-promoção a admin),
+      // `email` (fica atrelado ao Firebase Auth) e `criadoEm` ficam travados,
+      // e nenhum campo novo pode ser adicionado
       allow update: if estaLogado()
-                    && (souAdmin() || (meuUid() == userId && request.resource.data.role == resource.data.role));
+                    && (souAdmin()
+                        || (meuUid() == userId
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'dadosPerfil'])));
 
       allow delete: if souAdmin();
     }
