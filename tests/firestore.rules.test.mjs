@@ -126,6 +126,108 @@ describe("update do perfil de outra pessoa", () => {
 });
 
 // =============================================================================
+describe("update — validação do conteúdo do perfil", () => {
+    const editarMae = (dados) => updateDoc(doc(comoMae(), "users/mae1"), dados);
+
+    test("aceita texto com exatamente 100 caracteres", async () => {
+        await assertSucceeds(editarMae({ nome: "a".repeat(100) }));
+    });
+
+    test("NÃO aceita texto com mais de 100 caracteres", async () => {
+        await assertFails(editarMae({ nome: "a".repeat(101) }));
+    });
+
+    test("NÃO aceita nome vazio", async () => {
+        await assertFails(editarMae({ nome: "" }));
+    });
+
+    test("NÃO aceita nome que não é texto", async () => {
+        await assertFails(editarMae({ nome: 123 }));
+    });
+
+    test("NÃO aceita campo de outro perfil (mãe gravando crm)", async () => {
+        await assertFails(editarMae({ dadosPerfil: { ...MAE.dadosPerfil, crm: "00000" } }));
+    });
+
+    test("NÃO aceita chave desconhecida em dadosPerfil", async () => {
+        await assertFails(editarMae({ dadosPerfil: { ...MAE.dadosPerfil, laudo: "texto livre" } }));
+    });
+
+    test("NÃO aceita dadosPerfil faltando campo obrigatório", async () => {
+        await assertFails(editarMae({ dadosPerfil: { nomeCrianca: "Criança Fictícia" } }));
+    });
+
+    test("NÃO aceita valor que não é texto em dadosPerfil", async () => {
+        await assertFails(editarMae({ dadosPerfil: { nomeCrianca: { aninhado: true }, grauParentesco: "mãe" } }));
+    });
+
+    test("NÃO aceita dadosPerfil que não é objeto", async () => {
+        await assertFails(editarMae({ dadosPerfil: "texto" }));
+    });
+
+    test("médico edita os próprios campos", async () => {
+        await assertSucceeds(updateDoc(doc(comoMedico(), "users/medico1"), {
+            dadosPerfil: { crm: "11111", especialidade: "psiquiatria", unidadeSUS: "CAPS Fictício" },
+        }));
+    });
+});
+
+// =============================================================================
+describe("create — validação do cadastro", () => {
+    const EMAIL = "novo.ficticio@exemplo.com";
+    const novoUsuario = () => testEnv.authenticatedContext("novo1", { email: EMAIL }).firestore();
+    const cadastroMedico = {
+        nome: "Médica Fictícia",
+        email: EMAIL,
+        role: "medico",
+        dadosPerfil: { crm: "22222", especialidade: "psiquiatria infantil", unidadeSUS: "UBS Fictícia" },
+        criadoEm: 1700000000000,
+    };
+    const cadastrar = (dados) => setDoc(doc(novoUsuario(), "users/novo1"), dados);
+
+    test("cadastro válido de médico", async () => {
+        await assertSucceeds(cadastrar(cadastroMedico));
+    });
+
+    test("cadastro válido de mãe", async () => {
+        await assertSucceeds(cadastrar({ ...cadastroMedico, role: "mae", dadosPerfil: MAE.dadosPerfil }));
+    });
+
+    test("NÃO cadastra como admin", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, role: "admin", dadosPerfil: {} }));
+    });
+
+    test("NÃO cadastra com email diferente do login", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, email: "outro@exemplo.com" }));
+    });
+
+    test("NÃO cadastra documento de outra pessoa", async () => {
+        await assertFails(setDoc(doc(novoUsuario(), "users/outro1"), cadastroMedico));
+    });
+
+    test("NÃO cadastra com campo extra", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, isAdmin: true }));
+    });
+
+    test("NÃO cadastra faltando campo do modelo (sem criadoEm)", async () => {
+        const { criadoEm: _, ...semCriadoEm } = cadastroMedico;
+        await assertFails(cadastrar(semCriadoEm));
+    });
+
+    test("NÃO cadastra com criadoEm que não é número inteiro", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, criadoEm: "ontem" }));
+    });
+
+    test("NÃO cadastra com campos de outro perfil (médico com dados de mãe)", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, dadosPerfil: MAE.dadosPerfil }));
+    });
+
+    test("NÃO cadastra com texto acima de 100 caracteres", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, nome: "a".repeat(101) }));
+    });
+});
+
+// =============================================================================
 // Regressão: garante que a mudança no update não afetou leitura e cadastro
 describe("regressão — leitura e cadastro", () => {
     test("lê o próprio perfil", async () => {

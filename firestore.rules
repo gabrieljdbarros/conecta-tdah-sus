@@ -32,6 +32,48 @@ service cloud.firestore {
       return estaLogado() && papelDoUsuario(meuUid()) == 'admin';
     }
 
+    // ---------------------------------------------------------------------
+    // VALIDAÇÃO DO CONTEÚDO DO PERFIL
+    // Espelha o Yup dos formulários: o banco não aceita o que a tela nunca
+    // mandaria (chaves de outro perfil, tipos errados, textos gigantes),
+    // mesmo que alguém chame o SDK direto, sem passar pela tela.
+    // ---------------------------------------------------------------------
+    function textoValido(valor) {
+      return valor is string && valor.size() > 0 && valor.size() <= 100;
+    }
+
+    // Exatamente os campos do perfil (decisão travada nº 4), todos texto
+    function perfilMaeValido(dp) {
+      return dp.keys().hasOnly(['nomeCrianca', 'grauParentesco'])
+          && textoValido(dp.nomeCrianca)
+          && textoValido(dp.grauParentesco);
+    }
+
+    function perfilEscolaValido(dp) {
+      return dp.keys().hasOnly(['nomeEscola', 'cargo', 'disciplina'])
+          && textoValido(dp.nomeEscola)
+          && textoValido(dp.cargo)
+          && textoValido(dp.disciplina);
+    }
+
+    function perfilMedicoValido(dp) {
+      return dp.keys().hasOnly(['crm', 'especialidade', 'unidadeSUS'])
+          && textoValido(dp.crm)
+          && textoValido(dp.especialidade)
+          && textoValido(dp.unidadeSUS);
+    }
+
+    // `role` é passado por quem chama: no create vem do próprio documento
+    // (já restrito a mae/escola/medico); no update vem do documento SALVO,
+    // nunca do que o cliente enviou
+    function perfilValido(dados, role) {
+      return textoValido(dados.nome)
+          && dados.dadosPerfil is map
+          && ((role == 'mae' && perfilMaeValido(dados.dadosPerfil))
+              || (role == 'escola' && perfilEscolaValido(dados.dadosPerfil))
+              || (role == 'medico' && perfilMedicoValido(dados.dadosPerfil)));
+    }
+
     match /users/{userId} {
       // Qualquer pessoa autenticada pode ler o próprio perfil; admin lê todos
       // (necessário para a listagem do painel admin)
@@ -39,19 +81,29 @@ service cloud.firestore {
 
       // Cadastro: só é permitido criar o próprio documento, no momento do
       // signup (createUserWithEmailAndPassword + setDoc acontecem em sequência)
+      // O documento precisa ter exatamente os campos do modelo, com conteúdo
+      // válido para o perfil escolhido
       allow create: if estaLogado()
                     && meuUid() == userId
+                    && request.resource.data.keys().hasOnly(['nome', 'email', 'role', 'dadosPerfil', 'criadoEm'])
+                    && request.resource.data.keys().hasAll(['nome', 'email', 'role', 'dadosPerfil', 'criadoEm'])
                     && request.resource.data.role in ['mae', 'escola', 'medico']
-                    && request.resource.data.email == request.auth.token.email;
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.criadoEm is int
+                    && perfilValido(request.resource.data, request.resource.data.role);
 
       // Edição: admin pode editar qualquer um. O próprio usuário só pode
       // alterar `nome` e `dadosPerfil` — `role` (evita auto-promoção a admin),
       // `email` (fica atrelado ao Firebase Auth) e `criadoEm` ficam travados,
-      // e nenhum campo novo pode ser adicionado
+      // e nenhum campo novo pode ser adicionado. O conteúdo também é validado
+      // conforme o perfil salvo.
+      // TODO: restringir também o que o admin pode alterar (achado da revisão
+      // de segurança, pré-existente)
       allow update: if estaLogado()
                     && (souAdmin()
                         || (meuUid() == userId
-                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'dadosPerfil'])));
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'dadosPerfil'])
+                            && perfilValido(request.resource.data, resource.data.role)));
 
       allow delete: if souAdmin();
     }
