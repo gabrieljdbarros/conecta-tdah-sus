@@ -1,6 +1,7 @@
 "use client";
 import { AppButton, AppInput, AppLoader } from "@/themes/components";
 import { Formik } from "formik";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import * as Yup from 'yup';
 import UserServices from "@/services/user";
@@ -22,12 +23,34 @@ interface FormValues {
     unidadeSUS: string;
 }
 
+// Rótulos dos campos — usados nos inputs e no resumo de erros
+const ROTULOS: Record<keyof FormValues, string> = {
+    nome: 'Nome',
+    nomeCrianca: 'Nome da criança',
+    grauParentesco: 'Grau de parentesco',
+    nomeEscola: 'Nome da escola',
+    cargo: 'Cargo',
+    disciplina: 'Disciplina',
+    crm: 'CRM (registro do médico)',
+    especialidade: 'Especialidade',
+    unidadeSUS: 'Unidade SUS (posto ou hospital)',
+};
+
+// Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
+const COR_ERRO = 'text-[#B91C1C]';
+const COR_SUCESSO = 'text-[#166534]';
+
+// Limite igual ao das Security Rules (textoValido em firestore.rules)
+const MAX = 100;
+const MSG_MAX = `Use no máximo ${MAX} caracteres`;
+
 // O role vem do documento salvo e não é editável, então o schema já nasce
 // sabendo quais campos de `dadosPerfil` são obrigatórios
 function montarSchema(role: UserRole) {
-    const obrigatorioSe = (r: UserRole) => role === r ? Yup.string().trim().required('Campo obrigatório') : Yup.string();
+    const texto = () => Yup.string().trim().max(MAX, MSG_MAX);
+    const obrigatorioSe = (r: UserRole) => role === r ? texto().required('Campo obrigatório') : texto();
     return Yup.object({
-        nome: Yup.string().trim().required('Campo obrigatório'),
+        nome: texto().required('Campo obrigatório'),
 
         nomeCrianca: obrigatorioSe('mae'),
         grauParentesco: obrigatorioSe('mae'),
@@ -61,14 +84,23 @@ function valoresIniciais(user: AppUser): FormValues {
 function montarDadosPerfil(role: UserRole, values: FormValues): DadosPerfil {
     switch (role) {
         case 'mae':
-            return { nomeCrianca: values.nomeCrianca, grauParentesco: values.grauParentesco };
+            return { nomeCrianca: values.nomeCrianca.trim(), grauParentesco: values.grauParentesco.trim() };
         case 'escola':
-            return { nomeEscola: values.nomeEscola, cargo: values.cargo, disciplina: values.disciplina };
+            return { nomeEscola: values.nomeEscola.trim(), cargo: values.cargo.trim(), disciplina: values.disciplina.trim() };
         case 'medico':
-            return { crm: values.crm, especialidade: values.especialidade, unidadeSUS: values.unidadeSUS };
+            return { crm: values.crm.trim(), especialidade: values.especialidade.trim(), unidadeSUS: values.unidadeSUS.trim() };
         default:
             return {};
     }
+}
+
+// Link de saída para as telas sem formulário (alvo de toque grande)
+function LinkVoltar() {
+    return (
+        <Link href="/admin/dashboard" className="self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]">
+            Voltar ao início
+        </Link>
+    );
 }
 
 // ===========================================================================
@@ -93,7 +125,7 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
         (async () => {
             const { success, user: dados } = await UserServices.getById(userID);
             if (success && dados) setPerfil(dados);
-            else setError('Não foi possível carregar seus dados');
+            else setError('Não foi possível carregar seus dados. Tente novamente mais tarde');
             setCarregando(false);
         })();
     }, [carregandoSessao, ehProprioPerfil, userID]);
@@ -109,20 +141,36 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
         });
 
         if (success) {
-            setSucesso('Dados salvos com sucesso');
+            setSucesso('Seus dados foram salvos');
             await recarregarUsuario();
         } else
             setError(message ?? 'Não foi possível salvar as alterações');
     };
     // ===========================================================================
+    // Texto visível (e anunciado pelo leitor de tela) enquanto carrega
     if (carregandoSessao || carregando)
-        return <div className="flex justify-center"><AppLoader size={50} className="self-center" /></div>;
+        return (
+            <div role="status" className="flex flex-col items-center gap-3">
+                <AppLoader size={50} className="self-center" />
+                <p className="ff-default text-[16px]">Carregando seus dados...</p>
+            </div>
+        );
 
     if (!ehProprioPerfil)
-        return <p className="ff-default text-[16px] text-center mt-3">Você só pode editar o seu próprio perfil.</p>;
+        return (
+            <div className="flex flex-col">
+                <p role="alert" className="ff-default text-[16px] text-center mt-3">Você só pode editar o seu próprio perfil.</p>
+                <LinkVoltar />
+            </div>
+        );
 
     if (!perfil)
-        return <p className="text-[tomato] ff-default text-[16px] text-center mt-3">{error}</p>;
+        return (
+            <div className="flex flex-col">
+                <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>
+                <LinkVoltar />
+            </div>
+        );
 
     return (
         <Formik
@@ -130,45 +178,63 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
             validationSchema={montarSchema(perfil.role)}
             onSubmit={handleOnSubmit}
         >
-            {({ handleChange, handleSubmit, values, isSubmitting, isValid, errors }) => (
-                <form onSubmit={handleSubmit} className="w-[336px] flex flex-col">
+            {({ handleChange, handleSubmit, values, isSubmitting, errors, submitCount }) => {
+                // Como o AppInput só mostra o erro depois que o campo perde o
+                // foco, um resumo diz quais campos faltam quando a pessoa tenta
+                // salvar. TODO: remover quando o AppInput for corrigido
+                // (branch de acessibilidade dos componentes)
+                const camposComErro = (Object.keys(errors) as (keyof FormValues)[]).map(campo => ROTULOS[campo]);
 
-                    {/* DADOS QUE NÃO PODEM SER ALTERADOS — exibidos como texto, não como campo */}
-                    <div className="ml-3 mb-3">
-                        <p className="ff-default text-[grey] text-[13px]">Email</p>
-                        <p className="ff-default text-[16px]">{perfil.email}</p>
-                        <p className="ff-default text-[grey] text-[13px] mt-2">Perfil</p>
-                        <p className="ff-default text-[16px]">{ROLE_LABELS[perfil.role]}</p>
-                    </div>
+                return (
+                    <form onSubmit={handleSubmit} className="w-full max-w-[336px] flex flex-col">
 
-                    <AppInput label="Nome:" placeholder="Digite seu nome" name="nome" value={values.nome} onChange={handleChange} icon="person" error={errors.nome} />
+                        {/* DADOS QUE NÃO PODEM SER ALTERADOS — exibidos como texto, não como campo */}
+                        <dl className="ml-3 mb-3">
+                            <dt className="ff-default text-[14px] text-[#4b5563]">Email (não pode ser alterado)</dt>
+                            <dd className="ff-default text-[16px] break-all">{perfil.email}</dd>
+                            <dt className="ff-default text-[14px] text-[#4b5563] mt-2">Perfil (não pode ser alterado)</dt>
+                            <dd className="ff-default text-[16px]">{ROLE_LABELS[perfil.role]}</dd>
+                        </dl>
 
-                    {/* CAMPOS ESPECÍFICOS — MÃE/RESPONSÁVEL */}
-                    {perfil.role === 'mae' && <>
-                        <AppInput label="Nome da criança:" placeholder="Nome da criança" name="nomeCrianca" value={values.nomeCrianca} onChange={handleChange} icon="person" error={errors.nomeCrianca} />
-                        <AppInput label="Grau de parentesco:" placeholder="Ex: mãe, pai, avó..." name="grauParentesco" value={values.grauParentesco} onChange={handleChange} icon="ios-people" error={errors.grauParentesco} />
-                    </>}
+                        <AppInput label={`${ROTULOS.nome}:`} placeholder="Digite seu nome" name="nome" value={values.nome} onChange={handleChange} icon="person" error={errors.nome} />
 
-                    {/* CAMPOS ESPECÍFICOS — ESCOLA */}
-                    {perfil.role === 'escola' && <>
-                        <AppInput label="Nome da escola:" placeholder="Nome da instituição" name="nomeEscola" value={values.nomeEscola} onChange={handleChange} icon="home" error={errors.nomeEscola} />
-                        <AppInput label="Cargo:" placeholder="Ex: professor(a), coordenador(a)..." name="cargo" value={values.cargo} onChange={handleChange} icon="briefcase" error={errors.cargo} />
-                        <AppInput label="Disciplina:" placeholder="Disciplina lecionada" name="disciplina" value={values.disciplina} onChange={handleChange} icon="ios-book" error={errors.disciplina} />
-                    </>}
+                        {/* CAMPOS ESPECÍFICOS — MÃE/RESPONSÁVEL */}
+                        {perfil.role === 'mae' && <>
+                            <AppInput label={`${ROTULOS.nomeCrianca}:`} placeholder="Nome da criança" name="nomeCrianca" value={values.nomeCrianca} onChange={handleChange} icon="person" error={errors.nomeCrianca} />
+                            <AppInput label={`${ROTULOS.grauParentesco}:`} placeholder="Ex: mãe, pai, avó..." name="grauParentesco" value={values.grauParentesco} onChange={handleChange} icon="ios-people" error={errors.grauParentesco} />
+                        </>}
 
-                    {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}
-                    {perfil.role === 'medico' && <>
-                        <AppInput label="CRM:" placeholder="Número do CRM" name="crm" value={values.crm} onChange={handleChange} icon="clipboard" error={errors.crm} />
-                        <AppInput label="Especialidade:" placeholder="Ex: psiquiatria infantil" name="especialidade" value={values.especialidade} onChange={handleChange} icon="medkit" error={errors.especialidade} />
-                        <AppInput label="Unidade SUS:" placeholder="Nome da unidade de saúde" name="unidadeSUS" value={values.unidadeSUS} onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
-                    </>}
+                        {/* CAMPOS ESPECÍFICOS — ESCOLA */}
+                        {perfil.role === 'escola' && <>
+                            <AppInput label={`${ROTULOS.nomeEscola}:`} placeholder="Nome da instituição" name="nomeEscola" value={values.nomeEscola} onChange={handleChange} icon="home" error={errors.nomeEscola} />
+                            <AppInput label={`${ROTULOS.cargo}:`} placeholder="Ex: professor(a), coordenador(a)..." name="cargo" value={values.cargo} onChange={handleChange} icon="briefcase" error={errors.cargo} />
+                            <AppInput label={`${ROTULOS.disciplina}:`} placeholder="Disciplina lecionada" name="disciplina" value={values.disciplina} onChange={handleChange} icon="ios-book" error={errors.disciplina} />
+                        </>}
 
-                    {error && <p className="text-[tomato] ff-default text-[15px] text-center mt-3">{error}</p>}
-                    {sucesso && <p className="text-[green] ff-default text-[15px] text-center mt-3">{sucesso}</p>}
+                        {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}
+                        {perfil.role === 'medico' && <>
+                            <AppInput label={`${ROTULOS.crm}:`} placeholder="Número do CRM" name="crm" value={values.crm} onChange={handleChange} icon="clipboard" error={errors.crm} />
+                            <AppInput label={`${ROTULOS.especialidade}:`} placeholder="Ex: psiquiatria infantil" name="especialidade" value={values.especialidade} onChange={handleChange} icon="medkit" error={errors.especialidade} />
+                            <AppInput label={`${ROTULOS.unidadeSUS}:`} placeholder="Nome da unidade de saúde" name="unidadeSUS" value={values.unidadeSUS} onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
+                        </>}
 
-                    <AppButton title="Salvar alterações" onClick={() => handleSubmit()} disabled={isSubmitting || !isValid} form="round" className="mt-4" />
-                </form>
-            )}
+                        {/* MENSAGENS — logo acima do botão, onde a pessoa está olhando.
+                            role="alert"/"status" faz o leitor de tela anunciar */}
+                        {submitCount > 0 && camposComErro.length > 0 && (
+                            <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>
+                                Erro: confira estes campos: {camposComErro.join(', ')}
+                            </p>
+                        )}
+                        {error && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
+                        <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] text-center mt-3`}>
+                            {sucesso && `Pronto: ${sucesso}`}
+                        </p>
+
+                        {/* Botão só bloqueia durante o envio: com erro, o clique mostra o resumo acima */}
+                        <AppButton title={isSubmitting ? 'Salvando...' : 'Salvar alterações'} onClick={() => handleSubmit()} disabled={isSubmitting} form="round" className="mt-2" />
+                    </form>
+                );
+            }}
         </Formik>
     );
 }
