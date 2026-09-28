@@ -210,7 +210,8 @@ describe("create — validação do cadastro", () => {
     });
 
     test("NÃO cadastra faltando campo do modelo (sem criadoEm)", async () => {
-        const { criadoEm: _, ...semCriadoEm } = cadastroMedico;
+        const semCriadoEm = { ...cadastroMedico };
+        delete semCriadoEm.criadoEm;
         await assertFails(cadastrar(semCriadoEm));
     });
 
