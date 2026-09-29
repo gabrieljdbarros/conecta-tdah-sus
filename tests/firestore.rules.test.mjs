@@ -23,7 +23,7 @@ const MAE = {
     nome: "Maria Fictícia",
     email: "mae.ficticia@exemplo.com",
     role: "mae",
-    dadosPerfil: { nomeCrianca: "Criança Fictícia", grauParentesco: "mãe" },
+    dadosPerfil: { grauParentesco: "mãe" },
     criadoEm: 1700000000000,
 };
 const MEDICO = {
@@ -74,6 +74,7 @@ beforeEach(async () => {
         await setDoc(doc(db, "users/medico1"), MEDICO);
         await setDoc(doc(db, "users/escola1"), ESCOLA);
         await setDoc(doc(db, "users/admin1"), ADMIN);
+        await setDoc(doc(db, "users/admin2"), { ...ADMIN, email: "admin2.ficticio@exemplo.com" });
     });
 });
 
@@ -82,7 +83,7 @@ describe("update do próprio perfil", () => {
     test("pode alterar nome e dadosPerfil", async () => {
         await assertSucceeds(updateDoc(doc(comoMae(), "users/mae1"), {
             nome: "Maria Fictícia Editada",
-            dadosPerfil: { nomeCrianca: "Outra Criança", grauParentesco: "avó" },
+            dadosPerfil: { grauParentesco: "avó" },
         }));
     });
 
@@ -129,8 +130,40 @@ describe("update do perfil de outra pessoa", () => {
         await assertFails(updateDoc(doc(semLogin(), "users/mae1"), { nome: "Invasor" }));
     });
 
-    test("admin pode editar outro usuário (comportamento mantido)", async () => {
+    test("admin pode editar o nome de outro usuário", async () => {
         await assertSucceeds(updateDoc(doc(comoAdmin(), "users/mae1"), { nome: "Editado pelo admin" }));
+    });
+
+    test("admin pode editar o próprio nome", async () => {
+        await assertSucceeds(updateDoc(doc(comoAdmin(), "users/admin1"), { nome: "Admin Renomeado" }));
+    });
+
+    test("NÃO: admin troca o role de outro (escola -> médico leria laudos)", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/medico1"), { role: "escola" }));
+    });
+
+    test("NÃO: admin promove outro usuário a admin", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/mae1"), { role: "admin" }));
+    });
+
+    test("NÃO: admin troca o email de outro", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/mae1"), { email: "outro@exemplo.com" }));
+    });
+
+    test("admin edita só o nome de outro admin", async () => {
+        await assertSucceeds(updateDoc(doc(comoAdmin(), "users/admin2"), { nome: "Outro Admin" }));
+    });
+
+    test("NÃO: admin rebaixa outro admin", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/admin2"), { role: "mae" }));
+    });
+
+    test("NÃO: admin adiciona campo novo", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/mae1"), { campoExtra: "x" }));
+    });
+
+    test("NÃO: admin grava dadosPerfil inválido", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/medico1"), { dadosPerfil: { crm: "" } }));
     });
 });
 
@@ -162,16 +195,20 @@ describe("update — validação do conteúdo do perfil", () => {
         await assertFails(editarMae({ dadosPerfil: { ...MAE.dadosPerfil, crm: "00000" } }));
     });
 
+    test("NÃO aceita nome da criança no perfil da mãe (privacidade)", async () => {
+        await assertFails(editarMae({ dadosPerfil: { ...MAE.dadosPerfil, nomeCrianca: "Criança Fictícia" } }));
+    });
+
     test("NÃO aceita chave desconhecida em dadosPerfil", async () => {
         await assertFails(editarMae({ dadosPerfil: { ...MAE.dadosPerfil, laudo: "texto livre" } }));
     });
 
     test("NÃO aceita dadosPerfil faltando campo obrigatório", async () => {
-        await assertFails(editarMae({ dadosPerfil: { nomeCrianca: "Criança Fictícia" } }));
+        await assertFails(editarMae({ dadosPerfil: {} }));
     });
 
     test("NÃO aceita valor que não é texto em dadosPerfil", async () => {
-        await assertFails(editarMae({ dadosPerfil: { nomeCrianca: { aninhado: true }, grauParentesco: "mãe" } }));
+        await assertFails(editarMae({ dadosPerfil: { grauParentesco: { aninhado: true } } }));
     });
 
     test("NÃO aceita dadosPerfil que não é objeto", async () => {
@@ -238,6 +275,10 @@ describe("create — validação do cadastro", () => {
 
     test("cadastro válido de mãe", async () => {
         await assertSucceeds(cadastrar({ ...cadastroMedico, role: "mae", dadosPerfil: MAE.dadosPerfil }));
+    });
+
+    test("NÃO cadastra mãe com nome da criança no perfil (privacidade)", async () => {
+        await assertFails(cadastrar({ ...cadastroMedico, role: "mae", dadosPerfil: { ...MAE.dadosPerfil, nomeCrianca: "Criança Fictícia" } }));
     });
 
     test("NÃO cadastra como admin", async () => {

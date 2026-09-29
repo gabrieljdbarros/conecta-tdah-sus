@@ -11,8 +11,9 @@
 
 export type UserRole = 'admin' | 'mae' | 'escola' | 'medico';
 
+// O nome da criança não fica no perfil (o admin lê perfis): ele existe só
+// na pasta do aluno, que o admin não lê
 export interface DadosPerfilMae {
-    nomeCrianca: string;
     grauParentesco: string;
 }
 

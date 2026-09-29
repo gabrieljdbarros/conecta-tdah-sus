@@ -44,9 +44,10 @@ service cloud.firestore {
     }
 
     // Exatamente os campos do perfil (decisão travada nº 4), todos texto
+    // O nome da criança NÃO fica no perfil da mãe (o admin lê perfis):
+    // ele existe só na pasta do aluno, que o admin não lê
     function perfilMaeValido(dp) {
-      return dp.keys().hasOnly(['nomeCrianca', 'grauParentesco'])
-          && textoValido(dp.nomeCrianca)
+      return dp.keys().hasOnly(['grauParentesco'])
           && textoValido(dp.grauParentesco);
     }
 
@@ -74,7 +75,8 @@ service cloud.firestore {
           && dados.dadosPerfil is map
           && ((role == 'mae' && perfilMaeValido(dados.dadosPerfil))
               || (role == 'escola' && perfilEscolaValido(dados.dadosPerfil))
-              || (role == 'medico' && perfilMedicoValido(dados.dadosPerfil)));
+              || (role == 'medico' && perfilMedicoValido(dados.dadosPerfil))
+              || (role == 'admin' && dados.dadosPerfil.keys().size() == 0));
     }
 
     match /users/{userId} {
@@ -95,18 +97,16 @@ service cloud.firestore {
                     && request.resource.data.criadoEm is int
                     && perfilValido(request.resource.data, request.resource.data.role);
 
-      // Edição: admin pode editar qualquer um. O próprio usuário só pode
-      // alterar `nome` e `dadosPerfil` — `role` (evita auto-promoção a admin),
-      // `email` (fica atrelado ao Firebase Auth) e `criadoEm` ficam travados,
-      // e nenhum campo novo pode ser adicionado. O conteúdo também é validado
-      // conforme o perfil salvo.
-      // TODO: restringir também o que o admin pode alterar (achado da revisão
-      // de segurança, pré-existente)
+      // Edição: o próprio usuário ou o admin, e SÓ `nome` e `dadosPerfil`,
+      // com o conteúdo validado conforme o perfil salvo.
+      // Ninguém altera `role`, `email` ou `criadoEm` pelo app — nem o admin:
+      // trocar uma escola para médico daria acesso a laudos (matriz de
+      // visibilidade dos relatórios, RN06).
+      // Mudança de perfil, se precisar, é feita no Console do Firebase.
       allow update: if estaLogado()
-                    && (souAdmin()
-                        || (meuUid() == userId
-                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'dadosPerfil'])
-                            && perfilValido(request.resource.data, resource.data.role)));
+                    && (meuUid() == userId || souAdmin())
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'dadosPerfil'])
+                    && perfilValido(request.resource.data, resource.data.role);
 
       allow delete: if souAdmin();
     }

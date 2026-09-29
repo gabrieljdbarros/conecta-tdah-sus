@@ -96,13 +96,9 @@ export default function NovaPastaForm() {
             </div>
         );
 
-    // TODO: se a mãe tiver mais de um filho, o cadastro guarda só um nome;
-    // para as outras pastas ela apaga e digita o nome certo
-    const nomeDoCadastro = user.dadosPerfil.nomeCrianca ?? '';
-
     return (
         <Formik
-            initialValues={{ nomeAluno: nomeDoCadastro, serie: '' } as FormValues}
+            initialValues={{ nomeAluno: '', serie: '' } as FormValues}
             validationSchema={validationSchema}
             onSubmit={handleOnSubmit}
         >
@@ -111,11 +107,6 @@ export default function NovaPastaForm() {
                     <p className="ff-default text-[16px] mb-3">
                         A pasta reúne tudo sobre o acompanhamento do aluno. Depois você poderá convidar a escola e o médico.
                     </p>
-                    {nomeDoCadastro && (
-                        <p className="ff-default text-[16px] mb-3">
-                            Já preenchemos o nome com o que você informou no cadastro. Confira.
-                        </p>
-                    )}
 
                     <AppInput label={`${ROTULOS.nomeAluno}:`} placeholder="Nome completo do aluno" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} icon="person" error={errors.nomeAluno} />
 
