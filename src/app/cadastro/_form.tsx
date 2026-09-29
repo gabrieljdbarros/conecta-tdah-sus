@@ -16,7 +16,6 @@ interface FormValues {
     password: string;
     confirmarSenha: string;
     // mãe
-    nomeCrianca: string;
     grauParentesco: string;
     // escola
     nomeEscola: string;
@@ -34,7 +33,6 @@ const initialValues: FormValues = {
     email: '',
     password: '',
     confirmarSenha: '',
-    nomeCrianca: '',
     grauParentesco: '',
     nomeEscola: '',
     cargo: '',
@@ -55,7 +53,6 @@ const validationSchema = Yup.object({
     password: Yup.string().min(6, 'A senha precisa ter pelo menos 6 caracteres').required('Campo obrigatório'),
     confirmarSenha: Yup.string().oneOf([Yup.ref('password')], 'As senhas não coincidem').required('Campo obrigatório'),
 
-    nomeCrianca: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
     grauParentesco: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
 
     nomeEscola: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'escola', then: (s) => s.required('Campo obrigatório') }),
@@ -87,7 +84,7 @@ export default function CadastroForm() {
     const montarDadosPerfil = (values: FormValues): DadosPerfil => {
         switch (values.role) {
             case 'mae':
-                return { nomeCrianca: values.nomeCrianca.trim(), grauParentesco: values.grauParentesco.trim() };
+                return { grauParentesco: values.grauParentesco.trim() };
             case 'escola':
                 // Disciplina vazia não é gravada (as regras só aceitam texto preenchido)
                 return {
@@ -143,7 +140,6 @@ export default function CadastroForm() {
 
                     {/* CAMPOS ESPECÍFICOS — MÃE/RESPONSÁVEL */}
                     {values.role === 'mae' && <>
-                        <AppInput label="Nome da criança:" placeholder="Nome da criança" name="nomeCrianca" onChange={handleChange} icon="person" error={errors.nomeCrianca} />
                         <AppInput label="Grau de parentesco:" placeholder="Ex: mãe, pai, avó..." name="grauParentesco" onChange={handleChange} icon="ios-people" error={errors.grauParentesco} />
                     </>}
 

@@ -11,7 +11,6 @@ import { AppUser, DadosPerfil, ROLE_LABELS, UserRole } from "@/types/user";
 interface FormValues {
     nome: string;
     // mãe
-    nomeCrianca: string;
     grauParentesco: string;
     // escola
     nomeEscola: string;
@@ -26,7 +25,6 @@ interface FormValues {
 // Rótulos dos campos — usados nos inputs e no resumo de erros
 const ROTULOS: Record<keyof FormValues, string> = {
     nome: 'Nome',
-    nomeCrianca: 'Nome da criança',
     grauParentesco: 'Grau de parentesco',
     nomeEscola: 'Nome da escola',
     cargo: 'Cargo',
@@ -52,7 +50,6 @@ function montarSchema(role: UserRole) {
     return Yup.object({
         nome: texto().required('Campo obrigatório'),
 
-        nomeCrianca: obrigatorioSe('mae'),
         grauParentesco: obrigatorioSe('mae'),
 
         nomeEscola: obrigatorioSe('escola'),
@@ -69,7 +66,6 @@ function valoresIniciais(user: AppUser): FormValues {
     const d = user.dadosPerfil;
     return {
         nome: user.nome ?? '',
-        nomeCrianca: d.nomeCrianca ?? '',
         grauParentesco: d.grauParentesco ?? '',
         nomeEscola: d.nomeEscola ?? '',
         cargo: d.cargo ?? '',
@@ -84,7 +80,7 @@ function valoresIniciais(user: AppUser): FormValues {
 function montarDadosPerfil(role: UserRole, values: FormValues): DadosPerfil {
     switch (role) {
         case 'mae':
-            return { nomeCrianca: values.nomeCrianca.trim(), grauParentesco: values.grauParentesco.trim() };
+            return { grauParentesco: values.grauParentesco.trim() };
         case 'escola':
             // Disciplina vazia não é gravada (as regras só aceitam texto preenchido)
             return {
@@ -205,7 +201,6 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
 
                         {/* CAMPOS ESPECÍFICOS — MÃE/RESPONSÁVEL */}
                         {perfil.role === 'mae' && <>
-                            <AppInput label={`${ROTULOS.nomeCrianca}:`} placeholder="Nome da criança" name="nomeCrianca" value={values.nomeCrianca} onChange={handleChange} icon="person" error={errors.nomeCrianca} />
                             <AppInput label={`${ROTULOS.grauParentesco}:`} placeholder="Ex: mãe, pai, avó..." name="grauParentesco" value={values.grauParentesco} onChange={handleChange} icon="ios-people" error={errors.grauParentesco} />
                         </>}
 

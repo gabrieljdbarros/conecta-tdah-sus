@@ -7,7 +7,7 @@ import { AppUser, ROLE_LABELS } from "@/types/user";
 function detalhesPerfil(user: AppUser): string {
     switch (user.role) {
         case 'mae':
-            return `Criança: ${user.dadosPerfil.nomeCrianca ?? '-'}`;
+            return `Parentesco: ${user.dadosPerfil.grauParentesco ?? '-'}`;
         case 'escola':
             return `${user.dadosPerfil.nomeEscola ?? '-'} · ${user.dadosPerfil.cargo ?? '-'}`;
         case 'medico':
