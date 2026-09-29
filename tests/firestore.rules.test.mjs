@@ -74,6 +74,7 @@ beforeEach(async () => {
         await setDoc(doc(db, "users/medico1"), MEDICO);
         await setDoc(doc(db, "users/escola1"), ESCOLA);
         await setDoc(doc(db, "users/admin1"), ADMIN);
+        await setDoc(doc(db, "users/admin2"), { ...ADMIN, email: "admin2.ficticio@exemplo.com" });
     });
 });
 
@@ -147,6 +148,14 @@ describe("update do perfil de outra pessoa", () => {
 
     test("NÃO: admin troca o email de outro", async () => {
         await assertFails(updateDoc(doc(comoAdmin(), "users/mae1"), { email: "outro@exemplo.com" }));
+    });
+
+    test("admin edita só o nome de outro admin", async () => {
+        await assertSucceeds(updateDoc(doc(comoAdmin(), "users/admin2"), { nome: "Outro Admin" }));
+    });
+
+    test("NÃO: admin rebaixa outro admin", async () => {
+        await assertFails(updateDoc(doc(comoAdmin(), "users/admin2"), { role: "mae" }));
     });
 
     test("NÃO: admin adiciona campo novo", async () => {

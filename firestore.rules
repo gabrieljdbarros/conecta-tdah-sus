@@ -100,7 +100,8 @@ service cloud.firestore {
       // Edição: o próprio usuário ou o admin, e SÓ `nome` e `dadosPerfil`,
       // com o conteúdo validado conforme o perfil salvo.
       // Ninguém altera `role`, `email` ou `criadoEm` pelo app — nem o admin:
-      // trocar uma escola para médico daria acesso a laudos (decisão 9).
+      // trocar uma escola para médico daria acesso a laudos (matriz de
+      // visibilidade dos relatórios, RN06).
       // Mudança de perfil, se precisar, é feita no Console do Firebase.
       allow update: if estaLogado()
                     && (meuUid() == userId || souAdmin())
