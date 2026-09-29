@@ -1,11 +1,12 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import PastaServices from "@/services/pasta";
 import ConviteServices, { ConvitePendente, PapelConvidado } from "@/services/convite";
 import { AppButton, AppLoader } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
-import { getFlashData } from "@/helpers/router";
+import { getFlashData, setFlashData } from "@/helpers/router";
 import { Participante, Pasta, SERIE_LABELS } from "@/types/pasta";
 import { ROLE_LABELS } from "@/types/user";
 
@@ -23,9 +24,40 @@ function formatarValidade(ms: number): string {
     return new Date(ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+/**
+ * Confirmação na própria tela (no lugar do window.confirm, que pode não
+ * aparecer em navegadores dentro de apps, como o do WhatsApp). O foco vai
+ * para "Não", a opção segura, e o leitor de tela lê a pergunta
+ */
+function Confirmacao({ pergunta, textoSim, onSim, onNao }: {
+    pergunta: string; textoSim: string; onSim: () => void; onNao: () => void;
+}) {
+    const naoRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => { naoRef.current?.focus(); }, []);
+
+    return (
+        <div role="alertdialog" aria-label={pergunta} className="w-full flex flex-col gap-2 mt-2 p-3 rounded-xl bg-[#FEF2F2] border-2 border-[#B91C1C]">
+            <p className="ff-default text-[16px] font-bold">{pergunta}</p>
+            <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={onSim} className="min-h-[48px] px-4 rounded-full bg-[#B91C1C] text-white ff-default text-[16px] cursor-pointer">
+                    {textoSim}
+                </button>
+                <button ref={naoRef} type="button" onClick={onNao} className="min-h-[48px] px-4 rounded-full border-2 border-gray-700 text-gray-900 ff-default text-[16px] cursor-pointer">
+                    Não, voltar
+                </button>
+            </div>
+        </div>
+    );
+}
+
+const CLASSE_BOTAO_PERIGO = "min-h-[48px] px-4 rounded-full border-2 border-[#B91C1C] text-[#B91C1C] ff-default text-[16px] cursor-pointer";
+
 export default function DetalhePasta({ pastaId }: { pastaId: string }) {
+    const router = useRouter();
     const { user, loading: carregandoSessao } = useAuth();
     const [pasta, setPasta] = useState<Pasta | null>(null);
+    // Qual ação está esperando confirmação (remover/sair: uid; cancelar: id do convite)
+    const [confirmando, setConfirmando] = useState<{ acao: 'remover' | 'sair' | 'cancelar'; id: string } | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [sucesso, setSucesso] = useState<string | null>(null);
     const [erro, setErro] = useState<string | null>(null);
@@ -95,11 +127,9 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
         }
     };
 
-    // TODO: trocar o window.confirm por uma confirmação na própria tela —
-    // em alguns navegadores dentro de apps (ex.: WhatsApp) ele pode não aparecer
     const cancelarConvite = async (convite: ConvitePendente) => {
         if (!user) return;
-        if (!window.confirm(`Cancelar o convite para ${PARA_QUEM[convite.papel]}, que vale até ${formatarValidade(convite.expiraEm)}? O link vai parar de funcionar.`)) return;
+        setConfirmando(null);
         setErro(null);
         setSucesso(null);
         const { success } = await ConviteServices.cancelar(convite.id);
@@ -108,6 +138,33 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
             await carregarConvites(user.uid);
         } else
             setErro('Não foi possível cancelar o convite. Tente novamente');
+    };
+
+    // A dona tira outra pessoa da pasta
+    const removerParticipante = async (participanteUid: string, nome: string) => {
+        setConfirmando(null);
+        setErro(null);
+        setSucesso(null);
+        const { success, message } = await PastaServices.removerParticipante(pastaId, participanteUid);
+        if (success) {
+            const { pasta: atualizada } = await PastaServices.buscar(pastaId);
+            if (atualizada) setPasta(atualizada);
+            setSucesso(`${nome} não faz mais parte da pasta`);
+        } else
+            setErro(message ?? 'Não foi possível remover. Tente novamente');
+    };
+
+    // Escola/médico sai da pasta e volta para a lista (já não consegue lê-la)
+    const sairDaPasta = async () => {
+        if (!user) return;
+        setConfirmando(null);
+        setErro(null);
+        const { success, message } = await PastaServices.removerParticipante(pastaId, user.uid);
+        if (success) {
+            setFlashData('Você saiu da pasta');
+            router.push('/admin/pastas');
+        } else
+            setErro(message ?? 'Não foi possível sair da pasta. Tente novamente');
     };
     // ======================================================================
     if (carregandoSessao || carregando)
@@ -153,9 +210,9 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 ) : (
                     <ul className="flex flex-col gap-2">
                         {participantes.map(([uid, p]) => (
-                            <li key={uid} className="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                            <li key={uid} className="flex flex-wrap items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
                                 <i className={`${p.papel === 'escola' ? 'ion-university' : p.papel === 'medico' ? 'ion-medkit' : 'ion-person'} text-[24px] text-gray-700`} aria-hidden="true" />
-                                <div>
+                                <div className="flex-1">
                                     <p className="ff-default text-[16px] font-bold">
                                         {uid === user?.uid ? `${p.nome} (você)` : p.nome}
                                     </p>
@@ -165,6 +222,36 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                                         {p.detalhe && ` — ${p.detalhe}`}
                                     </p>
                                 </div>
+
+                                {/* A dona remove os outros; escola/médico só pode sair (a dona não sai) */}
+                                {!confirmando && ehDona && uid !== pasta.donoUid && (
+                                    <button type="button" onClick={() => setConfirmando({ acao: 'remover', id: uid })}
+                                        aria-label={`Remover ${p.nome} da pasta`} className={CLASSE_BOTAO_PERIGO}>
+                                        Remover
+                                    </button>
+                                )}
+                                {!confirmando && !ehDona && uid === user?.uid && (
+                                    <button type="button" onClick={() => setConfirmando({ acao: 'sair', id: uid })} className={CLASSE_BOTAO_PERIGO}>
+                                        Sair da pasta
+                                    </button>
+                                )}
+
+                                {confirmando?.acao === 'remover' && confirmando.id === uid && (
+                                    <Confirmacao
+                                        pergunta={`Remover ${p.nome} da pasta? Essa pessoa deixa de ver a pasta na hora.`}
+                                        textoSim="Sim, remover"
+                                        onSim={() => removerParticipante(uid, p.nome)}
+                                        onNao={() => setConfirmando(null)}
+                                    />
+                                )}
+                                {confirmando?.acao === 'sair' && confirmando.id === uid && (
+                                    <Confirmacao
+                                        pergunta="Sair da pasta? Você deixa de ver a pasta. Para voltar, a família precisa enviar um novo convite."
+                                        textoSim="Sim, sair"
+                                        onSim={sairDaPasta}
+                                        onNao={() => setConfirmando(null)}
+                                    />
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -219,11 +306,21 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                                             <p className="ff-default text-[16px] text-gray-700">Vale até {formatarValidade(c.expiraEm)}</p>
                                         </div>
                                         {/* aria-label diferencia os botões quando há mais de um convite */}
-                                        <button type="button" onClick={() => cancelarConvite(c)}
-                                            aria-label={`Cancelar convite para ${PARA_QUEM[c.papel]}, que vale até ${formatarValidade(c.expiraEm)}`}
-                                            className="min-h-[48px] px-4 rounded-full border-2 border-[#B91C1C] text-[#B91C1C] ff-default text-[16px] cursor-pointer">
-                                            Cancelar convite
-                                        </button>
+                                        {!confirmando && (
+                                            <button type="button" onClick={() => setConfirmando({ acao: 'cancelar', id: c.id })}
+                                                aria-label={`Cancelar convite para ${PARA_QUEM[c.papel]}, que vale até ${formatarValidade(c.expiraEm)}`}
+                                                className={CLASSE_BOTAO_PERIGO}>
+                                                Cancelar convite
+                                            </button>
+                                        )}
+                                        {confirmando?.acao === 'cancelar' && confirmando.id === c.id && (
+                                            <Confirmacao
+                                                pergunta={`Cancelar o convite para ${PARA_QUEM[c.papel]}? O link vai parar de funcionar.`}
+                                                textoSim="Sim, cancelar"
+                                                onSim={() => cancelarConvite(c)}
+                                                onNao={() => setConfirmando(null)}
+                                            />
+                                        )}
                                     </li>
                                 ))}
                             </ul>

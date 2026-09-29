@@ -24,7 +24,7 @@ export interface ConvitePendente {
  * (expirado, já usado, perfil errado...). Erros inesperados viram uma
  * mensagem genérica.
  */
-function mensagemErro(error: unknown, padrao: string): string {
+export function mensagemErro(error: unknown, padrao: string): string {
     if (error instanceof FirebaseError && error.code !== "functions/internal" && error.message)
         return error.message;
     return padrao;
