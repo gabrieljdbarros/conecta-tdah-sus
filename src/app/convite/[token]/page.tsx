@@ -3,7 +3,7 @@ import AceitarConvite from "./_aceitar";
 
 // ===============================================
 export const metadata: Metadata = {
-  title: 'Convite',
+  title: 'Convite para acompanhar um aluno',
 };
 // ===============================================
 // Fica fora de /admin: quem recebe o link pode ainda não ter conta.

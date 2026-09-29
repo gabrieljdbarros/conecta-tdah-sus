@@ -72,7 +72,10 @@ export default function LoginForm() {
                         <div className="w-[336px] flex flex-col">
 
                             <h1 className="ff-default text-[37px] text-center">Entrar</h1>
-                            {convite && <p className="ff-default text-[16px] text-center mb-2">Entre para aceitar o convite.</p>}
+                            {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
+                            <p role="status" className="ff-default text-[16px] text-center mb-2 empty:hidden">
+                                {convite && 'Entre para aceitar o convite.'}
+                            </p>
                             <AppInput placeholder="EMAIL" name="email" onChange={handleChange} icon="ios-email" error={errors.email} />
                             <AppInput placeholder="SENHA" name="password" type="password" onChange={handleChange} icon="locked" openPassword  error={errors.password}/>
                             
@@ -83,8 +86,8 @@ export default function LoginForm() {
 
                             <AppButton title="Entrar" onClick={handleSubmit} disabled={isSubmitting || !isValid} form="round" />
 
-                            <Link href={convite ? `/cadastro?convite=${convite}` : "/cadastro"}>
-                                <p className="ff-default text-center text-[#4703D0] cursor-pointer"> Não tem conta? Cadastre-se</p>
+                            <Link href={convite ? `/cadastro?convite=${convite}` : "/cadastro"} className="min-h-[48px] flex items-center justify-center">
+                                <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer"> Não tem conta? Cadastre-se</p>
                             </Link>
                         </div>
                     </form>

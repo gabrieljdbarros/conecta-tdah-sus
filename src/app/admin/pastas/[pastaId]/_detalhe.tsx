@@ -35,7 +35,8 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
     const [gerando, setGerando] = useState<PapelConvidado | null>(null);
     const [linkGerado, setLinkGerado] = useState<{ papel: PapelConvidado; url: string; expiraEm: number } | null>(null);
     const [copiado, setCopiado] = useState(false);
-    const linkRef = useRef<HTMLDivElement>(null);
+    const [erroCopia, setErroCopia] = useState(false);
+    const linkRef = useRef<HTMLParagraphElement>(null);
     const sucessoRef = useRef<HTMLParagraphElement>(null);
 
     const ehDona = !!user && !!pasta && pasta.donoUid === user.uid;
@@ -71,6 +72,7 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
         setErro(null);
         setSucesso(null);
         setCopiado(false);
+        setErroCopia(false);
         setGerando(papel);
         const { success, token, expiraEm, message } = await ConviteServices.gerar(pastaId, papel);
         setGerando(null);
@@ -86,14 +88,18 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
         try {
             await navigator.clipboard.writeText(linkGerado.url);
             setCopiado(true);
+            setErroCopia(false);
         } catch {
-            setErro('Não deu para copiar. Toque e segure no link para copiar.');
+            // Mensagem fica dentro da caixa do link, perto de onde a pessoa está
+            setErroCopia(true);
         }
     };
 
+    // TODO: trocar o window.confirm por uma confirmação na própria tela —
+    // em alguns navegadores dentro de apps (ex.: WhatsApp) ele pode não aparecer
     const cancelarConvite = async (convite: ConvitePendente) => {
         if (!user) return;
-        if (!window.confirm(`Cancelar o convite para ${PARA_QUEM[convite.papel]}? O link vai parar de funcionar.`)) return;
+        if (!window.confirm(`Cancelar o convite para ${PARA_QUEM[convite.papel]}, que vale até ${formatarValidade(convite.expiraEm)}? O link vai parar de funcionar.`)) return;
         setErro(null);
         setSucesso(null);
         const { success } = await ConviteServices.cancelar(convite.id);
@@ -170,7 +176,8 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 <section aria-labelledby="titulo-convidar">
                     <h3 id="titulo-convidar" className="font-bold text-[18px] mb-2">Convidar</h3>
                     <p className="ff-default text-[16px] mb-3">
-                        Gere um link e envie para a escola ou para o médico. Quem abrir o link entra na pasta.
+                        O convite é um link. Você envia o link para a escola ou para o médico
+                        (por exemplo, pelo WhatsApp), e quem abrir o link passa a acompanhar este aluno.
                     </p>
                     <div className="flex flex-wrap gap-3">
                         <AppButton title={gerando === 'escola' ? 'Gerando...' : 'Convidar escola'} icon="university" onClick={() => convidar('escola')} disabled={!!gerando} form="round" />
@@ -178,12 +185,24 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                     </div>
 
                     {linkGerado && (
-                        <div ref={linkRef} tabIndex={-1} role="status" className="mt-4 p-4 rounded-xl border-2 border-(--primary-color) bg-white flex flex-col gap-3">
-                            <p className="ff-default text-[16px] font-bold">Link para {PARA_QUEM[linkGerado.papel]}:</p>
-                            <p className="ff-default text-[16px] break-all select-all bg-[#f5f5f5] p-2 rounded">{linkGerado.url}</p>
+                        <div className="mt-4 p-4 rounded-xl border-2 border-(--primary-color) bg-white flex flex-col gap-3">
+                            {/* Anúncio curto (o leitor de tela não soletra a URL inteira) */}
+                            <p ref={linkRef} tabIndex={-1} role="status" className="ff-default text-[16px] font-bold">
+                                Link para {PARA_QUEM[linkGerado.papel]} pronto.
+                            </p>
+                            <ol className="ff-default text-[16px] list-decimal pl-6 flex flex-col gap-1">
+                                <li>Toque em &quot;Copiar link&quot;.</li>
+                                <li>Abra a conversa com {PARA_QUEM[linkGerado.papel]} (por exemplo, no WhatsApp), cole o link e envie.</li>
+                            </ol>
+                            <p className="ff-default text-[16px] break-all select-all bg-[#f5f5f5] p-2 rounded" aria-label="Link do convite">{linkGerado.url}</p>
                             <AppButton title={copiado ? 'Link copiado!' : 'Copiar link'} icon="ios-copy" onClick={copiarLink} form="round" />
+                            <p role="status" className={`ff-default text-[16px] empty:hidden ${erroCopia ? COR_ERRO : COR_SUCESSO}`}>
+                                {erroCopia
+                                    ? 'Erro: não deu para copiar. Toque e segure no link acima para copiar.'
+                                    : copiado ? 'Link copiado. Agora cole na conversa e envie.' : ''}
+                            </p>
                             <p className="ff-default text-[16px]">
-                                Vale até {formatarValidade(linkGerado.expiraEm)} e só pode ser usado uma vez.
+                                O link vale até {formatarValidade(linkGerado.expiraEm)} e só funciona para uma pessoa.
                                 Envie agora: por segurança, este link não aparece de novo.
                             </p>
                         </div>
@@ -195,10 +214,14 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                             <ul className="flex flex-col gap-2">
                                 {convites.map((c) => (
                                     <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl p-3 border border-gray-200">
-                                        <p className="ff-default text-[16px]">
-                                            Para {PARA_QUEM[c.papel]} — vale até {formatarValidade(c.expiraEm)}
-                                        </p>
-                                        <button type="button" onClick={() => cancelarConvite(c)} className="min-h-[48px] px-4 rounded-full border-2 border-[#B91C1C] text-[#B91C1C] ff-default text-[16px] cursor-pointer">
+                                        <div>
+                                            <p className="ff-default text-[16px] font-bold">Convite para {PARA_QUEM[c.papel]}</p>
+                                            <p className="ff-default text-[16px] text-gray-700">Vale até {formatarValidade(c.expiraEm)}</p>
+                                        </div>
+                                        {/* aria-label diferencia os botões quando há mais de um convite */}
+                                        <button type="button" onClick={() => cancelarConvite(c)}
+                                            aria-label={`Cancelar convite para ${PARA_QUEM[c.papel]}, que vale até ${formatarValidade(c.expiraEm)}`}
+                                            className="min-h-[48px] px-4 rounded-full border-2 border-[#B91C1C] text-[#B91C1C] ff-default text-[16px] cursor-pointer">
                                             Cancelar convite
                                         </button>
                                     </li>

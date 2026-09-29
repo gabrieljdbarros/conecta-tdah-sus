@@ -129,11 +129,15 @@ export default function CadastroForm() {
             {({ handleChange, handleSubmit, values, isSubmitting, isValid, errors }) => (
                 <form onSubmit={handleSubmit} className="w-[336px] flex flex-col">
                     <h1 className="ff-default text-[30px] text-center mb-3">Criar conta</h1>
-                    {convite && <p className="ff-default text-[16px] text-center mb-3">Crie sua conta para aceitar o convite. Escolha o seu perfil: escola ou médico.</p>}
+                    {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
+                    <p role="status" className="ff-default text-[16px] text-center mb-3 empty:hidden">
+                        {convite && 'Crie sua conta para aceitar o convite. Escolha o seu perfil: escola ou médico.'}
+                    </p>
 
                     <AppSelect label="Eu sou:" name="role" onChange={handleChange} value={values.role} error={errors.role}>
                         <option value="">Selecione...</option>
-                        <option value="mae">Mãe / Responsável</option>
+                        {/* Convite só serve para escola ou médico (a Function recusa mãe) */}
+                        {!convite && <option value="mae">Mãe / Responsável</option>}
                         <option value="escola">Escola</option>
                         <option value="medico">Médico (SUS)</option>
                     </AppSelect>
@@ -166,8 +170,8 @@ export default function CadastroForm() {
 
                     <AppButton title="Criar conta" onClick={() => handleSubmit()} disabled={isSubmitting || !isValid} form="round" className="mt-4" />
 
-                    <Link href={convite ? `/?convite=${convite}` : "/"}>
-                        <p className="ff-default text-center mt-3 text-[13px] text-[#4703D0] cursor-pointer">Já tenho conta — fazer login</p>
+                    <Link href={convite ? `/?convite=${convite}` : "/"} className="min-h-[48px] mt-2 flex items-center justify-center">
+                        <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer">Já tenho conta — fazer login</p>
                     </Link>
                 </form>
             )}
