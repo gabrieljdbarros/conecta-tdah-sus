@@ -118,6 +118,11 @@ describe("gerarConvite", () => {
         await falhaCom(outra.chamar("gerarConvite", { pastaId, papel: "escola" }), "permission-denied");
     });
 
+    test("NÃO: id de pasta com caminho (\"/\")", async () => {
+        const mae = await novaMae();
+        await falhaCom(mae.chamar("gerarConvite", { pastaId: "x/../y", papel: "escola" }), "invalid-argument");
+    });
+
     test("NÃO: convite para o papel de mãe", async () => {
         const mae = await novaMae();
         const pastaId = await novaPasta(mae);

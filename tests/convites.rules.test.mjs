@@ -85,6 +85,13 @@ describe("escrever convites", () => {
         await assertSucceeds(deleteDoc(doc(como("mae1"), "convites/hash1")));
     });
 
+    test("NÃO: apagar convite já usado (registro de quem entrou)", async () => {
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(doc(ctx.firestore(), "convites/hash3"), { ...CONVITE, usadoEm: 1700000000001, usadoPor: "escola1" });
+        });
+        await assertFails(deleteDoc(doc(como("mae1"), "convites/hash3")));
+    });
+
     test("NÃO: outra pessoa cancela o convite", async () => {
         await assertFails(deleteDoc(doc(como("escola1"), "convites/hash1")));
     });

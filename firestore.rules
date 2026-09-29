@@ -170,8 +170,11 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /convites/{conviteId} {
       // Quem criou (a dona da pasta) vê e cancela os próprios convites.
-      // Consultas de lista precisam filtrar por `criadoPor == uid`
-      allow read, delete: if estaLogado() && resource.data.criadoPor == meuUid();
+      // Consultas de lista precisam filtrar por `criadoPor == uid`.
+      // Só cancela convite ainda NÃO usado: o usado é o registro de quem
+      // entrou na pasta e por qual link
+      allow read: if estaLogado() && resource.data.criadoPor == meuUid();
+      allow delete: if estaLogado() && resource.data.criadoPor == meuUid() && resource.data.usadoEm == null;
       allow create, update: if false;
     }
 

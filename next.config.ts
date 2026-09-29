@@ -16,6 +16,17 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  // O link de convite leva o token na URL (/convite/<token> e ?convite=).
+  // `no-referrer` impede que o navegador envie essa URL a outros sites
+  // (cabeçalho Referer) ao sair da página ou carregar recursos externos.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }],
+      },
+    ]
+  },
 };
 
 export default nextConfig;

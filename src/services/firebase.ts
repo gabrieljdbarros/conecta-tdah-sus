@@ -18,6 +18,11 @@ import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
  */
 const usarEmuladores = process.env.NEXT_PUBLIC_USE_EMULATORS === "true";
 
+// Trava: um build de produção com a flag ligada apontaria para 127.0.0.1 e
+// pareceria um defeito estranho. Melhor falhar com uma mensagem clara
+if (usarEmuladores && process.env.NODE_ENV === "production")
+    throw new Error("NEXT_PUBLIC_USE_EMULATORS=true não pode ser usado em produção. Desligue no .env.local.");
+
 const firebaseConfig = usarEmuladores
     ? { apiKey: "chave-ficticia", projectId: "demo-conecta-tdah" }
     : {

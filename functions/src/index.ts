@@ -52,7 +52,9 @@ export const gerarConvite = onCall(async (request) => {
     const uid = exigirLogin(request.auth?.uid);
     const { pastaId, papel } = (request.data ?? {}) as { pastaId?: unknown; papel?: unknown };
 
-    if (typeof pastaId !== "string" || !pastaId)
+    // Ids do Firestore gerados pelo addDoc: só letras e números. Validar
+    // evita montar caminhos com "/" vindos do navegador
+    if (typeof pastaId !== "string" || !/^[A-Za-z0-9]{1,64}$/.test(pastaId))
         throw new HttpsError("invalid-argument", "Pasta inválida.");
     if (!PAPEIS_CONVIDADOS.includes(papel as PapelConvidado))
         throw new HttpsError("invalid-argument", "Escolha se o convite é para a escola ou para o médico.");
@@ -104,9 +106,9 @@ export const aceitarConvite = onCall(async (request) => {
             throw new HttpsError("not-found", "Este convite não existe ou foi cancelado.");
         const c = convite.data()!;
         if (c.usadoEm !== null)
-            throw new HttpsError("failed-precondition", "Este convite já foi usado. Peça um novo link à família.");
+            throw new HttpsError("failed-precondition", "Este convite já foi usado. Peça um novo link à mãe ou ao responsável pelo aluno.");
         if (c.expiraEm < Date.now())
-            throw new HttpsError("failed-precondition", "Este convite expirou. Peça um novo link à família.");
+            throw new HttpsError("failed-precondition", "Este convite expirou. Peça um novo link à mãe ou ao responsável pelo aluno.");
 
         // O papel vem do Firestore (decisão travada 2), nunca do navegador.
         // Isso também barra contas de mãe: só escola/médico entram por convite
