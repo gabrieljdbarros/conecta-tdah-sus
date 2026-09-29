@@ -17,7 +17,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Cadastro multiperfil (mãe/responsável, escola, médico) e login | ✅ Pronto |
 | Edição do próprio perfil | ✅ Pronto |
 | Pasta do aluno, criada pela mãe/responsável (RF03) | ✅ Pronto |
-| Ajustes de privacidade do perfil (nome da criança só na pasta; admin sem troca de perfil) | 🔄 Em revisão |
+| Ajustes de privacidade do perfil (nome da criança só na pasta; admin sem troca de perfil) | ✅ Pronto |
 | Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ⏳ Planejado |
 | Categorias de acompanhamento gerenciadas pelo admin (RF14) | ⏳ Planejado |
 | Relatórios dentro da pasta do aluno | ⏳ Planejado |
