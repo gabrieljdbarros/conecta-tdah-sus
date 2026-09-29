@@ -43,3 +43,6 @@ firestore-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dados locais dos emuladores do Firebase (fictícios)
+.emulator-data/

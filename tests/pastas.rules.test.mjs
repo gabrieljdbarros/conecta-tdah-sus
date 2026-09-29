@@ -35,6 +35,10 @@ const PASTA = {
     serie: "ef3",
     donoUid: "mae1",
     membrosUids: ["mae1", "escola1"],
+    participantes: {
+        mae1: { nome: "Fictício", papel: "mae" },
+        escola1: { nome: "Fictício", papel: "escola", detalhe: "Escola Fictícia" },
+    },
     criadoEm: 1700000000000,
 };
 
@@ -47,6 +51,8 @@ const novaPasta = (uid) => ({
     serie: "infantil",
     donoUid: uid,
     membrosUids: [uid],
+    // O nome precisa ser igual ao do perfil em `users` (todos são "Fictício")
+    participantes: { [uid]: { nome: "Fictício", papel: "mae" } },
     criadoEm: 1700000000000,
 });
 const criar = (uid, dados, id = "nova") => setDoc(doc(como(uid), `pastas/${id}`), dados);
@@ -128,6 +134,27 @@ describe("criar pasta", () => {
         await assertFails(criar("mae1", { ...novaPasta("mae1"), nomeAluno: "a".repeat(101) }));
     });
 
+    test("NÃO: sem a lista de participantes", async () => {
+        const semParticipantes = novaPasta("mae1");
+        delete semParticipantes.participantes;
+        await assertFails(criar("mae1", semParticipantes));
+    });
+
+    test("NÃO: participante com nome diferente do perfil", async () => {
+        await assertFails(criar("mae1", { ...novaPasta("mae1"), participantes: { mae1: { nome: "Outro Nome", papel: "mae" } } }));
+    });
+
+    test("NÃO: mãe se registra com outro papel na lista", async () => {
+        await assertFails(criar("mae1", { ...novaPasta("mae1"), participantes: { mae1: { nome: "Fictício", papel: "medico" } } }));
+    });
+
+    test("NÃO: já incluir outra pessoa na lista de participantes", async () => {
+        await assertFails(criar("mae1", {
+            ...novaPasta("mae1"),
+            participantes: { mae1: { nome: "Fictício", papel: "mae" }, escola1: { nome: "Fictício", papel: "escola" } },
+        }));
+    });
+
     test("NÃO: criadoEm que não é número inteiro", async () => {
         await assertFails(criar("mae1", { ...novaPasta("mae1"), criadoEm: "hoje" }));
     });
@@ -188,6 +215,10 @@ describe("editar pasta", () => {
 
     test("NÃO: dona remove membro pelo navegador", async () => {
         await assertFails(editar("mae1", { membrosUids: ["mae1"] }));
+    });
+
+    test("NÃO: dona altera a lista de participantes pelo navegador", async () => {
+        await assertFails(editar("mae1", { participantes: { mae1: { nome: "Fictício", papel: "mae" } } }));
     });
 
     test("NÃO: dona transfere a pasta", async () => {

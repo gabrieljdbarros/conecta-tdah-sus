@@ -18,6 +18,9 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "functions/lib/**",
+      "functions/node_modules/**",
+      ".emulator-data/**",
     ],
   },
 ];
