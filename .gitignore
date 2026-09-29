@@ -36,6 +36,8 @@ firestore-debug.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# o modelo não tem chaves, só os nomes das variáveis: precisa ir para o repositório
+!.env.local.example
 
 # vercel
 .vercel
