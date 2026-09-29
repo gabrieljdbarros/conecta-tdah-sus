@@ -8,6 +8,7 @@ import UserServices from "@/services/user";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { DadosPerfil, UserRole } from "@/types/user";
+import { conviteDaUrl, destinoAposEntrar } from "@/helpers/router";
 
 interface FormValues {
     role: UserRole | '';
@@ -71,13 +72,16 @@ export default function CadastroForm() {
     const { user } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [aguardandoSessao, setAguardandoSessao] = useState(false);
+    // Convite aberto antes de criar a conta (RN01): lido depois de montar a tela
+    const [convite, setConvite] = useState<string | null>(null);
+    useEffect(() => setConvite(conviteDaUrl()), []);
 
     // Depois do cadastro, o Firebase já autentica o usuário automaticamente.
     // Espera o AuthContext confirmar (perfil no Firestore + cookie) antes de
-    // navegar para a área restrita.
+    // navegar para a área restrita — ou de volta ao convite, se veio de um
     useEffect(() => {
         if (aguardandoSessao && user)
-            router.push('/admin/dashboard');
+            router.push(destinoAposEntrar());
     }, [aguardandoSessao, user, router]);
 
     // ===========================================================================
@@ -125,10 +129,15 @@ export default function CadastroForm() {
             {({ handleChange, handleSubmit, values, isSubmitting, isValid, errors }) => (
                 <form onSubmit={handleSubmit} className="w-[336px] flex flex-col">
                     <h1 className="ff-default text-[30px] text-center mb-3">Criar conta</h1>
+                    {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
+                    <p role="status" className="ff-default text-[16px] text-center mb-3 empty:hidden">
+                        {convite && 'Crie sua conta para aceitar o convite. Escolha o seu perfil: escola ou médico.'}
+                    </p>
 
                     <AppSelect label="Eu sou:" name="role" onChange={handleChange} value={values.role} error={errors.role}>
                         <option value="">Selecione...</option>
-                        <option value="mae">Mãe / Responsável</option>
+                        {/* Convite só serve para escola ou médico (a Function recusa mãe) */}
+                        {!convite && <option value="mae">Mãe / Responsável</option>}
                         <option value="escola">Escola</option>
                         <option value="medico">Médico (SUS)</option>
                     </AppSelect>
@@ -161,8 +170,8 @@ export default function CadastroForm() {
 
                     <AppButton title="Criar conta" onClick={() => handleSubmit()} disabled={isSubmitting || !isValid} form="round" className="mt-4" />
 
-                    <Link href="/">
-                        <p className="ff-default text-center mt-3 text-[13px] text-[#4703D0] cursor-pointer">Já tenho conta — fazer login</p>
+                    <Link href={convite ? `/?convite=${convite}` : "/"} className="min-h-[48px] mt-2 flex items-center justify-center">
+                        <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer">Já tenho conta — fazer login</p>
                     </Link>
                 </form>
             )}

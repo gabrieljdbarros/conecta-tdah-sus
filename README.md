@@ -18,7 +18,9 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Edição do próprio perfil | ✅ Pronto |
 | Pasta do aluno, criada pela mãe/responsável (RF03) | ✅ Pronto |
 | Ajustes de privacidade do perfil (nome da criança só na pasta; admin sem troca de perfil) | ✅ Pronto |
-| Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ⏳ Planejado |
+| Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto (no modo emulador) |
+| Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto (no modo emulador) |
+| Remover participante e sair da pasta | ⏳ Planejado |
 | Categorias de acompanhamento gerenciadas pelo admin (RF14) | ⏳ Planejado |
 | Relatórios dentro da pasta do aluno | ⏳ Planejado |
 | Chat em grupo por aluno (RN05) | ⏳ Planejado |
@@ -46,30 +48,48 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
 - **As regras têm testes automatizados** no Firebase Emulator, e toda mudança nelas é testada antes de ir para produção.
 - **A senha fica só no Firebase Authentication**, nunca no banco de dados.
 - **Só guardamos o necessário (minimização).** A pasta guarda apenas o nome e a série do aluno, e o nome da criança não fica no perfil da família.
+- **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma Cloud Function, numa transação, que confere se a conta é do perfil certo (escola ou médico).
 
 ## Tecnologias
 
 - **Painel web:** [Next.js 15](https://nextjs.org/), TypeScript, Tailwind CSS, Formik e Yup
-- **Backend:** Firebase (Authentication, Firestore e, em breve, Cloud Functions)
-- **Testes das regras:** Firebase Emulator e `@firebase/rules-unit-testing`
+- **Backend:** Firebase (Authentication, Firestore e Cloud Functions)
+- **Testes:** Firebase Emulator, `@firebase/rules-unit-testing` e o executor de testes nativo do Node.js
 
 ## Como rodar
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) 20 ou superior
-- Um projeto no [Firebase](https://console.firebase.google.com/) com **Authentication (e-mail/senha)** e **Firestore** ativados
-- [JDK 21](https://adoptium.net/): só para rodar os testes das regras no emulador
-
-### Passo a passo
+- [Node.js](https://nodejs.org/) 22 ou superior
+- [JDK 21](https://adoptium.net/): para os emuladores do Firebase e os testes
+- Um projeto no [Firebase](https://console.firebase.google.com/) com **Authentication (e-mail/senha)** e **Firestore** ativados. Só é necessário fora do modo protótipo.
 
 ```bash
 git clone https://github.com/gabrieljdbarros/conecta-tdah-sus.git
 cd conecta-tdah-sus
 npm install
+npm --prefix functions install
 ```
 
-1. Copie `.env.local.example` para `.env.local` e preencha com as chaves do app web do seu projeto Firebase. O `.env.local` **não** é versionado.
+### Modo protótipo (emuladores, recomendado)
+
+Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Firebase. As Cloud Functions do convite, por enquanto, funcionam **só** nesse modo, porque publicá-las exige o plano pago Blaze.
+
+1. Copie `.env.local.example` para `.env.local` e coloque `NEXT_PUBLIC_USE_EMULATORS=true`.
+2. Em um terminal, suba os emuladores e deixe-os abertos:
+   ```bash
+   npm run emulators
+   ```
+   Os dados são salvos em `.emulator-data/` quando você fecha o terminal com Ctrl+C, e são recarregados na próxima vez.
+3. Em outro terminal, inicie o site:
+   ```bash
+   npm run dev
+   ```
+   Acesse http://localhost:3000 e crie as contas de teste (mãe, escola e médico) pelo cadastro.
+
+### Com um projeto Firebase real
+
+1. Copie `.env.local.example` para `.env.local`, preencha com as chaves do app web do seu projeto Firebase e deixe `NEXT_PUBLIC_USE_EMULATORS=false`. O `.env.local` **não** é versionado.
 2. Vincule o repositório ao seu projeto e publique as regras de segurança:
    ```bash
    npx firebase login
@@ -89,7 +109,9 @@ npm install
 | Comando | O que faz |
 |---|---|
 | `npm run dev` | Servidor local de desenvolvimento |
-| `npm run test:rules` | Testes das Security Rules no Firestore Emulator (precisa de JDK 21) |
+| `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
+| `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
+| `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
 
@@ -97,12 +119,15 @@ npm install
 
 ```
 src/
-  app/            Telas (login, cadastro e área /admin)
+  app/            Telas (login, cadastro, convite e área /admin)
   contexts/       Sessão do usuário (AuthContext)
-  services/       Acesso ao Firebase (usuários, pastas)
+  services/       Acesso ao Firebase (usuários, pastas, convites)
   themes/         Componentes visuais do template
   types/          Modelos de dados
+functions/        Cloud Functions (gerar e aceitar convite)
 tests/            Testes das Security Rules
+tests/functions/  Testes das Cloud Functions
+scripts/          Script que sobe os emuladores
 firestore.rules   Regras de segurança do Firestore
 ```
 

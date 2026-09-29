@@ -7,7 +7,9 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/**/*.test.mjs\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/*.test.mjs\"",
+    "test:functions": "npm --prefix functions run build && firebase emulators:exec --only auth,firestore,functions --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/functions/*.test.mjs\"",
+    "emulators": "node scripts/emulators.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",

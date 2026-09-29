@@ -8,8 +8,8 @@ rules_version = '2';
  * Estas regras são a aplicação real do RBAC — o app só reflete o que elas
  * permitem, então qualquer checagem feita na tela é apenas UX.
  *
- * Coleções cobertas: `users` (cadastro/perfil) e `pastas` (pasta do aluno,
- * RF03). Convites (RN01, RN02), relatórios (RN06) e chat (RN05) serão
+ * Coleções cobertas: `users` (cadastro/perfil), `pastas` (pasta do aluno,
+ * RF03) e `convites` (RN01, RN02). Relatórios (RN06) e chat (RN05) serão
  * adicionados aqui quando forem implementados — até lá, o bloqueio geral no
  * fim do arquivo nega qualquer acesso a eles.
  */
@@ -126,19 +126,28 @@ service cloud.firestore {
       // Consultas de lista precisam filtrar por `membrosUids array-contains`
       allow read: if estaLogado() && meuUid() in resource.data.membrosUids;
 
-      // Só a mãe/responsável cria, como dona e única membro inicial
+      // Só a mãe/responsável cria, como dona e única membro inicial.
+      // `participantes` é o resumo público de quem está na pasta (nome e
+      // papel), para todos os membros saberem com quem estão falando: a mãe
+      // entra com o nome igual ao do próprio perfil; escola/médico são
+      // adicionados pela Cloud Function do convite
       allow create: if estaLogado()
                     && papelDoUsuario(meuUid()) == 'mae'
-                    && request.resource.data.keys().hasOnly(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'criadoEm'])
-                    && request.resource.data.keys().hasAll(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'criadoEm'])
+                    && request.resource.data.keys().hasOnly(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'participantes', 'criadoEm'])
+                    && request.resource.data.keys().hasAll(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'participantes', 'criadoEm'])
                     && request.resource.data.donoUid == meuUid()
                     && request.resource.data.membrosUids == [meuUid()]
+                    && request.resource.data.participantes.keys().hasOnly([meuUid()])
+                    && request.resource.data.participantes[meuUid()] == {
+                         'nome': get(/databases/$(database)/documents/users/$(meuUid())).data.nome,
+                         'papel': 'mae'
+                       }
                     && textoValido(request.resource.data.nomeAluno)
                     && serieValida(request.resource.data.serie)
                     && request.resource.data.criadoEm is int;
 
       // A dona só altera nome e série (a série muda todo ano).
-      // `membrosUids` nunca muda pelo navegador: quem adiciona escola/médico
+      // `membrosUids` e `participantes` nunca mudam pelo navegador: quem adiciona escola/médico
       // é a Cloud Function do convite (RN01, RN02), que usa o Admin SDK
       // A dona também precisa continuar membro: se um dia for removida de
       // `membrosUids`, perde a edição junto com a leitura
@@ -152,6 +161,21 @@ service cloud.firestore {
       // TODO: exclusão da pasta a pedido da família (direito do titular na
       // LGPD) — definir fluxo, inclusive o que acontece com os relatórios
       allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // CONVITES (RN01, RN02) — `convites/{hash do token}`
+    // Criados e usados só pelas Cloud Functions (Admin SDK). O id do
+    // documento é o hash do token, então ler o convite NÃO revela o link.
+    // ---------------------------------------------------------------------
+    match /convites/{conviteId} {
+      // Quem criou (a dona da pasta) vê e cancela os próprios convites.
+      // Consultas de lista precisam filtrar por `criadoPor == uid`.
+      // Só cancela convite ainda NÃO usado: o usado é o registro de quem
+      // entrou na pasta e por qual link
+      allow read: if estaLogado() && resource.data.criadoPor == meuUid();
+      allow delete: if estaLogado() && resource.data.criadoPor == meuUid() && resource.data.usadoEm == null;
+      allow create, update: if false;
     }
 
     // Bloqueia qualquer coleção ainda não modelada explicitamente
