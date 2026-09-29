@@ -101,8 +101,7 @@ export default function PastaList() {
                 </p>
             )}
 
-            {/* TODO (branch do convite): o nome do aluno vira link para a tela
-                da pasta, de onde a mãe convida escola e médico */}
+            {/* O nome do aluno abre a pasta (participantes e convites) */}
             {pastas.length > 0 && <div className="overflow-x-auto">
                 <table className="min-w-full bg-white">
                     <caption className="sr-only">Lista das pastas dos alunos</caption>
@@ -116,7 +115,12 @@ export default function PastaList() {
                     <tbody>
                         {pastas.map(pasta => (
                             <tr key={pasta.id}>
-                                <th scope="row" className={`${CLASSE_TD} text-left font-normal`}>{pasta.nomeAluno}</th>
+                                <th scope="row" className={`${CLASSE_TD} text-left font-normal`}>
+                                    <Link href={`/admin/pastas/${pasta.id}`} className="min-h-[48px] flex items-center gap-2 text-(--primary-color) underline">
+                                        <i className="ion-folder" aria-hidden="true" />
+                                        {pasta.nomeAluno}
+                                    </Link>
+                                </th>
                                 <td className={CLASSE_TD}>{SERIE_LABELS[pasta.serie] ?? '-'}</td>
                             </tr>
                         ))}

@@ -6,7 +6,8 @@
  *  - `membrosUids` lista quem participa (mãe, e depois escola e médico
  *    vinculados por convite — RN01, RN02). É um array para permitir a
  *    consulta `array-contains` ("minhas pastas") validada pelas Rules
- *  - O papel de cada membro NÃO é guardado aqui: vem do `role` em `users`
+ *  - As permissões usam o `role` em `users`; `participantes` serve só para
+ *    exibir quem está na pasta
  *  - Minimização (LGPD): só nome e série; nada de data de nascimento, CPF etc.
  */
 
@@ -34,6 +35,18 @@ export const SERIE_LABELS: Record<Serie, string> = {
 };
 
 /**
+ * Resumo público de quem está na pasta, visível a todos os membros.
+ * Minimização: só nome, papel e instituição (nome da escola ou unidade SUS).
+ * A mãe grava o próprio ao criar a pasta; escola/médico entram pela Cloud
+ * Function do convite (RN01, RN02)
+ */
+export interface Participante {
+    nome: string;
+    papel: 'mae' | 'escola' | 'medico';
+    detalhe?: string;
+}
+
+/**
  * Formato salvo em `pastas/{pastaId}` no Firestore
  */
 export interface PastaDocument {
@@ -41,6 +54,7 @@ export interface PastaDocument {
     serie: Serie;
     donoUid: string;
     membrosUids: string[];
+    participantes: Record<string, Participante>;
     criadoEm: number;
 }
 

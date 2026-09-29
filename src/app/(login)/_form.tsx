@@ -8,6 +8,7 @@ import UserServices from "@/services/user";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { conviteDaUrl, destinoAposEntrar } from "@/helpers/router";
 
 export default function LoginForm() {
     const [ showResetPasswordModal, setShowResetPasswordModal ] = useState(false);
@@ -17,13 +18,17 @@ export default function LoginForm() {
     const [ aguardandoSessao, setAguardandoSessao ] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
+    // Convite aberto antes de entrar (RN01): lido depois de montar a tela
+    const [ convite, setConvite ] = useState<string|null>(null);
+    useEffect(() => setConvite(conviteDaUrl()), []);
 
     // Só redireciona depois que o AuthContext confirmar a sessão (perfil
     // carregado do Firestore + cookie setado) — evita o middleware barrar
-    // a navegação por falta do cookie ainda não gravado
+    // a navegação por falta do cookie ainda não gravado.
+    // Se veio de um link de convite, volta para ele
     useEffect(() => {
         if (aguardandoSessao && user)
-            router.push('/admin/dashboard');
+            router.push(destinoAposEntrar());
     }, [aguardandoSessao, user, router]);
     // ======================================================
     const onSubmitLogin = async ({email, password}: any) => {
@@ -67,6 +72,7 @@ export default function LoginForm() {
                         <div className="w-[336px] flex flex-col">
 
                             <h1 className="ff-default text-[37px] text-center">Entrar</h1>
+                            {convite && <p className="ff-default text-[16px] text-center mb-2">Entre para aceitar o convite.</p>}
                             <AppInput placeholder="EMAIL" name="email" onChange={handleChange} icon="ios-email" error={errors.email} />
                             <AppInput placeholder="SENHA" name="password" type="password" onChange={handleChange} icon="locked" openPassword  error={errors.password}/>
                             
@@ -77,7 +83,7 @@ export default function LoginForm() {
 
                             <AppButton title="Entrar" onClick={handleSubmit} disabled={isSubmitting || !isValid} form="round" />
 
-                            <Link href="/cadastro">
+                            <Link href={convite ? `/cadastro?convite=${convite}` : "/cadastro"}>
                                 <p className="ff-default text-center text-[#4703D0] cursor-pointer"> Não tem conta? Cadastre-se</p>
                             </Link>
                         </div>

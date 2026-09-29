@@ -66,7 +66,7 @@ export default function NovaPastaForm() {
         if (!user) return;
         setError(null);
 
-        const { success, message } = await PastaServices.criar(user.uid, {
+        const { success, message } = await PastaServices.criar(user, {
             nomeAluno: values.nomeAluno.trim(),
             serie: values.serie as Serie,
         });

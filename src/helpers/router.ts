@@ -28,3 +28,23 @@ export function getFlashData() {
 export function clearFlashData() {
     Cookies.remove(`flash`);
 }
+
+/**
+ * CONVITE PENDENTE (RN01, RN02)
+ * Quem abre um link de convite sem estar logado vai para o login/cadastro
+ * com `?convite=<token>` e, depois de entrar, volta para o convite.
+ */
+// Formato do token (32 bytes em base64url). Validar evita montar URLs com
+// qualquer texto vindo da barra de endereço
+export const TOKEN_CONVITE = /^[A-Za-z0-9_-]{43}$/;
+
+export function conviteDaUrl(): string | null {
+    if (typeof window === 'undefined') return null;
+    const token = new URLSearchParams(window.location.search).get('convite');
+    return token && TOKEN_CONVITE.test(token) ? token : null;
+}
+
+export function destinoAposEntrar(): string {
+    const token = conviteDaUrl();
+    return token ? `/convite/${token}` : '/admin/dashboard';
+}
