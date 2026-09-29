@@ -32,6 +32,8 @@ export default function AppMenu() {
             <div className="pl-[30px] mt-[30px] flex-1">
                 <AppMenuItem title="Dashboard" icon="grid" url="/admin/dashboard"/>
                 <AppMenuItem title="Usuários" icon="ios-people" url="/admin/usuarios"/>
+                {/* Admin não acessa pastas (LGPD) — as regras também bloqueiam */}
+                {user && user.role !== 'admin' && <AppMenuItem title="Pastas" icon="folder" url="/admin/pastas"/>}
             </div>
 
             {/* LOGOUT */}
