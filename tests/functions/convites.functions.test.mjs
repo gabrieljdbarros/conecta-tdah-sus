@@ -10,84 +10,21 @@
  */
 import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash, randomBytes } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { deleteApp, initializeApp } from "firebase/app";
-import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import { randomBytes } from "node:crypto";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import {
-    addDoc, collection, connectFirestoreEmulator, deleteDoc, doc, getDoc, getFirestore, setDoc,
-} from "firebase/firestore";
-import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
-import { initializeTestEnvironment } from "@firebase/rules-unit-testing";
+    HORA, encerrarAmbiente, falhaCom, hashDoToken, novaEscola, novaMae, novaPasta, novoApp, novoMedico,
+    prepararAmbiente,
+} from "./ajuda.mjs";
 
-const PROJETO = "demo-conecta-tdah";
-const HORA = 60 * 60 * 1000;
-const apps = [];
-let contador = 0;
 let testEnv;
-
-/** Cria um app "navegador" isolado, ligado aos emuladores */
-function novoApp() {
-    const app = initializeApp({ projectId: PROJETO, apiKey: "chave-ficticia" }, `app-${++contador}`);
-    apps.push(app);
-    const auth = getAuth(app);
-    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-    const db = getFirestore(app);
-    connectFirestoreEmulator(db, "127.0.0.1", 8080);
-    const fns = getFunctions(app, "southamerica-east1");
-    connectFunctionsEmulator(fns, "127.0.0.1", 5001);
-    return { auth, db, chamar: (nome, dados) => httpsCallable(fns, nome)(dados).then((r) => r.data) };
-}
-
-/** Cria uma conta fictícia com perfil em `users` (pelas regras, como no cadastro) */
-async function novoUsuario(role, dadosPerfil) {
-    const cliente = novoApp();
-    const email = `${role}${contador}@exemplo.com`;
-    const cred = await createUserWithEmailAndPassword(cliente.auth, email, "senha-ficticia");
-    const nome = `${role} Fictício ${contador}`;
-    await setDoc(doc(cliente.db, `users/${cred.user.uid}`), { nome, email, role, dadosPerfil, criadoEm: Date.now() });
-    return { ...cliente, uid: cred.user.uid, nome };
-}
-
-const novaMae = () => novoUsuario("mae", { grauParentesco: "mãe" });
-const novaEscola = () => novoUsuario("escola", { nomeEscola: "Escola Fictícia", cargo: "professora" });
-const novoMedico = () => novoUsuario("medico", { crm: "00000", especialidade: "psiquiatria", unidadeSUS: "UBS Fictícia" });
-
-/** A mãe cria uma pasta pelo navegador (como na tela Nova pasta) */
-async function novaPasta(mae) {
-    const ref = await addDoc(collection(mae.db, "pastas"), {
-        nomeAluno: "Aluno Fictício",
-        serie: "ef3",
-        donoUid: mae.uid,
-        membrosUids: [mae.uid],
-        participantes: { [mae.uid]: { nome: mae.nome, papel: "mae" } },
-        criadoEm: Date.now(),
-    });
-    return ref.id;
-}
-
-const hashDoToken = (token) => createHash("sha256").update(token).digest("hex");
-
-/** Espera que a chamada falhe com o código indicado */
-async function falhaCom(promessa, codigo) {
-    await assert.rejects(promessa, (erro) => {
-        assert.equal(erro.code, `functions/${codigo}`);
-        return true;
-    });
-}
 
 before(async () => {
     // Usado só para gravar um convite expirado direto no banco
-    testEnv = await initializeTestEnvironment({
-        projectId: PROJETO,
-        firestore: { host: "127.0.0.1", port: 8080, rules: readFileSync("firestore.rules", "utf8") },
-    });
+    testEnv = await prepararAmbiente();
 });
 
-after(async () => {
-    await Promise.all(apps.map((app) => deleteApp(app)));
-    await testEnv.cleanup();
-});
+after(encerrarAmbiente);
 
 // =============================================================================
 describe("gerarConvite", () => {

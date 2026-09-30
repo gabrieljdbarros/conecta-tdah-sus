@@ -20,7 +20,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Ajustes de privacidade do perfil (nome da criança só na pasta; admin sem troca de perfil) | ✅ Pronto |
 | Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto (no modo emulador) |
 | Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto (no modo emulador) |
-| Remover participante e sair da pasta | ⏳ Planejado |
+| Remover participante e sair da pasta | ✅ Pronto (no modo emulador) |
 | Categorias de acompanhamento gerenciadas pelo admin (RF14) | ⏳ Planejado |
 | Relatórios dentro da pasta do aluno | ⏳ Planejado |
 | Chat em grupo por aluno (RN05) | ⏳ Planejado |

@@ -1,5 +1,7 @@
 import { addDoc, collection, doc, DocumentData, getDoc, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/services/firebase";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@/services/firebase";
+import { mensagemErro } from "@/services/convite";
 import { Pasta, Serie } from "@/types/pasta";
 import { AppUser } from "@/types/user";
 
@@ -78,6 +80,22 @@ const PastaServices = {
             return { success: true, pastas };
         } catch {
             return { success: false, pastas: [] };
+        }
+    },
+
+    /**
+     * Tira alguém da pasta (Cloud Function `removerParticipante`):
+     * a dona remove outra pessoa; escola/médico passa o próprio uid para sair.
+     */
+    removerParticipante: async (
+        pastaId: string,
+        participanteUid: string
+    ): Promise<{ success: boolean; message?: string }> => {
+        try {
+            await httpsCallable(functions, "removerParticipante")({ pastaId, participanteUid });
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: mensagemErro(error, "Não foi possível concluir. Tente novamente") };
         }
     },
 };

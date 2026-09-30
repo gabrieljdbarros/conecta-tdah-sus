@@ -1,11 +1,13 @@
 /**
  * CLOUD FUNCTIONS — CONECTA TDAH SUS
  *
- * Convite por link para vincular escola e médico à pasta do aluno
- * (RN01: link com expiração; RN02: uso único).
+ * - Convite por link para vincular escola e médico à pasta do aluno
+ *   (RN01: link com expiração; RN02: uso único).
+ * - Remover participante da pasta (dona) e sair da pasta (escola/médico).
  *
- * Por que Function e não Security Rule: quem aceita o convite ainda NÃO é
- * membro da pasta, então as regras não o deixariam alterar `membrosUids`.
+ * Por que Function e não Security Rule: `membrosUids` e `participantes`
+ * nunca mudam pelo navegador (quem aceita o convite ainda NÃO é membro, e a
+ * remoção precisa mexer nas duas listas juntas).
  * A Function roda no servidor (Admin SDK, que ignora as regras), faz todas
  * as checagens e grava tudo numa transação.
  *
@@ -38,6 +40,12 @@ function hashDoToken(token: string): string {
     return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Ids do Firestore (addDoc) e do Firebase Auth: só letras e números.
+ * Validar evita montar caminhos com "/" vindos do navegador
+ */
+const ID_VALIDO = /^[A-Za-z0-9]{1,128}$/;
+
 function exigirLogin(uid: string | undefined): string {
     if (!uid) throw new HttpsError("unauthenticated", "Entre na sua conta para continuar.");
     return uid;
@@ -52,9 +60,7 @@ export const gerarConvite = onCall(async (request) => {
     const uid = exigirLogin(request.auth?.uid);
     const { pastaId, papel } = (request.data ?? {}) as { pastaId?: unknown; papel?: unknown };
 
-    // Ids do Firestore gerados pelo addDoc: só letras e números. Validar
-    // evita montar caminhos com "/" vindos do navegador
-    if (typeof pastaId !== "string" || !/^[A-Za-z0-9]{1,64}$/.test(pastaId))
+    if (typeof pastaId !== "string" || !ID_VALIDO.test(pastaId))
         throw new HttpsError("invalid-argument", "Pasta inválida.");
     if (!PAPEIS_CONVIDADOS.includes(papel as PapelConvidado))
         throw new HttpsError("invalid-argument", "Escolha se o convite é para a escola ou para o médico.");
@@ -141,4 +147,49 @@ export const aceitarConvite = onCall(async (request) => {
 
         return { pastaId: c.pastaId as string, nomeAluno: pasta.data()?.nomeAluno as string };
     });
+});
+
+// =============================================================================
+/**
+ * Tira alguém da pasta (sai de `membrosUids` e de `participantes` juntos):
+ *  - a dona remove outra pessoa;
+ *  - escola/médico remove a si mesmo ("sair da pasta").
+ * A dona não sai nem é removida: a pasta ficaria sem responsável (apagar a
+ * pasta é o TODO de exclusão da LGPD).
+ * Quem sai perde a leitura na hora, porque as regras só deixam ler membros.
+ */
+export const removerParticipante = onCall(async (request) => {
+    const uid = exigirLogin(request.auth?.uid);
+    const { pastaId, participanteUid } = (request.data ?? {}) as { pastaId?: unknown; participanteUid?: unknown };
+
+    if (typeof pastaId !== "string" || !ID_VALIDO.test(pastaId)
+        || typeof participanteUid !== "string" || !ID_VALIDO.test(participanteUid))
+        throw new HttpsError("invalid-argument", "Pedido inválido.");
+
+    const pastaRef = db.doc(`pastas/${pastaId}`);
+
+    await db.runTransaction(async (tx) => {
+        const pasta = await tx.get(pastaRef);
+        const membros: string[] = pasta.data()?.membrosUids ?? [];
+
+        // Mesma resposta para "pasta não existe" e "você não é membro": não
+        // revela a quem não participa se a pasta existe
+        if (!pasta.exists || !membros.includes(uid))
+            throw new HttpsError("permission-denied", "Você não faz parte desta pasta.");
+
+        const donoUid = pasta.data()?.donoUid;
+        if (participanteUid === donoUid)
+            throw new HttpsError("failed-precondition", "A responsável pela pasta não pode sair nem ser removida.");
+        if (uid !== donoUid && uid !== participanteUid)
+            throw new HttpsError("permission-denied", "Só a responsável pela pasta pode remover outras pessoas.");
+        if (!membros.includes(participanteUid))
+            throw new HttpsError("not-found", "Esta pessoa não faz parte da pasta.");
+
+        tx.update(pastaRef, {
+            membrosUids: FieldValue.arrayRemove(participanteUid),
+            [`participantes.${participanteUid}`]: FieldValue.delete(),
+        });
+    });
+
+    return { ok: true };
 });
