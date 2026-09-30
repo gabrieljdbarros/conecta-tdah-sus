@@ -36,8 +36,8 @@ const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center
 /**
  * Resumo dos erros ao tentar enviar: diz O QUE fazer ("Escolha o assunto"),
  * não só o nome do campo, e cada item leva até o campo. Recebe o foco a
- * cada tentativa.
- * TODO: rever quando os componentes do template mostrarem os próprios erros
+ * cada tentativa. O erro também aparece junto de cada campo; o resumo
+ * continua, por ser o padrão recomendado de formulário acessível.
  */
 function ResumoErros({ erros, tentativas }: { erros: Partial<Record<keyof FormValues, string>>; tentativas: number }) {
     const ref = useRef<HTMLDivElement>(null);
@@ -180,7 +180,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                                 Ainda não há assuntos cadastrados. Peça ao administrador para cadastrar.
                             </p>
                         ) : <>
-                            <AppSelect label="Assunto (obrigatório):" name="categoriaId" value={values.categoriaId} onChange={handleChange} error={errors.categoriaId}>
+                            <AppSelect label="Assunto (obrigatório):" name="categoriaId" value={values.categoriaId} onChange={handleChange} error={errors.categoriaId} mostrarErro={submitCount > 0}>
                                 <option value="">Escolha o assunto...</option>
                                 {categorias.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
                             </AppSelect>

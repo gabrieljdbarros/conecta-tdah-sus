@@ -37,8 +37,7 @@ const validationSchema = Yup.object({
 
 // Resumo dos campos com erro. Recebe o foco a cada tentativa de envio, para
 // quem usa teclado ou leitor de tela não precisar procurar o problema.
-// TODO: remover quando o AppInput mostrar os próprios erros (branch de
-// acessibilidade dos componentes)
+// O erro também aparece junto de cada campo; o resumo continua
 function ResumoErros({ campos, tentativas }: { campos: string[]; tentativas: number }) {
     const ref = useRef<HTMLParagraphElement>(null);
     const temErro = tentativas > 0 && campos.length > 0;
@@ -108,9 +107,9 @@ export default function NovaPastaForm() {
                         A pasta reúne tudo sobre o acompanhamento do aluno. Depois você poderá convidar a escola e o médico.
                     </p>
 
-                    <AppInput label={`${ROTULOS.nomeAluno}:`} placeholder="Nome completo do aluno" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} icon="person" error={errors.nomeAluno} />
+                    <AppInput label={`${ROTULOS.nomeAluno}:`} placeholder="Nome completo do aluno" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} icon="person" error={errors.nomeAluno} mostrarErro={submitCount > 0} />
 
-                    <AppSelect label={`${ROTULOS.serie}:`} name="serie" value={values.serie} onChange={handleChange} error={errors.serie}>
+                    <AppSelect label={`${ROTULOS.serie}:`} name="serie" value={values.serie} onChange={handleChange} error={errors.serie} mostrarErro={submitCount > 0}>
                         <option value="">Escolha a série...</option>
                         {(Object.entries(SERIE_LABELS) as [Serie, string][]).map(([codigo, rotulo]) => (
                             <option key={codigo} value={codigo}>{rotulo}</option>
