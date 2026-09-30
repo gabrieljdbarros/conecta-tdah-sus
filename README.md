@@ -21,7 +21,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto (no modo emulador) |
 | Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto (no modo emulador) |
 | Remover participante e sair da pasta | ✅ Pronto (no modo emulador) |
-| Categorias de acompanhamento gerenciadas pelo admin (RF14) | ⏳ Planejado |
+| Categorias de acompanhamento gerenciadas pelo admin (RF14) | ✅ Pronto |
 | Relatórios dentro da pasta do aluno | ⏳ Planejado |
 | Chat em grupo por aluno (RN05) | ⏳ Planejado |
 | Leitura em voz alta (acessibilidade) | ⏳ Planejado |
@@ -86,6 +86,7 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
    npm run dev
    ```
    Acesse http://localhost:3000 e crie as contas de teste (mãe, escola e médico) pelo cadastro.
+4. A interface dos emuladores fica em http://localhost:4000. Ela mostra os dados em tempo real e permite transformar uma conta de teste em **administrador**: em *Firestore*, abra `users` → documento da conta e troque `role` para `admin`. Isso vale **só para o emulador**. A interface ignora as regras de segurança e roda apenas no seu computador (127.0.0.1).
 
 ### Com um projeto Firebase real
 

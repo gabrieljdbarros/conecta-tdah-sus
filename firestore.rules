@@ -9,7 +9,7 @@ rules_version = '2';
  * permitem, então qualquer checagem feita na tela é apenas UX.
  *
  * Coleções cobertas: `users` (cadastro/perfil), `pastas` (pasta do aluno,
- * RF03) e `convites` (RN01, RN02). Relatórios (RN06) e chat (RN05) serão
+ * RF03), `convites` (RN01, RN02) e `categorias` (RF14). Relatórios (RN06) e chat (RN05) serão
  * adicionados aqui quando forem implementados — até lá, o bloqueio geral no
  * fim do arquivo nega qualquer acesso a eles.
  */
@@ -176,6 +176,37 @@ service cloud.firestore {
       allow read: if estaLogado() && resource.data.criadoPor == meuUid();
       allow delete: if estaLogado() && resource.data.criadoPor == meuUid() && resource.data.usadoEm == null;
       allow create, update: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // CATEGORIAS DE ACOMPANHAMENTO (RF14, CSU15, RN10)
+    // Só classificam o conteúdo dos relatórios: NUNCA controlam quem lê
+    // (quem lê é definido pelo tipo do relatório — RN06).
+    // ---------------------------------------------------------------------
+    function nomeCategoriaValido(nome) {
+      return nome is string && nome.trim().size() > 0 && nome.size() <= 60;
+    }
+
+    match /categorias/{categoriaId} {
+      // Qualquer pessoa logada lê: mãe, escola e médico escolhem a
+      // categoria ao escrever um relatório. Não são dados sensíveis
+      allow read: if estaLogado();
+
+      // Só o admin cria e edita
+      allow create: if souAdmin()
+                    && request.resource.data.keys().hasOnly(['nome', 'ativa', 'criadoEm'])
+                    && request.resource.data.keys().hasAll(['nome', 'ativa', 'criadoEm'])
+                    && nomeCategoriaValido(request.resource.data.nome)
+                    && request.resource.data.ativa is bool
+                    && request.resource.data.criadoEm is int;
+      allow update: if souAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'ativa'])
+                    && nomeCategoriaValido(request.resource.data.nome)
+                    && request.resource.data.ativa is bool;
+
+      // Ninguém apaga: relatórios antigos continuam apontando para a
+      // categoria. Em vez de apagar, o admin desativa (ativa = false)
+      allow delete: if false;
     }
 
     // Bloqueia qualquer coleção ainda não modelada explicitamente
