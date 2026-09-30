@@ -31,7 +31,9 @@ export default function AppMenu() {
             {/* OPÇÕES */}
             <div className="pl-[30px] mt-[30px] flex-1">
                 <AppMenuItem title="Dashboard" icon="grid" url="/admin/dashboard"/>
-                <AppMenuItem title="Usuários" icon="ios-people" url="/admin/usuarios"/>
+                {/* Só o admin gerencia usuários e categorias (as regras também bloqueiam) */}
+                {user?.role === 'admin' && <AppMenuItem title="Usuários" icon="ios-people" url="/admin/usuarios"/>}
+                {user?.role === 'admin' && <AppMenuItem title="Categorias" icon="pricetags" url="/admin/categorias"/>}
                 {/* Admin não acessa pastas (LGPD) — as regras também bloqueiam */}
                 {user && user.role !== 'admin' && <AppMenuItem title="Pastas" icon="folder" url="/admin/pastas"/>}
             </div>
