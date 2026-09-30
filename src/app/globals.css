@@ -36,6 +36,11 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Quem pede menos movimento no aparelho não vê a animação girando */
+@media (prefers-reduced-motion: reduce) {
+  .loader { animation: none; -webkit-animation: none; }
+}
 /*
 * LOADER [FIM]
 */
