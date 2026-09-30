@@ -13,7 +13,7 @@ import {
     assertSucceeds,
     assertFails,
 } from "@firebase/rules-unit-testing";
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 
 let testEnv;
 
@@ -71,6 +71,14 @@ describe("ler categorias", () => {
 describe("criar categorias", () => {
     test("admin cria", async () => {
         await assertSucceeds(criar("admin1", { nome: "Atenção e concentração", ativa: true, criadoEm: 1700000000000 }));
+    });
+
+    test("admin cria as 8 sugestões de uma vez (lote, como na tela)", async () => {
+        const db = como("admin1");
+        const lote = writeBatch(db);
+        for (let i = 0; i < 8; i++)
+            lote.set(doc(collection(db, "categorias")), { nome: `Sugestão fictícia ${i}`, ativa: true, criadoEm: 1700000000000 });
+        await assertSucceeds(lote.commit());
     });
 
     test("NÃO: mãe cria", async () => {

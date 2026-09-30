@@ -86,7 +86,7 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
    npm run dev
    ```
    Acesse http://localhost:3000 e crie as contas de teste (mãe, escola e médico) pelo cadastro.
-4. A interface dos emuladores fica em http://localhost:4000. Ela mostra os dados em tempo real e permite transformar uma conta de teste em **administrador**: em *Firestore*, abra `users` → documento da conta e troque `role` para `admin`.
+4. A interface dos emuladores fica em http://localhost:4000. Ela mostra os dados em tempo real e permite transformar uma conta de teste em **administrador**: em *Firestore*, abra `users` → documento da conta e troque `role` para `admin`. Isso vale **só para o emulador**. A interface ignora as regras de segurança e roda apenas no seu computador (127.0.0.1).
 
 ### Com um projeto Firebase real
 
