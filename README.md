@@ -23,7 +23,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Remover participante e sair da pasta | ✅ Pronto (no modo emulador) |
 | Categorias de acompanhamento gerenciadas pelo admin (RF14) | ✅ Pronto |
 | Relatórios dentro da pasta do aluno, com acesso por tipo (RN06) | ✅ Pronto |
-| Chat em grupo por aluno (RN05) | ⏳ Planejado |
+| Chat por aluno (RN05): grupo com todos e canal privado mãe–médico | ✅ Pronto |
 | Leitura em voz alta (acessibilidade) | ⏳ Planejado |
 | App mobile (Android/iOS) | ⏳ Depois do painel web |
 

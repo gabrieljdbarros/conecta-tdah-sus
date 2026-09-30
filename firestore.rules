@@ -10,8 +10,8 @@ rules_version = '2';
  *
  * Coleções cobertas: `users` (cadastro/perfil), `pastas` (pasta do aluno,
  * RF03) com os relatórios (RN06), `convites` (RN01, RN02) e `categorias`
- * (RF14). O chat (RN05) será adicionado aqui quando for implementado — até
- * lá, o bloqueio geral no fim do arquivo nega qualquer acesso a ele.
+ * (RF14), e o chat da pasta (RN05). Qualquer coleção não listada aqui é
+ * negada pelo bloqueio geral no fim do arquivo.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -222,6 +222,67 @@ service cloud.firestore {
         // Registro imutável: ninguém edita nem apaga. Correção = novo
         // relatório complementar. Relatórios de quem saiu da pasta ficam
         // (o nome do autor está guardado no próprio relatório)
+        allow update, delete: if false;
+      }
+
+      // -------------------------------------------------------------------
+      // CHAT (RN05, decisão travada 10)
+      //   canais/grupo/...            → todos os membros da pasta
+      //   canais/privado-{uid}/...    → só a mãe (dona) e aquele médico
+      // O canal está no CAMINHO: todas as mensagens de um canal têm a mesma
+      // permissão, e a consulta não precisa de filtro nem índice composto.
+      // -------------------------------------------------------------------
+      match /canais/{canalId}/mensagens/{mensagemId} {
+        // uid do médico dono do canal privado ("privado-<uid>")
+        function medicoDoCanal() {
+          return canalId.split('-')[1];
+        }
+
+        // Privado: só a dona e o médico do canal (a escola e os outros
+        // médicos, não). A mãe continua LENDO o histórico mesmo se o médico
+        // sair da pasta, como acontece com os relatórios
+        function podeLerPrivado(papel) {
+          return canalId.matches('privado-[A-Za-z0-9]+')
+              && (papel == 'mae' || (papel == 'medico' && meuUid() == medicoDoCanal()));
+        }
+
+        // Para ESCREVER no privado, o médico do canal precisa ainda estar na
+        // pasta e ter o perfil de médico
+        function podeEscreverPrivado(pasta, papel) {
+          return podeLerPrivado(papel)
+              && medicoDoCanal() in pasta.membrosUids
+              && get(/databases/$(database)/documents/users/$(medicoDoCanal())).data.role == 'medico';
+        }
+
+        function podeLerCanal() {
+          let papel = papelNaPasta(dadosDaPasta(pastaId));
+          return papel != 'nenhum' && (canalId == 'grupo' || podeLerPrivado(papel));
+        }
+
+        function podeEscreverCanal() {
+          let pasta = dadosDaPasta(pastaId);
+          let papel = papelNaPasta(pasta);
+          return papel != 'nenhum' && (canalId == 'grupo' || podeEscreverPrivado(pasta, papel));
+        }
+
+        allow read: if estaLogado() && podeLerCanal();
+
+        // O autor é quem está logado, com o nome do perfil e o papel na pasta
+        allow create: if estaLogado()
+                      && podeEscreverCanal()
+                      && request.resource.data.keys().hasOnly(['texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
+                      && request.resource.data.keys().hasAll(['texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
+                      && request.resource.data.autorUid == meuUid()
+                      && request.resource.data.autorNome == get(/databases/$(database)/documents/users/$(meuUid())).data.nome
+                      && request.resource.data.autorPapel == papelNaPasta(dadosDaPasta(pastaId))
+                      && request.resource.data.texto is string
+                      && request.resource.data.texto.trim().size() > 0
+                      && request.resource.data.texto.size() <= 2000
+                      // Data do SERVIDOR (serverTimestamp): o relógio do
+                      // celular não define a ordem de uma conversa imutável
+                      && request.resource.data.criadoEm == request.time;
+
+        // Decisão travada 10: mensagens não são editadas nem apagadas
         allow update, delete: if false;
       }
     }

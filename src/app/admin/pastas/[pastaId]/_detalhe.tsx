@@ -255,6 +255,11 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 <p className="ff-default text-[16px]">{SERIE_LABELS[pasta.serie] ?? '-'}</p>
             </div>
 
+            {/* CHAT (RN05): tela própria, com o grupo e os canais privados */}
+            <div className="self-start">
+                <AppButton title="Abrir conversas" icon="chatbubbles" href={`/admin/pastas/${pasta.id}/conversas`} form="round" />
+            </div>
+
             {/* MENSAGENS — anunciadas pelo leitor de tela */}
             <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>
                 {sucesso && `Pronto: ${sucesso}`}
