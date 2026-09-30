@@ -15,6 +15,11 @@ import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/
 import { initializeTestEnvironment } from "@firebase/rules-unit-testing";
 
 export const PROJETO = "demo-conecta-tdah";
+
+// Portas dos emuladores de TESTE (firebase.test.json), diferentes das do
+// modo protótipo: os testes rodam mesmo com os emuladores de demonstração
+// abertos, sem misturar os dados
+const PORTAS = JSON.parse(readFileSync("firebase.test.json", "utf8")).emulators;
 export const HORA = 60 * 60 * 1000;
 
 const apps = [];
@@ -24,7 +29,7 @@ let testEnv;
 export async function prepararAmbiente() {
     testEnv = await initializeTestEnvironment({
         projectId: PROJETO,
-        firestore: { host: "127.0.0.1", port: 8080, rules: readFileSync("firestore.rules", "utf8") },
+        firestore: { host: "127.0.0.1", port: PORTAS.firestore.port, rules: readFileSync("firestore.rules", "utf8") },
     });
     return testEnv;
 }
@@ -39,11 +44,11 @@ export function novoApp() {
     const app = initializeApp({ projectId: PROJETO, apiKey: "chave-ficticia" }, `app-${randomUUID()}`);
     apps.push(app);
     const auth = getAuth(app);
-    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    connectAuthEmulator(auth, `http://127.0.0.1:${PORTAS.auth.port}`, { disableWarnings: true });
     const db = getFirestore(app);
-    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    connectFirestoreEmulator(db, "127.0.0.1", PORTAS.firestore.port);
     const fns = getFunctions(app, "southamerica-east1");
-    connectFunctionsEmulator(fns, "127.0.0.1", 5001);
+    connectFunctionsEmulator(fns, "127.0.0.1", PORTAS.functions.port);
     return { auth, db, chamar: (nome, dados) => httpsCallable(fns, nome)(dados).then((r) => r.data) };
 }
 

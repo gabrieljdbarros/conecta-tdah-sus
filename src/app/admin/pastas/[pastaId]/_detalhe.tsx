@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData, setFlashData } from "@/helpers/router";
 import { Participante, Pasta, SERIE_LABELS } from "@/types/pasta";
 import { ROLE_LABELS } from "@/types/user";
+import SecaoRelatorios from "./_relatorios";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -325,6 +326,9 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                     </ul>
                 )}
             </section>
+
+            {/* RELATÓRIOS (cada um vê só os tipos que pode ler) */}
+            <SecaoRelatorios pasta={pasta} />
 
             {/* CONVIDAR (só a dona) */}
             {ehDona && (
