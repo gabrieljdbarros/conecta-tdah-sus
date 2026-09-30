@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import CategoriaServices from "@/services/categoria";
 import { AppButton, AppLoader } from "@/themes/components";
@@ -22,7 +22,6 @@ export default function CategoriaList() {
     const [erro, setErro] = useState<string | null>(null);
     const [sucesso, setSucesso] = useState<string | null>(null);
     const [salvando, setSalvando] = useState<string | null>(null); // id em alteração, ou 'sugestoes'
-    const sucessoRef = useRef<HTMLParagraphElement>(null);
 
     const ehAdmin = user?.role === 'admin';
 
@@ -36,7 +35,7 @@ export default function CategoriaList() {
     const carregar = useCallback(async () => {
         const { success, categorias } = await CategoriaServices.listar();
         setCategorias(categorias);
-        if (!success) setErro('Não deu para carregar as categorias. Tente novamente mais tarde');
+        setErro(success ? null : 'Não deu para carregar as categorias. Toque em "Tentar de novo".');
         setCarregando(false);
     }, []);
 
@@ -46,7 +45,6 @@ export default function CategoriaList() {
         carregar();
     }, [carregandoSessao, ehAdmin, carregar]);
 
-    useEffect(() => { if (sucesso && !carregando) sucessoRef.current?.focus(); }, [sucesso, carregando]);
     // ======================================================================
     const adicionarSugeridas = async () => {
         setErro(null);
@@ -61,15 +59,20 @@ export default function CategoriaList() {
             setErro(message ?? 'Não foi possível adicionar as categorias');
     };
 
-    // Desativar pode ser desfeito (Reativar), então não pede confirmação
+    // Desativar pode ser desfeito (Reativar), então não pede confirmação.
+    // O botão não é desabilitado durante o salvamento (só ignora cliques):
+    // desabilitar tiraria o foco dele, e quem usa teclado perderia o lugar
     const alternarAtiva = async (categoria: Categoria) => {
+        if (salvando) return;
         setErro(null);
         setSucesso(null);
         setSalvando(categoria.id);
         const { success } = await CategoriaServices.definirAtiva(categoria.id, !categoria.ativa);
         setSalvando(null);
         if (success) {
-            setSucesso(`"${categoria.nome}" foi ${categoria.ativa ? 'desativada' : 'reativada'}`);
+            setSucesso(categoria.ativa
+                ? `"${categoria.nome}" foi desativada. Você pode reativar depois`
+                : `"${categoria.nome}" foi reativada`);
             await carregar();
         } else
             setErro('Não foi possível salvar. Tente novamente');
@@ -94,16 +97,19 @@ export default function CategoriaList() {
                 <AppButton title="Nova categoria" icon="plus" href="/admin/categorias/nova" form="round" />
             </div>
 
-            <p className="ff-default text-[16px] mb-3">
-                As categorias ajudam a organizar os relatórios (por exemplo, &quot;Sono&quot; ou &quot;Atenção&quot;).
-                Elas não mudam quem pode ler cada relatório. Categorias desativadas deixam de aparecer para
-                relatórios novos, mas continuam nos relatórios antigos.
-            </p>
+            <div className="ff-default text-[16px] mb-3 flex flex-col gap-1">
+                <p>As categorias ajudam a organizar os relatórios (por exemplo, &quot;Sono&quot;). Elas não mudam quem pode ler cada relatório.</p>
+                <p><strong>Desativar não apaga a categoria.</strong> Ela só deixa de aparecer em relatórios novos. Os relatórios antigos continuam com ela, e você pode reativar quando quiser.</p>
+            </div>
 
-            <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] mb-3 empty:hidden`}>
+            {/* Anunciado pelo leitor de tela (role="status"); o foco fica onde a pessoa está */}
+            <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] mb-3 empty:hidden`}>
                 {sucesso && `Pronto: ${sucesso}`}
             </p>
             {erro && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] mb-3`}>Erro: {erro}</p>}
+            {erro && categorias.length === 0 && (
+                <AppButton title="Tentar de novo" icon="refresh" onClick={() => { setCarregando(true); carregar(); }} form="round" />
+            )}
 
             {/* LISTA VAZIA: oferece as sugestões como ponto de partida */}
             {categorias.length === 0 && !erro && (
@@ -134,16 +140,21 @@ export default function CategoriaList() {
                                 <td className={CLASSE_TD}>
                                     {c.ativa ? 'Ativa' : <span className="text-gray-700">Desativada</span>}
                                 </td>
-                                <td className={`${CLASSE_TD} flex flex-wrap gap-2`}>
-                                    <Link href={`/admin/categorias/editar/${c.id}`} aria-label={`Editar ${c.nome}`}
-                                        className={`${CLASSE_ACAO} border-(--primary-color) text-(--primary-color)`}>
-                                        Editar
-                                    </Link>
-                                    <button type="button" onClick={() => alternarAtiva(c)} disabled={salvando === c.id}
-                                        aria-label={`${c.ativa ? 'Desativar' : 'Reativar'} ${c.nome}`}
-                                        className={`${CLASSE_ACAO} ${c.ativa ? 'border-[#B91C1C] text-[#B91C1C]' : 'border-[#166534] text-[#166534]'} disabled:opacity-50`}>
-                                        {salvando === c.id ? 'Salvando...' : c.ativa ? 'Desativar' : 'Reativar'}
-                                    </button>
+                                {/* O nome da categoria vai em texto oculto: o leitor de tela diz
+                                    "Editar Sono", e o nome acessível começa pelo texto visível */}
+                                <td className={CLASSE_TD}>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Link href={`/admin/categorias/editar/${c.id}`}
+                                            className={`${CLASSE_ACAO} border-(--primary-color) text-(--primary-color)`}>
+                                            Editar<span className="sr-only"> {c.nome}</span>
+                                        </Link>
+                                        {/* Cor neutra: desativar não é destrutivo (dá para reativar) */}
+                                        <button type="button" onClick={() => alternarAtiva(c)} aria-disabled={salvando === c.id}
+                                            className={`${CLASSE_ACAO} border-(--primary-color) text-(--primary-color) aria-disabled:opacity-50`}>
+                                            {salvando === c.id ? 'Salvando...' : c.ativa ? 'Desativar' : 'Reativar'}
+                                            <span className="sr-only"> {c.nome}</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

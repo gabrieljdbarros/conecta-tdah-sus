@@ -12,6 +12,18 @@ import { Categoria, MAX_NOME_CATEGORIA } from "@/types/categoria";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
+
+// Erro de validação ao tentar salvar: recebe o foco a cada tentativa, para
+// quem usa teclado ou leitor de tela ir direto ao problema.
+// TODO: remover quando o AppInput mostrar os próprios erros (branch de
+// acessibilidade dos componentes)
+function ErroAoSalvar({ mensagem, tentativas }: { mensagem?: string; tentativas: number }) {
+    const ref = useRef<HTMLParagraphElement>(null);
+    const mostrar = tentativas > 0 && !!mensagem;
+    useEffect(() => { if (mostrar) ref.current?.focus(); }, [tentativas, mostrar]);
+    if (!mostrar) return null;
+    return <p ref={ref} tabIndex={-1} className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {mensagem}</p>;
+}
 const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
 
 /**
@@ -24,7 +36,6 @@ export default function CategoriaForm({ categoriaId }: { categoriaId?: string })
     const [atual, setAtual] = useState<Categoria | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const erroRef = useRef<HTMLParagraphElement>(null);
 
     const editando = !!categoriaId;
     const ehAdmin = user?.role === 'admin';
@@ -45,8 +56,6 @@ export default function CategoriaForm({ categoriaId }: { categoriaId?: string })
             setCarregando(false);
         })();
     }, [carregandoSessao, ehAdmin, categoriaId]);
-
-    useEffect(() => { if (error) erroRef.current?.focus(); }, [error]);
 
     // O schema conhece as categorias já existentes para recusar repetidas
     const validationSchema = Yup.object({
@@ -84,7 +93,7 @@ export default function CategoriaForm({ categoriaId }: { categoriaId?: string })
     if (!ehAdmin || (editando && !atual))
         return (
             <div className="flex flex-col">
-                <p ref={erroRef} tabIndex={-1} role="alert" className="ff-default text-[16px] text-center mt-3">
+                <p role="alert" className={`${ehAdmin ? COR_ERRO : ''} ff-default text-[16px] text-center mt-3`}>
                     {ehAdmin ? `Erro: ${error}` : 'Só administradores gerenciam as categorias de acompanhamento.'}
                 </p>
                 <Link href="/admin/categorias" className={CLASSE_LINK_VOLTAR}>Voltar para as categorias</Link>
@@ -102,17 +111,16 @@ export default function CategoriaForm({ categoriaId }: { categoriaId?: string })
                     <p className="ff-default text-[16px] mb-3">
                         Use um nome curto e claro, que mãe, escola e médico entendam. Exemplo: &quot;Sono&quot;.
                     </p>
+                    {/* O nome da categoria é visto por todas as famílias, escolas e médicos */}
+                    <p className="ff-default text-[16px] mb-3">
+                        <strong>Não use nomes de pessoas nem dados de saúde</strong>: todos os usuários veem as categorias.
+                    </p>
 
                     <AppInput label="Nome da categoria:" placeholder="Ex.: Atenção e concentração" name="nome"
                         value={values.nome} onChange={handleChange} icon="pricetag" error={errors.nome} />
 
-                    {/* O AppInput só mostra o erro depois de sair do campo; ao tentar
-                        salvar, o erro aparece aqui. TODO: remover quando o AppInput
-                        for corrigido (branch de acessibilidade dos componentes) */}
-                    {submitCount > 0 && errors.nome && (
-                        <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {errors.nome}</p>
-                    )}
-                    {error && <p ref={erroRef} tabIndex={-1} role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
+                    <ErroAoSalvar mensagem={errors.nome} tentativas={submitCount} />
+                    {error && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
 
                     <AppButton title={isSubmitting ? 'Salvando...' : editando ? 'Salvar' : 'Criar categoria'}
                         onClick={() => handleSubmit()} disabled={isSubmitting} form="round" className="mt-4" />
