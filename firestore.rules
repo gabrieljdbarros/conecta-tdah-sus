@@ -9,9 +9,9 @@ rules_version = '2';
  * permitem, então qualquer checagem feita na tela é apenas UX.
  *
  * Coleções cobertas: `users` (cadastro/perfil), `pastas` (pasta do aluno,
- * RF03), `convites` (RN01, RN02) e `categorias` (RF14). Relatórios (RN06) e chat (RN05) serão
- * adicionados aqui quando forem implementados — até lá, o bloqueio geral no
- * fim do arquivo nega qualquer acesso a eles.
+ * RF03) com os relatórios (RN06), `convites` (RN01, RN02) e `categorias`
+ * (RF14). O chat (RN05) será adicionado aqui quando for implementado — até
+ * lá, o bloqueio geral no fim do arquivo nega qualquer acesso a ele.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -119,6 +119,37 @@ service cloud.firestore {
                        'ef7', 'ef8', 'ef9', 'em1', 'em2', 'em3'];
     }
 
+    // ---------------------------------------------------------------------
+    // RELATÓRIOS (decisão travada 9 / RN06) — funções de apoio
+    // ---------------------------------------------------------------------
+    function dadosDaPasta(pastaId) {
+      return get(/databases/$(database)/documents/pastas/$(pastaId)).data;
+    }
+
+    // Papel NA PASTA: a mãe é a DONA (não basta ter role 'mae'); escola e
+    // médico precisam ser membros e ter esse role no perfil. Qualquer outra
+    // pessoa (inclusive o admin e quem saiu da pasta) fica sem papel
+    function papelNaPasta(pasta) {
+      return (meuUid() == pasta.donoUid && meuUid() in pasta.membrosUids) ? 'mae'
+           : (meuUid() in pasta.membrosUids && papelDoUsuario(meuUid()) in ['escola', 'medico']) ? papelDoUsuario(meuUid())
+           : 'nenhum';
+    }
+
+    // Matriz de leitura: a escola vê só o pedagógico; laudo e relato da
+    // família ficam entre a mãe e o médico
+    function tiposQueLe(papel) {
+      return papel == 'escola' ? ['orientacao_medica', 'avaliacao_escolar']
+           : papel in ['mae', 'medico'] ? ['orientacao_medica', 'laudo', 'avaliacao_escolar', 'relato_familia']
+           : [];
+    }
+
+    function tiposQueEscreve(papel) {
+      return papel == 'mae' ? ['relato_familia']
+           : papel == 'medico' ? ['orientacao_medica', 'laudo']
+           : papel == 'escola' ? ['avaliacao_escolar']
+           : [];
+    }
+
     match /pastas/{pastaId} {
       // Só quem é membro da pasta lê. O admin NÃO lê: a pasta vai guardar
       // laudos e relatos de crianças, e o admin não participa do
@@ -161,6 +192,38 @@ service cloud.firestore {
       // TODO: exclusão da pasta a pedido da família (direito do titular na
       // LGPD) — definir fluxo, inclusive o que acontece com os relatórios
       allow delete: if false;
+
+      // -------------------------------------------------------------------
+      // RELATÓRIOS da pasta: `pastas/{pastaId}/relatorios/{id}`
+      // Quem lê é decidido SÓ pelo `tipo` (nunca pela categoria, que é
+      // editável pelo admin e só classifica o conteúdo).
+      // -------------------------------------------------------------------
+      match /relatorios/{relatorioId} {
+        // Consultas de lista precisam filtrar `tipo in [tipos que o papel lê]`
+        allow read: if estaLogado()
+                    && resource.data.tipo in tiposQueLe(papelNaPasta(dadosDaPasta(pastaId)));
+
+        // O autor é quem está logado, com o nome igual ao do perfil e o
+        // papel que tem na pasta; a categoria precisa existir e estar ativa
+        allow create: if estaLogado()
+                      && request.resource.data.keys().hasOnly(['tipo', 'categoriaId', 'texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
+                      && request.resource.data.keys().hasAll(['tipo', 'categoriaId', 'texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
+                      && request.resource.data.tipo in tiposQueEscreve(papelNaPasta(dadosDaPasta(pastaId)))
+                      && request.resource.data.autorPapel == papelNaPasta(dadosDaPasta(pastaId))
+                      && request.resource.data.autorUid == meuUid()
+                      && request.resource.data.autorNome == get(/databases/$(database)/documents/users/$(meuUid())).data.nome
+                      && request.resource.data.texto is string
+                      && request.resource.data.texto.trim().size() > 0
+                      && request.resource.data.texto.size() <= 5000
+                      && request.resource.data.criadoEm is int
+                      && request.resource.data.categoriaId is string
+                      && get(/databases/$(database)/documents/categorias/$(request.resource.data.categoriaId)).data.ativa == true;
+
+        // Registro imutável: ninguém edita nem apaga. Correção = novo
+        // relatório complementar. Relatórios de quem saiu da pasta ficam
+        // (o nome do autor está guardado no próprio relatório)
+        allow update, delete: if false;
+      }
     }
 
     // ---------------------------------------------------------------------
