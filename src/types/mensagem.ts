@@ -18,6 +18,10 @@ export const LIMITE_MENSAGENS = 100;
 export const CANAL_GRUPO = 'grupo';
 export const canalPrivado = (medicoUid: string) => `privado-${medicoUid}`;
 
+/**
+ * No Firestore, `criadoEm` é um Timestamp gravado pelo servidor
+ * (serverTimestamp). Na aplicação ele vira milissegundos
+ */
 export interface MensagemDocument {
     texto: string;
     autorUid: string;

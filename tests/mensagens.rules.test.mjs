@@ -15,7 +15,8 @@ import {
     assertFails,
 } from "@firebase/rules-unit-testing";
 import {
-    collection, deleteDoc, doc, getDoc, getDocs, limitToLast, orderBy, query, setDoc, updateDoc,
+    collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, limitToLast, orderBy, query, serverTimestamp,
+    setDoc, Timestamp, updateDoc,
 } from "firebase/firestore";
 
 let testEnv;
@@ -37,10 +38,13 @@ const PASTA = {
     membrosUids: ["mae1", "escola1", "medico1", "medico2"], participantes: {}, criadoEm: 1,
 };
 
+// Mensagem nova, como o site envia: data do servidor (serverTimestamp)
 const mensagem = (autor, papel, extra = {}) => ({
     texto: "Mensagem fictícia.", autorUid: autor, autorNome: USUARIOS[autor].nome,
-    autorPapel: papel, criadoEm: 1700000000000, ...extra,
+    autorPapel: papel, criadoEm: serverTimestamp(), ...extra,
 });
+// Mensagem já gravada (dados de preparação): data fixa
+const gravada = (autor, papel) => ({ ...mensagem(autor, papel), criadoEm: Timestamp.fromMillis(1700000000000) });
 
 const como = (uid) => testEnv.authenticatedContext(uid).firestore();
 const semLogin = () => testEnv.unauthenticatedContext().firestore();
@@ -66,12 +70,12 @@ beforeEach(async () => {
         for (const [uid, dados] of Object.entries(USUARIOS))
             await setDoc(doc(db, `users/${uid}`), { email: `${uid}@exemplo.com`, dadosPerfil: {}, criadoEm: 1, ...dados });
         await setDoc(doc(db, "pastas/pasta1"), PASTA);
-        await setDoc(doc(db, caminho("grupo")), mensagem("escola1", "escola"));
-        await setDoc(doc(db, caminho("privado-medico1")), mensagem("medico1", "medico"));
-        await setDoc(doc(db, caminho("privado-exMedico")), mensagem("exMedico", "medico"));
+        await setDoc(doc(db, caminho("grupo")), gravada("escola1", "escola"));
+        await setDoc(doc(db, caminho("privado-medico1")), gravada("medico1", "medico"));
+        await setDoc(doc(db, caminho("privado-exMedico")), gravada("exMedico", "medico"));
         // Estado anômalo: conta de mãe como membro que NÃO é a dona
         await setDoc(doc(db, "pastas/pasta2"), { ...PASTA, membrosUids: ["mae1", "mae2"] });
-        await setDoc(doc(db, caminho("grupo", "m1", "pasta2")), mensagem("mae1", "mae"));
+        await setDoc(doc(db, caminho("grupo", "m1", "pasta2")), gravada("mae1", "mae"));
     });
 });
 
@@ -139,8 +143,16 @@ describe("canal privado mãe–médico", () => {
         await assertFails(ler("exMedico", "privado-exMedico"));
     });
 
-    test("NÃO: canal com nome inventado", async () => {
+    test("NÃO: canal com nome inventado ou malformado", async () => {
         await assertFails(ler("mae1", "secreto"));
+        await assertFails(ler("mae1", "privado-medico1-extra"));
+        await assertFails(ler("mae1", "privado-"));
+    });
+
+    test("NÃO: buscar mensagens de todas as pastas de uma vez (collectionGroup)", async () => {
+        await assertFails(getDocs(collectionGroup(como("escola1"), "mensagens")));
+        await assertFails(getDocs(collectionGroup(como("medico1"), "mensagens")));
+        await assertFails(getDocs(collectionGroup(como("mae1"), "mensagens")));
     });
 });
 
@@ -207,8 +219,10 @@ describe("enviar mensagens", () => {
         await assertFails(enviar("escola1", "grupo", mensagem("escola1", "escola", { anexo: "arquivo.pdf" })));
     });
 
-    test("NÃO: criadoEm que não é número inteiro", async () => {
-        await assertFails(enviar("escola1", "grupo", mensagem("escola1", "escola", { criadoEm: "agora" })));
+    test("NÃO: data escolhida pelo celular (passado ou futuro) em vez da do servidor", async () => {
+        await assertFails(enviar("escola1", "grupo", mensagem("escola1", "escola", { criadoEm: Timestamp.fromMillis(1) })));
+        await assertFails(enviar("escola1", "grupo", mensagem("escola1", "escola", { criadoEm: Timestamp.fromMillis(9999999999999) })));
+        await assertFails(enviar("escola1", "grupo", mensagem("escola1", "escola", { criadoEm: 1700000000000 })));
     });
 });
 

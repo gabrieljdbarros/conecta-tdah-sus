@@ -278,7 +278,9 @@ service cloud.firestore {
                       && request.resource.data.texto is string
                       && request.resource.data.texto.trim().size() > 0
                       && request.resource.data.texto.size() <= 2000
-                      && request.resource.data.criadoEm is int;
+                      // Data do SERVIDOR (serverTimestamp): o relógio do
+                      // celular não define a ordem de uma conversa imutável
+                      && request.resource.data.criadoEm == request.time;
 
         // Decisão travada 10: mensagens não são editadas nem apagadas
         allow update, delete: if false;

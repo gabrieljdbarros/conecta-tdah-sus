@@ -1,4 +1,4 @@
-import { addDoc, collection, limitToLast, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, limitToLast, onSnapshot, orderBy, query, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { AppUser } from "@/types/user";
 import { PapelNaPasta } from "@/types/relatorio";
@@ -26,7 +26,13 @@ const MensagemServices = {
         const q = query(colecao(pastaId, canal), orderBy("criadoEm"), limitToLast(LIMITE_MENSAGENS));
         return onSnapshot(
             q,
-            (snapshot) => aoMudar(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Mensagem)),
+            (snapshot) => aoMudar(snapshot.docs.map((d) => {
+                // "estimate": a mensagem que acabou de ser enviada aparece na
+                // hora, com a hora local, até o servidor confirmar a oficial
+                const dados = d.data({ serverTimestamps: 'estimate' });
+                const criadoEm = dados.criadoEm instanceof Timestamp ? dados.criadoEm.toMillis() : Date.now();
+                return { id: d.id, ...dados, criadoEm } as Mensagem;
+            })),
             () => aoFalhar()
         );
     },
@@ -45,7 +51,7 @@ const MensagemServices = {
                 autorUid: autor.uid,
                 autorNome: autor.nome,
                 autorPapel: papel,
-                criadoEm: Date.now(),
+                criadoEm: serverTimestamp(), // data do servidor (as regras exigem)
             });
             return { success: true };
         } catch {
