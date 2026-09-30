@@ -15,7 +15,7 @@ import {
     assertFails,
 } from "@firebase/rules-unit-testing";
 import {
-    collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where,
+    collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where,
 } from "firebase/firestore";
 
 let testEnv;
@@ -148,6 +148,12 @@ describe("listar relatórios", () => {
 
     test("NÃO: escola lista sem filtro", async () => {
         await assertFails(listar("escola1"));
+    });
+
+    test("NÃO: buscar relatórios de todas as pastas de uma vez (collectionGroup)", async () => {
+        const q = query(collectionGroup(como("escola1"), "relatorios"), where("tipo", "in", ["orientacao_medica", "avaliacao_escolar"]));
+        await assertFails(getDocs(q));
+        await assertFails(getDocs(query(collectionGroup(como("medico1"), "relatorios"), where("tipo", "==", "laudo"))));
     });
 
     test("mãe e médico listam todos os tipos", async () => {
