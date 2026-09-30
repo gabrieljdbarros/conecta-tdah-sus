@@ -22,7 +22,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto (no modo emulador) |
 | Remover participante e sair da pasta | ✅ Pronto (no modo emulador) |
 | Categorias de acompanhamento gerenciadas pelo admin (RF14) | ✅ Pronto |
-| Relatórios dentro da pasta do aluno | ⏳ Planejado |
+| Relatórios dentro da pasta do aluno, com acesso por tipo (RN06) | ✅ Pronto |
 | Chat em grupo por aluno (RN05) | ⏳ Planejado |
 | Leitura em voz alta (acessibilidade) | ⏳ Planejado |
 | App mobile (Android/iOS) | ⏳ Depois do painel web |
@@ -113,6 +113,8 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
 | `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
 | `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
 | `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
+
+> Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
 
