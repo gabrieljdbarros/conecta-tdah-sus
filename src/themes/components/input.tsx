@@ -53,7 +53,7 @@ export default function AppInput ({type="text", name, onChange, placeholder, val
                         <i className={showPassword ? "ion-eye" : "ion-eye-disabled"} aria-hidden="true" />
                     </button>}
             </div>
-            {exibirErro && <p id={idErro} className="text-[#B91C1C] ff-default text-[16px] ml-3">{error}</p>}
+            {exibirErro && <p id={idErro} aria-live="polite" className="text-[#B91C1C] ff-default text-[16px] ml-3">{error}</p>}
         </div>
     )
 }

@@ -29,10 +29,12 @@ export default function AppMenu() {
             </div>
 
             {/* OPÇÕES */}
-            <nav aria-label="Menu principal" className="pl-[30px] mt-[30px] flex-1">
+            <nav aria-label="Menu principal" className="pl-1 md:pl-[30px] mt-[30px] flex-1">
                 <AppMenuItem title="Dashboard" icon="grid" url="/admin/dashboard"/>
+                {/* No celular o cabeçalho do menu some: "Editar perfil" vira um item */}
+                {user && <div className="md:hidden"><AppMenuItem title="Editar perfil" icon="person" url={`/admin/usuarios/editar/${user.uid}`}/></div>}
                 {/* Só o admin gerencia usuários e categorias (as regras também bloqueiam) */}
-                {user?.role === 'admin' && <AppMenuItem title="Usuários" icon="ios-people" url="/admin/usuarios"/>}
+                {user?.role === 'admin' && <AppMenuItem title="Usuários" icon="ios-people" url="/admin/usuarios" exato/>}
                 {user?.role === 'admin' && <AppMenuItem title="Categorias" icon="pricetags" url="/admin/categorias"/>}
                 {/* Admin não acessa pastas (LGPD) — as regras também bloqueiam */}
                 {user && user.role !== 'admin' && <AppMenuItem title="Pastas" icon="folder" url="/admin/pastas"/>}
@@ -40,7 +42,7 @@ export default function AppMenu() {
 
             {/* LOGOUT — botão de verdade; no celular, o nome fica para o leitor de tela */}
             <button type="button" onClick={handleLogout}
-                className="mb-[50px] min-h-[48px] flex items-center justify-center gap-1 text-[18px] text-[#B91C1C] font-bold cursor-pointer">
+                className="mb-[50px] w-full min-h-[48px] flex items-center justify-center gap-1 text-[18px] text-[#B91C1C] font-bold cursor-pointer">
                 <i className="ion-log-out" aria-hidden="true"/>
                 <span className="sr-only md:not-sr-only">Sair</span>
             </button>

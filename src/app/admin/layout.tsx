@@ -24,7 +24,7 @@ export default function AdminLayout({
 
 
         {/* MAIN */}
-        <div className="flex flex-1 ml-[30px]">
+        <div className="flex flex-1 min-w-0 ml-2 md:ml-[30px]">
             {children}
         </div>
     </div>

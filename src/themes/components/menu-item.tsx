@@ -8,6 +8,8 @@ export interface AppMenuItemProps {
     title: string,
     icon: Ionicons
     url: string
+    /** Só marca como aberto na URL exata (ex.: "Usuários" não fica ativo ao editar o próprio perfil) */
+    exato?: boolean
 }
 
 /**
@@ -15,10 +17,10 @@ export interface AppMenuItemProps {
  * disponível para o leitor de tela (sr-only). A página aberta é marcada
  * com aria-current
  */
-export default function AppMenuItem ({title, icon, url}: AppMenuItemProps) {
+export default function AppMenuItem ({title, icon, url, exato = false}: AppMenuItemProps) {
 
     const path = usePathname();
-    const ativado = path.startsWith(url);
+    const ativado = exato ? path === url : path.startsWith(url);
 
     return (
         <Link href={url} aria-current={ativado ? 'page' : undefined}

@@ -35,7 +35,7 @@ export default function AppSelect ({children, name, onChange, value, label, erro
                     {children}
                 </select>
             </div>
-            {exibirErro && <p id={idErro} className="text-[#B91C1C] ff-default text-[16px] ml-3">{error}</p>}
+            {exibirErro && <p id={idErro} aria-live="polite" className="text-[#B91C1C] ff-default text-[16px] ml-3">{error}</p>}
         </div>
     )
 }

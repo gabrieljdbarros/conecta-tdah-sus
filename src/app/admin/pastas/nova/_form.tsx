@@ -123,7 +123,7 @@ export default function NovaPastaForm() {
                     {error && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
 
                     {/* Botão só bloqueia durante o envio: com erro, o clique mostra o resumo acima */}
-                    <AppButton title={isSubmitting ? 'Criando...' : 'Criar pasta'} onClick={() => handleSubmit()} disabled={isSubmitting} form="round" className="mt-4" />
+                    <AppButton title={isSubmitting ? 'Criando...' : 'Criar pasta'} submit disabled={isSubmitting} form="round" className="mt-4" />
                     <Link href="/admin/pastas" className={CLASSE_LINK_VOLTAR}>Voltar sem criar</Link>
                 </form>
             )}

@@ -54,6 +54,7 @@ export default function LoginForm() {
     // --------
     const closeModal = () => {
         setEmail('');
+        setMessageResetPassword(null); // não reaparece a mensagem antiga ao reabrir
         setShowResetPasswordModal(false);
     }
     // ======================================================
@@ -67,7 +68,7 @@ export default function LoginForm() {
                 })}
                 onSubmit={onSubmitLogin}
                 >
-                {({handleChange, handleSubmit, isSubmitting, isValid, errors}) => (
+                {({handleChange, handleSubmit, isSubmitting, errors, submitCount}) => (
                     <form onSubmit={handleSubmit}>
                         <div className="w-full max-w-[336px] flex flex-col">
 
@@ -76,8 +77,8 @@ export default function LoginForm() {
                             <p role="status" className="ff-default text-[16px] text-center mb-2 empty:hidden">
                                 {convite && 'Entre para aceitar o convite.'}
                             </p>
-                            <AppInput label="E-mail:" placeholder="Digite seu e-mail" name="email" onChange={handleChange} icon="ios-email" autoComplete="email" error={errors.email} />
-                            <AppInput label="Senha:" placeholder="Digite sua senha" name="password" type="password" onChange={handleChange} icon="locked" openPassword autoComplete="current-password" error={errors.password}/>
+                            <AppInput label="E-mail:" placeholder="Digite seu e-mail" name="email" onChange={handleChange} icon="ios-email" autoComplete="email" error={errors.email} mostrarErro={submitCount > 0} />
+                            <AppInput label="Senha:" placeholder="Digite sua senha" name="password" type="password" onChange={handleChange} icon="locked" openPassword autoComplete="current-password" error={errors.password} mostrarErro={submitCount > 0} />
                             
                             <button type="button" className="self-start min-h-[48px] cursor-pointer text-[16px] ff-default text-[#4703D0] underline" onClick={() => setShowResetPasswordModal(true)}>Esqueci minha senha</button>
 
@@ -85,7 +86,7 @@ export default function LoginForm() {
 
 
                             {/* Botão de envio de verdade: o Enter no campo também entra */}
-                            <AppButton title="Entrar" submit disabled={isSubmitting || !isValid} form="round" className="mt-2" />
+                            <AppButton title={isSubmitting ? "Entrando..." : "Entrar"} submit disabled={isSubmitting} form="round" className="mt-2" />
 
                             <Link href={convite ? `/cadastro?convite=${convite}` : "/cadastro"} className="min-h-[48px] flex items-center justify-center">
                                 <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer"> Não tem conta? Cadastre-se</p>
@@ -99,7 +100,7 @@ export default function LoginForm() {
             {showResetPasswordModal && <AppModal title="Esqueci a senha" onClose={() => closeModal()}>
                 <div className="flex-col flex items-stretch">
 
-                    <Image className="self-center my-10" src="/assets/img/icons/reset-password.png" alt="ícone resetar senha" width={120} height={120} />
+                    <Image className="self-center my-4" src="/assets/img/icons/reset-password.png" alt="" width={120} height={120} />
 
                     <p className="text-center ff-default text-[16px]">Digite seu e-mail e toque em &quot;Enviar&quot; para receber um e-mail para criar uma nova senha.</p>
 

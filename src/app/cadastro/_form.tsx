@@ -126,7 +126,7 @@ export default function CadastroForm() {
             validationSchema={validationSchema}
             onSubmit={handleOnSubmit}
         >
-            {({ handleChange, handleSubmit, values, isSubmitting, isValid, errors }) => (
+            {({ handleChange, handleSubmit, values, isSubmitting, errors, submitCount }) => (
                 <form onSubmit={handleSubmit} className="w-[336px] flex flex-col">
                     <h1 className="ff-default text-[30px] text-center mb-3">Criar conta</h1>
                     {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
@@ -134,7 +134,7 @@ export default function CadastroForm() {
                         {convite && 'Crie sua conta para aceitar o convite. Escolha o seu perfil: escola ou médico.'}
                     </p>
 
-                    <AppSelect label="Eu sou:" name="role" onChange={handleChange} value={values.role} error={errors.role}>
+                    <AppSelect label="Eu sou:" name="role" onChange={handleChange} value={values.role} error={errors.role} mostrarErro={submitCount > 0}>
                         <option value="">Selecione...</option>
                         {/* Convite só serve para escola ou médico (a Function recusa mãe) */}
                         {!convite && <option value="mae">Mãe / Responsável</option>}
@@ -142,33 +142,33 @@ export default function CadastroForm() {
                         <option value="medico">Médico (SUS)</option>
                     </AppSelect>
 
-                    <AppInput label="Nome:" placeholder="Digite seu nome" name="nome" onChange={handleChange} icon="person" error={errors.nome} />
-                    <AppInput label="Email:" placeholder="Digite seu email" name="email" onChange={handleChange} icon="ios-email" error={errors.email} />
-                    <AppInput label="Senha:" placeholder="Digite sua senha" name="password" type="password" onChange={handleChange} icon="locked" openPassword error={errors.password} />
-                    <AppInput label="Confirmar senha:" placeholder="Repita sua senha" name="confirmarSenha" type="password" onChange={handleChange} icon="locked" openPassword error={errors.confirmarSenha} />
+                    <AppInput label="Nome:" placeholder="Digite seu nome" name="nome" onChange={handleChange} icon="person" error={errors.nome} mostrarErro={submitCount > 0} />
+                    <AppInput label="Email:" placeholder="Digite seu email" name="email" onChange={handleChange} icon="ios-email" error={errors.email} mostrarErro={submitCount > 0} />
+                    <AppInput label="Senha:" placeholder="Digite sua senha" name="password" type="password" onChange={handleChange} icon="locked" openPassword error={errors.password} mostrarErro={submitCount > 0} />
+                    <AppInput label="Confirmar senha:" placeholder="Repita sua senha" name="confirmarSenha" type="password" onChange={handleChange} icon="locked" openPassword error={errors.confirmarSenha} mostrarErro={submitCount > 0} />
 
                     {/* CAMPOS ESPECÍFICOS — MÃE/RESPONSÁVEL */}
                     {values.role === 'mae' && <>
-                        <AppInput label="Grau de parentesco:" placeholder="Ex: mãe, pai, avó..." name="grauParentesco" onChange={handleChange} icon="ios-people" error={errors.grauParentesco} />
+                        <AppInput label="Grau de parentesco:" placeholder="Ex: mãe, pai, avó..." name="grauParentesco" onChange={handleChange} icon="ios-people" error={errors.grauParentesco} mostrarErro={submitCount > 0} />
                     </>}
 
                     {/* CAMPOS ESPECÍFICOS — ESCOLA */}
                     {values.role === 'escola' && <>
-                        <AppInput label="Nome da escola:" placeholder="Nome da instituição" name="nomeEscola" onChange={handleChange} icon="home" error={errors.nomeEscola} />
-                        <AppInput label="Cargo:" placeholder="Ex: professor(a), coordenador(a)..." name="cargo" onChange={handleChange} icon="briefcase" error={errors.cargo} />
-                        <AppInput label="Disciplina (se for professor):" placeholder="Deixe em branco se não leciona" name="disciplina" onChange={handleChange} icon="ios-book" error={errors.disciplina} />
+                        <AppInput label="Nome da escola:" placeholder="Nome da instituição" name="nomeEscola" onChange={handleChange} icon="home" error={errors.nomeEscola} mostrarErro={submitCount > 0} />
+                        <AppInput label="Cargo:" placeholder="Ex: professor(a), coordenador(a)..." name="cargo" onChange={handleChange} icon="briefcase" error={errors.cargo} mostrarErro={submitCount > 0} />
+                        <AppInput label="Disciplina (se for professor):" placeholder="Deixe em branco se não leciona" name="disciplina" onChange={handleChange} icon="ios-book" error={errors.disciplina} mostrarErro={submitCount > 0} />
                     </>}
 
                     {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}
                     {values.role === 'medico' && <>
-                        <AppInput label="CRM (registro do médico):" placeholder="Número do CRM" name="crm" onChange={handleChange} icon="clipboard" error={errors.crm} />
-                        <AppInput label="Especialidade:" placeholder="Ex: psiquiatria infantil" name="especialidade" onChange={handleChange} icon="medkit" error={errors.especialidade} />
-                        <AppInput label="Unidade SUS (posto ou hospital):" placeholder="Nome da unidade de saúde" name="unidadeSUS" onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
+                        <AppInput label="CRM (registro do médico):" placeholder="Número do CRM" name="crm" onChange={handleChange} icon="clipboard" error={errors.crm} mostrarErro={submitCount > 0} />
+                        <AppInput label="Especialidade:" placeholder="Ex: psiquiatria infantil" name="especialidade" onChange={handleChange} icon="medkit" error={errors.especialidade} mostrarErro={submitCount > 0} />
+                        <AppInput label="Unidade SUS (posto ou hospital):" placeholder="Nome da unidade de saúde" name="unidadeSUS" onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} mostrarErro={submitCount > 0} />
                     </>}
 
                     {error && <p role="alert" className="text-[#B91C1C] ff-default text-[16px] text-center mt-3">Erro: {error}</p>}
 
-                    <AppButton title="Criar conta" onClick={() => handleSubmit()} disabled={isSubmitting || !isValid} form="round" className="mt-4" />
+                    <AppButton title={isSubmitting ? "Criando..." : "Criar conta"} submit disabled={isSubmitting} form="round" className="mt-4" />
 
                     <Link href={convite ? `/?convite=${convite}` : "/"} className="min-h-[48px] mt-2 flex items-center justify-center">
                         <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer">Já tenho conta — fazer login</p>

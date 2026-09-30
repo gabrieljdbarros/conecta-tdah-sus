@@ -121,8 +121,7 @@ export default function CategoriaForm({ categoriaId }: { categoriaId?: string })
                     <ErroAoSalvar mensagem={errors.nome} tentativas={submitCount} />
                     {error && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
 
-                    <AppButton title={isSubmitting ? 'Salvando...' : editando ? 'Salvar' : 'Criar categoria'}
-                        onClick={() => handleSubmit()} disabled={isSubmitting} form="round" className="mt-4" />
+                    <AppButton title={isSubmitting ? 'Salvando...' : editando ? 'Salvar' : 'Criar categoria'} submit disabled={isSubmitting} form="round" className="mt-4" />
                     <Link href="/admin/categorias" className={CLASSE_LINK_VOLTAR}>Voltar sem salvar</Link>
                 </form>
             )}

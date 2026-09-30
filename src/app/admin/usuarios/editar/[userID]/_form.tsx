@@ -230,7 +230,7 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
                         </p>
 
                         {/* Botão só bloqueia durante o envio: com erro, o clique mostra o resumo acima */}
-                        <AppButton title={isSubmitting ? 'Salvando...' : 'Salvar alterações'} onClick={() => handleSubmit()} disabled={isSubmitting} form="round" className="mt-2" />
+                        <AppButton title={isSubmitting ? 'Salvando...' : 'Salvar alterações'} submit disabled={isSubmitting} form="round" className="mt-2" />
                     </form>
                 );
             }}

@@ -209,8 +209,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                     <ResumoErros erros={errors} tentativas={submitCount} />
                     {error && <p ref={erroEnvioRef} tabIndex={-1} role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center`}>Erro: {error}</p>}
 
-                    <AppButton title={isSubmitting ? 'Enviando...' : 'Enviar relatório'} icon="paper-airplane"
-                        onClick={() => handleSubmit()} disabled={isSubmitting || categorias.length === 0} form="round" />
+                    <AppButton title={isSubmitting ? 'Enviando...' : 'Enviar relatório'} icon="paper-airplane" submit disabled={isSubmitting || categorias.length === 0} form="round" />
                     <Link href={`/admin/pastas/${pastaId}`} className={CLASSE_LINK_VOLTAR}>Voltar sem enviar</Link>
                 </form>
             )}
