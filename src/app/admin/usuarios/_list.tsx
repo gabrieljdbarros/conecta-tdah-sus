@@ -57,7 +57,7 @@ export default function UserList() {
                         ))}
 
                         {users.length === 0 && (
-                            <tr><td colSpan={4} className="py-4 text-center text-sm text-[grey]">Nenhum usuário cadastrado ainda</td></tr>
+                            <tr><td colSpan={4} className="py-4 text-center text-[16px] text-gray-700">Nenhum usuário cadastrado ainda</td></tr>
                         )}
                     </tbody>
                 </table>

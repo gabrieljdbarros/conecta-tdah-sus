@@ -11,12 +11,12 @@ import Cookies from "js-cookie";
  *          const response = getFlashData();
  */
 
-//SALVA FLASH DATA
-export function setFlashData(data:any) {
+//SALVA FLASH DATA (só mensagens curtas, sem dados sensíveis: fica num cookie)
+export function setFlashData(data: string) {
     Cookies.set(`flash`, JSON.stringify(data));
 }
 //RECUPERA FLASH DATA
-export function getFlashData() {
+export function getFlashData(): string | null {
     const data = Cookies.get(`flash`);
     if (data) {
         Cookies.remove(`flash`);

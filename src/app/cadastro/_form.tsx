@@ -166,7 +166,7 @@ export default function CadastroForm() {
                         <AppInput label="Unidade SUS (posto ou hospital):" placeholder="Nome da unidade de saúde" name="unidadeSUS" onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
                     </>}
 
-                    {error && <p className="text-[tomato] ff-default text-[15px] text-center mt-3">{error}</p>}
+                    {error && <p role="alert" className="text-[#B91C1C] ff-default text-[16px] text-center mt-3">Erro: {error}</p>}
 
                     <AppButton title="Criar conta" onClick={() => handleSubmit()} disabled={isSubmitting || !isValid} form="round" className="mt-4" />
 

@@ -180,10 +180,9 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
             onSubmit={handleOnSubmit}
         >
             {({ handleChange, handleSubmit, values, isSubmitting, errors, submitCount }) => {
-                // Como o AppInput só mostra o erro depois que o campo perde o
-                // foco, um resumo diz quais campos faltam quando a pessoa tenta
-                // salvar. TODO: remover quando o AppInput for corrigido
-                // (branch de acessibilidade dos componentes)
+                // Ao tentar salvar, o erro aparece junto de cada campo e um
+                // resumo diz quais campos faltam (padrão recomendado de
+                // formulário acessível)
                 const camposComErro = (Object.keys(errors) as (keyof FormValues)[]).map(campo => ROTULOS[campo]);
 
                 return (
@@ -197,25 +196,25 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
                             <dd className="ff-default text-[16px]">{ROLE_LABELS[perfil.role]}</dd>
                         </dl>
 
-                        <AppInput label={`${ROTULOS.nome}:`} placeholder="Digite seu nome" name="nome" value={values.nome} onChange={handleChange} icon="person" error={errors.nome} />
+                        <AppInput label={`${ROTULOS.nome}:`} placeholder="Digite seu nome" name="nome" value={values.nome} onChange={handleChange} icon="person" error={errors.nome} mostrarErro={submitCount > 0} />
 
                         {/* CAMPOS ESPECÍFICOS — MÃE/RESPONSÁVEL */}
                         {perfil.role === 'mae' && <>
-                            <AppInput label={`${ROTULOS.grauParentesco}:`} placeholder="Ex: mãe, pai, avó..." name="grauParentesco" value={values.grauParentesco} onChange={handleChange} icon="ios-people" error={errors.grauParentesco} />
+                            <AppInput label={`${ROTULOS.grauParentesco}:`} placeholder="Ex: mãe, pai, avó..." name="grauParentesco" value={values.grauParentesco} onChange={handleChange} icon="ios-people" error={errors.grauParentesco} mostrarErro={submitCount > 0} />
                         </>}
 
                         {/* CAMPOS ESPECÍFICOS — ESCOLA */}
                         {perfil.role === 'escola' && <>
-                            <AppInput label={`${ROTULOS.nomeEscola}:`} placeholder="Nome da instituição" name="nomeEscola" value={values.nomeEscola} onChange={handleChange} icon="home" error={errors.nomeEscola} />
-                            <AppInput label={`${ROTULOS.cargo}:`} placeholder="Ex: professor(a), coordenador(a)..." name="cargo" value={values.cargo} onChange={handleChange} icon="briefcase" error={errors.cargo} />
-                            <AppInput label={`${ROTULOS.disciplina}:`} placeholder="Deixe em branco se não leciona" name="disciplina" value={values.disciplina} onChange={handleChange} icon="ios-book" error={errors.disciplina} />
+                            <AppInput label={`${ROTULOS.nomeEscola}:`} placeholder="Nome da instituição" name="nomeEscola" value={values.nomeEscola} onChange={handleChange} icon="home" error={errors.nomeEscola} mostrarErro={submitCount > 0} />
+                            <AppInput label={`${ROTULOS.cargo}:`} placeholder="Ex: professor(a), coordenador(a)..." name="cargo" value={values.cargo} onChange={handleChange} icon="briefcase" error={errors.cargo} mostrarErro={submitCount > 0} />
+                            <AppInput label={`${ROTULOS.disciplina}:`} placeholder="Deixe em branco se não leciona" name="disciplina" value={values.disciplina} onChange={handleChange} icon="ios-book" error={errors.disciplina} mostrarErro={submitCount > 0} />
                         </>}
 
                         {/* CAMPOS ESPECÍFICOS — MÉDICO (SUS) */}
                         {perfil.role === 'medico' && <>
-                            <AppInput label={`${ROTULOS.crm}:`} placeholder="Número do CRM" name="crm" value={values.crm} onChange={handleChange} icon="clipboard" error={errors.crm} />
-                            <AppInput label={`${ROTULOS.especialidade}:`} placeholder="Ex: psiquiatria infantil" name="especialidade" value={values.especialidade} onChange={handleChange} icon="medkit" error={errors.especialidade} />
-                            <AppInput label={`${ROTULOS.unidadeSUS}:`} placeholder="Nome da unidade de saúde" name="unidadeSUS" value={values.unidadeSUS} onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} />
+                            <AppInput label={`${ROTULOS.crm}:`} placeholder="Número do CRM" name="crm" value={values.crm} onChange={handleChange} icon="clipboard" error={errors.crm} mostrarErro={submitCount > 0} />
+                            <AppInput label={`${ROTULOS.especialidade}:`} placeholder="Ex: psiquiatria infantil" name="especialidade" value={values.especialidade} onChange={handleChange} icon="medkit" error={errors.especialidade} mostrarErro={submitCount > 0} />
+                            <AppInput label={`${ROTULOS.unidadeSUS}:`} placeholder="Nome da unidade de saúde" name="unidadeSUS" value={values.unidadeSUS} onChange={handleChange} icon="ios-home" error={errors.unidadeSUS} mostrarErro={submitCount > 0} />
                         </>}
 
                         {/* MENSAGENS — logo acima do botão, onde a pessoa está olhando.
