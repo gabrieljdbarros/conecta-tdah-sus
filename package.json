@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/*.test.mjs\"",
     "test:functions": "npm --prefix functions run build && firebase emulators:exec --config firebase.test.json --only auth,firestore,functions --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/functions/*.test.mjs\"",
-    "emulators": "node scripts/emulators.mjs"
+    "emulators": "node scripts/emulators.mjs",
+    "preview": "next build && next start"
   },
   "dependencies": {
     "firebase": "^12.19.0",

@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }],
       },
+      {
+        // O navegador sempre confere se há versão nova do service worker
+        source: '/sw.js',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
     ]
   },
 };
