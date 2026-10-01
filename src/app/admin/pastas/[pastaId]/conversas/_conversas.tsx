@@ -4,7 +4,8 @@ import Link from "next/link";
 import PastaServices from "@/services/pasta";
 import MensagemServices from "@/services/mensagem";
 import { papelNaPasta } from "@/services/relatorio";
-import { AppLoader } from "@/themes/components";
+import { AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
+import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
 import { PapelNaPasta } from "@/types/relatorio";
@@ -69,6 +70,8 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     const textoRef = useRef<HTMLTextAreaElement>(null);
     const abasRef = useRef<(HTMLButtonElement | null)[]>([]);
     const rolarParaOFim = useRef(true); // na abertura e depois de enviar
+    // Mensagens são conteúdo: só voz que roda no aparelho (decisão travada 11)
+    const vozLocal = useVozDisponivel(true);
 
     // ======================================================================
     useEffect(() => {
@@ -106,7 +109,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         const pertoDoFim = lista.scrollHeight - lista.scrollTop - lista.clientHeight < 120;
         if (rolarParaOFim.current || pertoDoFim) lista.scrollTop = lista.scrollHeight;
         rolarParaOFim.current = false;
-    }, [mensagens]);
+    }, [mensagens, vozLocal]);
     // ======================================================================
     // Só o botão envia. O Enter do campo quebra a linha: no celular não há
     // Shift, e uma mensagem enviada pela metade não pode ser apagada
@@ -160,6 +163,15 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     return (
         <div className="flex flex-col gap-4 max-w-[720px]">
             <h2 className="font-bold text-[20px]">Conversas sobre {pasta.nomeAluno}</h2>
+            <AppOuvir rotulo="Ouvir instruções" className="self-start"
+                texto={`Aqui você conversa sobre o aluno. No alto, toque no nome da conversa para escolher com quem falar. A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
+            {vozLocal === false && (
+                <p role="status" className="ff-default text-[16px] text-gray-700">
+                    {vozSuportada()
+                        ? 'Este aparelho não tem uma voz em português que funcione sem internet. Por segurança, este conteúdo não é lido em voz alta aqui: seus dados não saem do aparelho. Para ouvir, instale a voz em português nas configurações do celular.'
+                        : 'Este navegador não consegue ler em voz alta.'}
+                </p>
+            )}
 
             {papel === 'mae' && abas.length === 1 && (
                 <p className="ff-default text-[16px]">
@@ -222,6 +234,13 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                                         <span className="font-normal text-gray-700"> · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span>
                                     </p>
                                     <p className="ff-default text-[16px] leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
+                                    {/* Conteúdo: só com voz local no aparelho. Nas próprias
+                                        mensagens não aparece (a pessoa acabou de escrever) */}
+                                    {!minha && (
+                                        <AppOuvir conteudo disponivel={vozLocal} className="mt-2"
+                                            texto={`${m.autorNome} escreveu: ${m.texto}`}
+                                            descricao={`mensagem de ${m.autorNome}`} />
+                                    )}
                                 </li>
                             );
                         })}
@@ -234,9 +253,13 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     <p id="aviso-mensagem" className="ff-default text-[16px] text-gray-700">
                         Depois de enviada, a mensagem não pode ser apagada nem editada. Confira antes de tocar em Enviar.
                     </p>
+                    {/* Ditado pelo teclado do celular: ajuda quem tem dificuldade para escrever */}
+                    <p id="dica-microfone" className="ff-default text-[16px] text-gray-700">
+                        <i className="ion-mic-a mr-1" aria-hidden="true" />Dica: no celular, toque no microfone do teclado para falar em vez de digitar.
+                    </p>
                     <textarea id="texto-mensagem" ref={textoRef} value={texto}
                         onChange={(e) => { setTexto(e.target.value); setEnviada(false); }}
-                        rows={3} maxLength={MAX_TEXTO_MENSAGEM} aria-describedby="aviso-mensagem"
+                        rows={3} maxLength={MAX_TEXTO_MENSAGEM} aria-describedby="aviso-mensagem dica-microfone"
                         className="w-full rounded-xl border-2 border-gray-600 bg-white p-3 ff-default text-[16px] focus:border-(--primary-color) focus:outline-none" />
                     {erroEnvio && <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: a mensagem não foi enviada. Tente de novo.</p>}
                     <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>{enviada ? 'Mensagem enviada.' : ''}</p>

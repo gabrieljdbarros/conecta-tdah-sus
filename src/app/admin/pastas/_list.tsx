@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PastaServices from "@/services/pasta";
-import { AppButton, AppLoader } from "@/themes/components";
+import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData } from "@/helpers/router";
 import { Pasta, SERIE_LABELS } from "@/types/pasta";
@@ -81,6 +81,11 @@ export default function PastaList() {
                 </h2>
                 {ehMae && <AppButton title="Nova pasta" icon="plus" href="/admin/pastas/nova" form="round" />}
             </div>
+
+            <AppOuvir rotulo="Ouvir instruções" className="mb-3"
+                texto={ehMae
+                    ? 'Aqui ficam as pastas dos seus filhos. Toque no nome do aluno para abrir a pasta. Para criar uma pasta nova, toque em Nova pasta.'
+                    : 'Aqui ficam as pastas dos alunos que você acompanha. Toque no nome do aluno para abrir a pasta. Para entrar numa pasta nova, peça o link de convite à família.'} />
 
             <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] mb-3`}>
                 {sucesso && `Pronto: ${sucesso}`}

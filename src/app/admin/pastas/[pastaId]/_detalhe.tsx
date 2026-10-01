@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PastaServices from "@/services/pasta";
 import ConviteServices, { ConvitePendente, PapelConvidado } from "@/services/convite";
-import { AppButton, AppLoader } from "@/themes/components";
+import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData, setFlashData } from "@/helpers/router";
 import { Participante, Pasta, SERIE_LABELS } from "@/types/pasta";
@@ -256,8 +256,13 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
             </div>
 
             {/* CHAT (RN05): tela própria, com o grupo e os canais privados */}
-            <div className="self-start">
+            <div className="self-start flex flex-wrap gap-3">
                 <AppButton title="Abrir conversas" icon="chatbubbles" href={`/admin/pastas/${pasta.id}/conversas`} form="round" />
+                {/* Instruções genéricas (sem o nome do aluno): podem usar qualquer voz */}
+                <AppOuvir rotulo="Ouvir instruções"
+                    texto={ehDona
+                        ? 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para contar como a criança está em casa, toque em Escrever relatório. Para chamar a escola, toque em Convidar escola. Para chamar o médico, toque em Convidar médico. Depois, envie o link para a pessoa.'
+                        : 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para escrever um relatório, toque em Escrever relatório.'} />
             </div>
 
             {/* MENSAGENS — anunciadas pelo leitor de tela */}

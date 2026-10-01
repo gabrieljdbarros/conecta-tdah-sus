@@ -1,5 +1,5 @@
 "use client";
-import { AppButton, AppInput, AppLoader, AppSelect } from "@/themes/components";
+import { AppButton, AppInput, AppLoader, AppOuvir, AppSelect } from "@/themes/components";
 import { Formik } from "formik";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -106,6 +106,8 @@ export default function NovaPastaForm() {
                     <p className="ff-default text-[16px] mb-3">
                         A pasta reúne tudo sobre o acompanhamento do aluno. Depois você poderá convidar a escola e o médico.
                     </p>
+                    <AppOuvir rotulo="Ouvir instruções" className="self-start mb-3"
+                        texto="Para criar a pasta, escreva o nome completo do aluno, escolha a série em que ele estuda e toque em Criar pasta. Depois você poderá convidar a escola e o médico." />
 
                     <AppInput label={`${ROTULOS.nomeAluno}:`} placeholder="Nome completo do aluno" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} icon="person" error={errors.nomeAluno} mostrarErro={submitCount > 0} />
 

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ConviteServices from "@/services/convite";
-import { AppButton, AppLoader } from "@/themes/components";
+import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { setFlashData, TOKEN_CONVITE } from "@/helpers/router";
 import { ROLE_LABELS } from "@/types/user";
@@ -64,6 +64,8 @@ export default function AceitarConvite({ token }: { token: string }) {
                 Você recebeu um convite para acompanhar um aluno no Conecta TDAH SUS.
                 Ao aceitar, você passa a ver a pasta deste aluno.
             </p>
+            <AppOuvir rotulo="Ouvir instruções" className="self-center"
+                texto="Você recebeu um convite para acompanhar um aluno. Se você já tem conta, toque em Entrar. Se não tem, toque em Criar conta. Depois, toque em Aceitar convite." />
 
             {/* SEM CONTA/LOGIN: entra ou cria a conta e volta para cá */}
             {!user && <>
