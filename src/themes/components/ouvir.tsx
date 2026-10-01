@@ -11,8 +11,15 @@ export function useVozDisponivel(somenteLocal: boolean): boolean | null {
     useEffect(() => {
         if (!vozSuportada()) { setDisponivel(false); return; }
         let ativo = true;
-        carregarVozes().then((vozes) => { if (ativo) setDisponivel(!!escolherVoz(vozes, somenteLocal)); });
-        return () => { ativo = false; };
+        const verificar = () => carregarVozes().then((vozes) => { if (ativo) setDisponivel(!!escolherVoz(vozes, somenteLocal)); });
+        verificar();
+        // As vozes podem chegar depois (o navegador carrega aos poucos):
+        // confere de novo quando a lista mudar, para não dizer "sem voz" por pressa
+        window.speechSynthesis.addEventListener('voiceschanged', verificar);
+        return () => {
+            ativo = false;
+            window.speechSynthesis.removeEventListener('voiceschanged', verificar);
+        };
     }, [somenteLocal]);
     return disponivel;
 }

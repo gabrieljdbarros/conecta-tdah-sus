@@ -114,6 +114,12 @@ export function pararDeFalar(): void {
     avisar(null);
 }
 
+// Quando o navegador avisar que a lista de vozes mudou, busca de novo
+// (a lista guardada pode ter sido feita antes de todas as vozes chegarem)
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.addEventListener('voiceschanged', () => { vozesPromessa = null; });
+}
+
 // Celular bloqueado, app em segundo plano ou página fechada: para de falar
 if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => { if (document.hidden) pararDeFalar(); });
