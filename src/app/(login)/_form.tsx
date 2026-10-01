@@ -1,5 +1,5 @@
 "use client";
-import { AppButton, AppInput, AppModal } from "@/themes/components";
+import { AppButton, AppInput, AppModal, AppOuvir } from "@/themes/components";
 import { Formik } from "formik";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -73,6 +73,8 @@ export default function LoginForm() {
                         <div className="w-full max-w-[336px] flex flex-col">
 
                             <h1 className="ff-default text-[37px] text-center">Entrar</h1>
+                            <AppOuvir rotulo="Ouvir instruções" className="self-center mb-2"
+                                texto="Para entrar, escreva o seu e-mail e a sua senha e toque em Entrar. Se ainda não tem conta, toque em Cadastre-se." />
                             {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
                             <p role="status" className="ff-default text-[16px] text-center mb-2 empty:hidden">
                                 {convite && 'Entre para aceitar o convite.'}

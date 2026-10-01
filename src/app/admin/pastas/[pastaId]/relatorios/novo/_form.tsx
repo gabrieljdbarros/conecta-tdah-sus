@@ -7,7 +7,7 @@ import * as Yup from 'yup';
 import PastaServices from "@/services/pasta";
 import CategoriaServices from "@/services/categoria";
 import RelatorioServices, { papelNaPasta } from "@/services/relatorio";
-import { AppButton, AppLoader, AppSelect } from "@/themes/components";
+import { AppButton, AppLoader, AppOuvir, AppSelect } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { setFlashData } from "@/helpers/router";
 import { Categoria } from "@/types/categoria";
@@ -142,6 +142,8 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                     <p className="ff-default text-[16px]">
                         Relatório sobre <strong>{pasta.nomeAluno}</strong>.
                     </p>
+                    <AppOuvir rotulo="Ouvir instruções" className="self-start"
+                        texto="Para escrever o relatório: escolha o tipo, se aparecer a opção, escolha o assunto e escreva o texto. A tela mostra quem vai ver o relatório. Depois de enviado, ele não pode ser alterado. No fim, toque em Enviar relatório." />
 
                     {/* TIPO — só os que o papel pode escrever */}
                     {tipos.length === 1 ? (
@@ -198,8 +200,12 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                     <div className="flex flex-col gap-1">
                         <label htmlFor={ID_CAMPO.texto} className="ff-default text-[16px] font-bold">Texto do relatório (obrigatório):</label>
                         <textarea id={ID_CAMPO.texto} name="texto" value={values.texto} onChange={handleChange}
-                            rows={8} maxLength={MAX_TEXTO_RELATORIO} aria-describedby="contador-texto aviso-imutavel"
+                            rows={8} maxLength={MAX_TEXTO_RELATORIO} aria-describedby="dica-microfone contador-texto aviso-imutavel"
                             className="w-full rounded-xl border-2 border-gray-600 bg-[#f5f5f5] p-3 ff-default text-[16px] leading-relaxed focus:border-(--primary-color) focus:outline-none" />
+                        {/* Ditado pelo teclado do celular: ajuda quem tem dificuldade para escrever */}
+                        <p id="dica-microfone" className="ff-default text-[16px] text-gray-700">
+                            <i className="ion-mic-a mr-1" aria-hidden="true" />Dica: no celular, toque no microfone do teclado para falar em vez de digitar.
+                        </p>
                         {/* Lido uma vez ao focar (aria-describedby), não a cada letra */}
                         <p id="contador-texto" className="ff-default text-[16px] text-gray-700 text-right">
                             {values.texto.length} de {MAX_TEXTO_RELATORIO} caracteres

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import CategoriaServices from "@/services/categoria";
 import RelatorioServices, { papelNaPasta } from "@/services/relatorio";
-import { AppButton, AppLoader } from "@/themes/components";
+import { AppButton, AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
 import { Relatorio, TIPO_LABELS, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
@@ -35,6 +35,8 @@ export default function SecaoRelatorios({ pasta }: { pasta: Pasta }) {
     const [erro, setErro] = useState(false);
     const tituloRef = useRef<HTMLHeadingElement>(null);
 
+    // Relatórios são conteúdo de saúde: só voz que roda no aparelho (decisão travada 11)
+    const vozLocal = useVozDisponivel(true);
     const papel = user ? papelNaPasta(user, pasta.donoUid) : null;
     const podeEscrever = !!papel && TIPOS_QUE_ESCREVE[papel].length > 0;
 
@@ -70,6 +72,12 @@ export default function SecaoRelatorios({ pasta }: { pasta: Pasta }) {
             {papel === 'escola' && (
                 <p className="ff-default text-[16px] mb-3">
                     Você vê as orientações médicas e as avaliações escolares. Laudos e relatos da família ficam só entre a família e o médico.
+                </p>
+            )}
+
+            {vozLocal === false && relatorios.length > 0 && (
+                <p className="ff-default text-[16px] text-gray-700 mb-3">
+                    Para ouvir os relatórios, o aparelho precisa ter uma voz em português instalada. Por privacidade, não usamos vozes da internet para dados de saúde.
                 </p>
             )}
 
@@ -110,6 +118,10 @@ export default function SecaoRelatorios({ pasta }: { pasta: Pasta }) {
                                 </p>
                                 {/* TODO: "Ler mais" para relatórios muito longos */}
                                 <p className="ff-default text-[16px] leading-relaxed max-w-prose whitespace-pre-wrap break-words">{r.texto}</p>
+                                {/* Conteúdo: só aparece com voz local no aparelho */}
+                                <AppOuvir conteudo className="self-start"
+                                    texto={`${TIPO_LABELS[r.tipo]}. Assunto: ${nomesCategorias[r.categoriaId] ?? 'não encontrado'}. Escrito por ${r.autorNome}, em ${formatarData(r.criadoEm)}. ${r.texto}`}
+                                    descricao={`${TIPO_LABELS[r.tipo]} de ${formatarData(r.criadoEm)}`} />
                             </article>
                         </li>
                     ))}

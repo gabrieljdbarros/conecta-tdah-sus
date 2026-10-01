@@ -25,7 +25,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Relatórios dentro da pasta do aluno, com acesso por tipo (RN06) | ✅ Pronto |
 | Chat por aluno (RN05): grupo com todos e canal privado mãe–médico | ✅ Pronto |
 | Aplicativo instalável no celular (PWA) | ✅ Pronto |
-| Leitura em voz alta (acessibilidade) | ⏳ Planejado |
+| Leitura em voz alta: instruções das telas, relatórios e mensagens | ✅ Pronto |
 | App mobile (Android/iOS) | ⏳ Depois do painel web |
 
 ## Perfis e acesso aos relatórios
@@ -49,6 +49,7 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
 - **As regras têm testes automatizados** no Firebase Emulator, e toda mudança nelas é testada antes de ir para produção.
 - **A senha fica só no Firebase Authentication**, nunca no banco de dados.
 - **Só guardamos o necessário (minimização).** A pasta guarda apenas o nome e a série do aluno, e o nome da criança não fica no perfil da família.
+- **A leitura em voz alta não envia dados de saúde para fora.** As instruções das telas podem usar qualquer voz em português. Já os relatórios e as mensagens só são lidos com uma voz que roda no próprio aparelho, porque algumas vozes do navegador mandam o texto para servidores externos gerarem o áudio. Se o aparelho não tiver uma voz local em português, o botão de ouvir o conteúdo não aparece.
 - **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma Cloud Function, numa transação, que confere se a conta é do perfil certo (escola ou médico).
 
 ## Tecnologias
@@ -114,6 +115,7 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
 | `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
 | `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
 | `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
+| `npm run test:unit` | Testes de lógica sem emulador (ex.: escolha da voz da leitura em voz alta) |
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
 | `npm run preview` | Build e abre a versão de produção, para testar o PWA (pare o `npm run dev` antes) |
