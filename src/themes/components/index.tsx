@@ -6,3 +6,4 @@ export { default as AppMainContainer } from './main';
 export { default as AppButton } from './button';
 export { default as AppSelect } from './select';
 export { default as AppLoader } from './loader';
+export { default as AppOuvir, useVozDisponivel } from './ouvir';
