@@ -23,8 +23,9 @@ export default function Icon({ id }: { id: string }) {
                 alignItems: "center", justifyContent: "center", background: "#0069ad", color: "white",
                 fontWeight: 700, fontFamily: "sans-serif",
             }}>
-                <div style={{ fontSize: tamanho * 0.24, lineHeight: 1 }}>TDAH</div>
-                <div style={{ fontSize: tamanho * 0.11, lineHeight: 1, marginTop: tamanho * 0.03 }}>Conecta</div>
+                {/* Só "TDAH": na tela inicial o ícone tem ~48px, e um segundo texto
+                    ficaria ilegível. O nome completo aparece escrito embaixo do ícone */}
+                <div style={{ fontSize: tamanho * 0.26, lineHeight: 1 }}>TDAH</div>
             </div>
         ),
         { width: tamanho, height: tamanho }

@@ -14,13 +14,15 @@
 const CACHE = "conecta-tdah-estaticos-v1";
 const PAGINA_OFFLINE = "/offline.html";
 
-// Arquivos fixos: os de /_next/static têm o conteúdo no nome (nunca mudam)
-function ehArquivoFixo(url) {
-    return url.pathname.startsWith("/_next/static/")
-        || url.pathname.startsWith("/icon/")
-        || url.pathname === "/apple-icon"
-        || url.pathname.startsWith("/assets/img/");
-}
+// Arquivos de /_next/static têm o conteúdo no nome: nunca mudam
+const ehImutavel = (url) => url.pathname.startsWith("/_next/static/");
+
+// Ícones e imagens têm nome fixo: podem mudar entre versões do site
+const ehImagemFixa = (url) =>
+    url.pathname.startsWith("/icon/") || url.pathname === "/apple-icon" || url.pathname.startsWith("/assets/img/");
+
+// Só guarda resposta válida do próprio site (nada de erro ou redirecionamento)
+const podeGuardar = (resposta) => resposta.ok && resposta.type === "basic";
 
 self.addEventListener("install", (evento) => {
     evento.waitUntil(caches.open(CACHE).then((cache) => cache.add(PAGINA_OFFLINE)));
@@ -36,6 +38,13 @@ self.addEventListener("activate", (evento) => {
     );
 });
 
+// Reserva, caso a página offline não esteja guardada
+const respostaOffline = () =>
+    caches.match(PAGINA_OFFLINE).then((pagina) => pagina || new Response(
+        "Você está sem internet. Conecte-se e tente de novo.",
+        { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    ));
+
 self.addEventListener("fetch", (evento) => {
     const pedido = evento.request;
     if (pedido.method !== "GET") return;
@@ -46,18 +55,39 @@ self.addEventListener("fetch", (evento) => {
 
     // Páginas: sempre da internet; sem conexão, a tela "você está sem internet"
     if (pedido.mode === "navigate") {
-        evento.respondWith(fetch(pedido).catch(() => caches.match(PAGINA_OFFLINE)));
+        evento.respondWith(fetch(pedido).catch(respostaOffline));
         return;
     }
 
-    // Arquivos fixos: do aparelho, se já tiver; senão baixa e guarda
-    if (ehArquivoFixo(url)) {
+    // Código e estilos com o conteúdo no nome: do aparelho, se já tiver
+    if (ehImutavel(url)) {
         evento.respondWith(
             caches.open(CACHE).then((cache) =>
                 cache.match(pedido).then((guardado) => guardado || fetch(pedido).then((resposta) => {
-                    if (resposta.ok) cache.put(pedido, resposta.clone());
+                    if (podeGuardar(resposta)) cache.put(pedido, resposta.clone());
                     return resposta;
                 }))
+            )
+        );
+        return;
+    }
+
+    // Ícones e imagens: mostra o guardado na hora e atualiza em segundo plano
+    // (se o logo mudar, o aparelho recebe o novo na próxima vez)
+    if (ehImagemFixa(url)) {
+        evento.respondWith(
+            caches.open(CACHE).then((cache) =>
+                cache.match(pedido).then((guardado) => {
+                    const daRede = fetch(pedido).then((resposta) => {
+                        if (podeGuardar(resposta)) cache.put(pedido, resposta.clone());
+                        return resposta;
+                    });
+                    if (guardado) {
+                        evento.waitUntil(daRede.catch(() => undefined));
+                        return guardado;
+                    }
+                    return daRede;
+                })
             )
         );
     }

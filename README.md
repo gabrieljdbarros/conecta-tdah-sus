@@ -114,18 +114,20 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
 | `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
 | `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
 | `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
-
-> Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
 | `npm run preview` | Build e abre a versão de produção, para testar o PWA (pare o `npm run dev` antes) |
+
+> Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
 
 ## Instalar no celular (PWA)
 
 O painel pode ser instalado como um aplicativo, com ícone na tela inicial, sem loja de aplicativos:
 
-- **Android (Chrome):** abra o site e toque em **"Instalar aplicativo"**, ou no menu ⋮ → *Instalar aplicativo*.
-- **iPhone (Safari):** toque em **Compartilhar** → *Adicionar à Tela de Início*.
+- **Android (Chrome):** abra o site, toque nos **três pontinhos** no canto de cima e depois em **"Instalar aplicativo"**. Em alguns celulares o nome é **"Adicionar à tela inicial"**.
+- **iPhone:** abra o site no **Safari**, porque o Chrome do iPhone não instala. Toque no botão **Compartilhar**, o quadrado com uma seta na barra de baixo, e depois em **"Adicionar à Tela de Início"**.
+
+> TODO: levar essas instruções para dentro do app, numa tela "Como instalar" com passos e imagens, em linguagem simples.
 
 Professores e médicos não precisam instalar nada: o mesmo endereço funciona no navegador.
 

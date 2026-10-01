@@ -7,20 +7,37 @@
     <title>Sem internet | Conecta TDAH SUS</title>
     <style>
         body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-               font-family: system-ui, sans-serif; background: #f5f5f5; color: #111827; padding: 16px; box-sizing: border-box; }
+               font-family: system-ui, Arial, sans-serif; background: #f5f5f5; color: #111827; padding: 16px; box-sizing: border-box; }
         main { max-width: 420px; text-align: center; background: #fff; border-radius: 16px; padding: 32px 24px; }
         h1 { font-size: 26px; margin: 0 0 12px; }
         p { font-size: 18px; line-height: 1.5; margin: 0 0 24px; }
-        button { min-height: 48px; padding: 0 28px; border: 0; border-radius: 999px; background: #0069ad;
-                 color: #fff; font-size: 18px; cursor: pointer; }
+        button { min-height: 48px; width: 100%; max-width: 280px; padding: 0 28px; border: 0; border-radius: 999px;
+                 background: #0069ad; color: #fff; font-size: 18px; cursor: pointer; }
+        #aviso { min-height: 1.5em; margin: 16px 0 0; font-size: 18px; }
         button:focus-visible { outline: 3px solid #111827; outline-offset: 3px; }
     </style>
 </head>
 <body>
     <main>
-        <h1>Você está sem internet</h1>
-        <p>O Conecta TDAH SUS precisa de internet para mostrar as pastas, os relatórios e as conversas. Conecte-se e tente de novo.</p>
-        <button type="button" onclick="location.reload()">Tentar de novo</button>
+        <!-- role="alert": o leitor de tela avisa assim que a página abre -->
+        <div role="alert">
+            <h1>Sem internet</h1>
+            <p>O Conecta TDAH SUS precisa de internet para abrir. Ligue o Wi-Fi ou os dados móveis e toque no botão abaixo.</p>
+        </div>
+        <button type="button" onclick="tentarDeNovo()">Tentar de novo</button>
+        <p id="aviso" role="status"></p>
     </main>
+    <script>
+        // Dá retorno ao toque: se ainda não houver internet, avisa em vez de só recarregar igual
+        function tentarDeNovo() {
+            var aviso = document.getElementById("aviso");
+            if (!navigator.onLine) {
+                aviso.textContent = "Ainda sem internet. Confira o Wi-Fi ou os dados móveis.";
+                return;
+            }
+            aviso.textContent = "Verificando...";
+            location.reload();
+        }
+    </script>
 </body>
 </html>

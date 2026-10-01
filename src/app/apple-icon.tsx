@@ -15,8 +15,8 @@ export default function AppleIcon() {
                 alignItems: "center", justifyContent: "center", background: "#0069ad", color: "white",
                 fontWeight: 700, fontFamily: "sans-serif",
             }}>
-                <div style={{ fontSize: 46, lineHeight: 1 }}>TDAH</div>
-                <div style={{ fontSize: 20, lineHeight: 1, marginTop: 6 }}>Conecta</div>
+                {/* Mesmo desenho do icon.tsx (26% do tamanho) */}
+                <div style={{ fontSize: 47, lineHeight: 1 }}>TDAH</div>
             </div>
         ),
         size
