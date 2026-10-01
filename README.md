@@ -24,6 +24,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Categorias de acompanhamento gerenciadas pelo admin (RF14) | ✅ Pronto |
 | Relatórios dentro da pasta do aluno, com acesso por tipo (RN06) | ✅ Pronto |
 | Chat por aluno (RN05): grupo com todos e canal privado mãe–médico | ✅ Pronto |
+| Aplicativo instalável no celular (PWA) | ✅ Pronto |
 | Leitura em voz alta (acessibilidade) | ⏳ Planejado |
 | App mobile (Android/iOS) | ⏳ Depois do painel web |
 
@@ -113,10 +114,26 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
 | `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
 | `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
 | `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
-
-> Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
+| `npm run preview` | Build e abre a versão de produção, para testar o PWA (pare o `npm run dev` antes) |
+
+> Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
+
+## Instalar no celular (PWA)
+
+O painel pode ser instalado como um aplicativo, com ícone na tela inicial, sem loja de aplicativos:
+
+- **Android (Chrome):** abra o site, toque nos **três pontinhos** no canto de cima e depois em **"Instalar aplicativo"**. Em alguns celulares o nome é **"Adicionar à tela inicial"**.
+- **iPhone:** abra o site no **Safari**, porque o Chrome do iPhone não instala. Toque no botão **Compartilhar**, o quadrado com uma seta na barra de baixo, e depois em **"Adicionar à Tela de Início"**.
+
+> TODO: levar essas instruções para dentro do app, numa tela "Como instalar" com passos e imagens, em linguagem simples.
+
+Professores e médicos não precisam instalar nada: o mesmo endereço funciona no navegador.
+
+> **Privacidade:** o aplicativo **não guarda dados no aparelho**, nem pastas, nem relatórios, nem conversas. Ele guarda só os arquivos fixos do site, para abrir mais rápido. Sem internet, mostra a tela "Você está sem internet". Muitas famílias dividem o celular, e dados de saúde de crianças não devem ficar salvos nele.
+
+Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview` e abra http://localhost:3000. O Chrome mostra o botão de instalar na barra de endereço. A versão de produção não roda no modo emulador, então use `NEXT_PUBLIC_USE_EMULATORS=false`. No celular, a instalação exige o site publicado num endereço com HTTPS.
 
 ## Estrutura principal
 

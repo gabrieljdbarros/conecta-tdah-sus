@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import RegistrarServiceWorker from "./_pwa/registrar-service-worker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,14 @@ export const metadata: Metadata = {
     template: "%s | Conecta TDAH SUS",
   },
   description: "Comunicação entre escola, família e médicos do SUS no acompanhamento de estudantes com TDAH (projeto acadêmico).",
+  applicationName: "Conecta TDAH SUS",
+  // iPhone: nome e modo tela cheia ao "Adicionar à Tela de Início"
+  appleWebApp: { capable: true, title: "Conecta TDAH", statusBarStyle: "default" },
+};
+
+// Cor da barra do navegador/aplicativo instalado (a mesma do tema)
+export const viewport: Viewport = {
+  themeColor: "#0069ad",
 };
 
 export default function RootLayout({
@@ -43,6 +52,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
       >
         <AuthProvider>{children}</AuthProvider>
+        <RegistrarServiceWorker />
       </body>
     </html>
   );
