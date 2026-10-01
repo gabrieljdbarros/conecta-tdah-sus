@@ -11,10 +11,10 @@ export default function UsuariosPage() {
     return (
         <AppMainContainer title="Usuários">
             <div className="flex justify-between items-center">
-                <h1 className="font-bold text-[20px]">Lista de usuários</h1>
+                <h2 className="font-bold text-[20px]">Lista de usuários</h2>
             </div>
 
-            <p className="text-[13px] text-[grey] mt-1 mb-3">
+            <p className="text-[16px] text-gray-700 mt-1 mb-3">
                 Novos usuários se cadastram pela tela pública de cadastro (mãe/responsável, escola ou médico).
             </p>
 

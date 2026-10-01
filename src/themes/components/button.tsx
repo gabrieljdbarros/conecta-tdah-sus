@@ -1,3 +1,4 @@
+import { CSSProperties } from "react"
 import Link from "next/link"
 import { Ionicons } from "@/types/ionicos"
 
@@ -9,46 +10,53 @@ export interface AppButtonProps {
     href?: string
     form?: 'square'|'round'
     type?: 'solid'|'outline'
+    /** Botão de envio do formulário (type="submit") */
+    submit?: boolean
     disabled?: boolean
     icon?: Ionicons;
-    style?: any;
+    style?: CSSProperties;
     className?: string
 }
 // ==========================================================================
-export default function AppButton({title, onClick, color='--primary-color', textColor='white', form='square', type='solid', disabled, icon, href, style = {}, className = ''}: AppButtonProps) {
-    
-    let tailwind = className + ' flex justify-center py-[5px] px-[15px] text-[15px] flex border';
-    let dynamicStyle = {
-        ...style, 
-        background: color.startsWith('--') ? `var(${color})` : color,
-        borderColor: color.startsWith('--') ? `var(${color})` : color,
-        color: textColor.startsWith('--') ? `var(${textColor})` : textColor
-    }
-    
-    //Tipo
-    if (type == 'outline') {
-        dynamicStyle['background'] = 'transparent';
-        dynamicStyle['color'] = color.startsWith('--') ? `var(${color})` : color;
-    }
-    
-    //Forma
-    if (form == 'round') tailwind += ' rounded-full'
+/**
+ * Botão acessível:
+ *  - com `href` vira um link (<Link>); sem `href`, um <button> de verdade
+ *    (recebe foco, Enter/Espaço funcionam e o leitor de tela diz "botão")
+ *  - `disabled` desabilita de fato
+ *  - alvo de 48px e texto de 16px
+ */
+export default function AppButton({title, onClick, color='--primary-color', textColor='white', form='square', type='solid', submit = false, disabled, icon, href, style = {}, className = ''}: AppButtonProps) {
 
-    //Habilitado
-    if (disabled) tailwind += ' opacity-50'
-    else tailwind += ' cursor-pointer'
+    const corFundo = color.startsWith('--') ? `var(${color})` : color;
+    const corTexto = textColor.startsWith('--') ? `var(${textColor})` : textColor;
 
-    
+    const dynamicStyle: CSSProperties = {
+        ...style,
+        background: type == 'outline' ? 'transparent' : corFundo,
+        borderColor: corFundo,
+        color: type == 'outline' ? corFundo : corTexto,
+    }
+
+    const tailwind = [
+        className,
+        'inline-flex items-center justify-center gap-2 min-h-[48px] py-2 px-5 border-2 ff-default text-[16px]',
+        form == 'round' ? 'rounded-full' : 'rounded-md',
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+    ].join(' ');
+
+    const conteudo = <>
+        {icon && <i className={`ion-${icon}`} aria-hidden="true" />}
+        <span>{title}</span>
+    </>;
 
     // ==========================================================================
-    // ------------------------
-    // ==========================================================================
+    if (href && !disabled)
+        return <Link href={href} className={tailwind} style={dynamicStyle}>{conteudo}</Link>;
+
     return (
-        <Link href={href ? href : '#'}>
-            <div className={tailwind} style={dynamicStyle} onClick={disabled ? () => {} : onClick}>
-                {icon && <i className={`ion-${icon} mr-[5px]`} />}
-                <p className="ff-default">{title}</p>
-            </div>
-        </Link>
+        <button type={submit ? 'submit' : 'button'} onClick={onClick} disabled={disabled}
+            className={tailwind} style={dynamicStyle}>
+            {conteudo}
+        </button>
     )
 }

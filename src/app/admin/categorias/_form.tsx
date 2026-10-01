@@ -15,8 +15,7 @@ const COR_ERRO = 'text-[#B91C1C]';
 
 // Erro de validação ao tentar salvar: recebe o foco a cada tentativa, para
 // quem usa teclado ou leitor de tela ir direto ao problema.
-// TODO: remover quando o AppInput mostrar os próprios erros (branch de
-// acessibilidade dos componentes)
+// O erro também aparece junto de cada campo; o resumo continua
 function ErroAoSalvar({ mensagem, tentativas }: { mensagem?: string; tentativas: number }) {
     const ref = useRef<HTMLParagraphElement>(null);
     const mostrar = tentativas > 0 && !!mensagem;
@@ -117,13 +116,12 @@ export default function CategoriaForm({ categoriaId }: { categoriaId?: string })
                     </p>
 
                     <AppInput label="Nome da categoria:" placeholder="Ex.: Atenção e concentração" name="nome"
-                        value={values.nome} onChange={handleChange} icon="pricetag" error={errors.nome} />
+                        value={values.nome} onChange={handleChange} icon="pricetag" error={errors.nome} mostrarErro={submitCount > 0} />
 
                     <ErroAoSalvar mensagem={errors.nome} tentativas={submitCount} />
                     {error && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
 
-                    <AppButton title={isSubmitting ? 'Salvando...' : editando ? 'Salvar' : 'Criar categoria'}
-                        onClick={() => handleSubmit()} disabled={isSubmitting} form="round" className="mt-4" />
+                    <AppButton title={isSubmitting ? 'Salvando...' : editando ? 'Salvar' : 'Criar categoria'} submit disabled={isSubmitting} form="round" className="mt-4" />
                     <Link href="/admin/categorias" className={CLASSE_LINK_VOLTAR}>Voltar sem salvar</Link>
                 </form>
             )}
