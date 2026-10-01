@@ -66,29 +66,66 @@ export function vozSuportada(): boolean {
     return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 }
 
-/** As vozes carregam depois da página: espera um pouco por elas */
+// As vozes carregam depois da página. A busca é feita UMA vez e
+// compartilhada por todos os botões (sem um "ouvinte" por mensagem)
+let vozesPromessa: Promise<SpeechSynthesisVoice[]> | null = null;
+
 export function carregarVozes(): Promise<SpeechSynthesisVoice[]> {
     if (!vozSuportada()) return Promise.resolve([]);
+    if (vozesPromessa) return vozesPromessa;
     const ja = window.speechSynthesis.getVoices();
-    if (ja.length) return Promise.resolve(ja);
-    return new Promise((resolve) => {
+    if (ja.length) return (vozesPromessa = Promise.resolve(ja));
+    vozesPromessa = new Promise((resolve) => {
         const pronto = () => resolve(window.speechSynthesis.getVoices());
         window.speechSynthesis.addEventListener('voiceschanged', pronto, { once: true });
         setTimeout(pronto, 1500);
+    }).then((vozes) => {
+        // Se ainda vieram vazias, deixa tentar de novo na próxima vez
+        if (!(vozes as SpeechSynthesisVoice[]).length) vozesPromessa = null;
+        return vozes as SpeechSynthesisVoice[];
     });
+    return vozesPromessa;
+}
+
+// Qual botão está lendo agora (só um por vez em toda a tela). Os botões
+// acompanham isso, em vez de cada um adivinhar pelo fim da própria fala —
+// assim o fim de uma leitura cancelada não para a leitura seguinte
+let leituraAtual: string | null = null;
+const ouvintes = new Set<(id: string | null) => void>();
+
+function avisar(id: string | null): void {
+    leituraAtual = id;
+    ouvintes.forEach((ouvinte) => ouvinte(id));
+}
+
+export function qualLeituraAtual(): string | null {
+    return leituraAtual;
+}
+
+/** Acompanha qual leitura está ativa; devolve a função para deixar de acompanhar */
+export function acompanharLeitura(ouvinte: (id: string | null) => void): () => void {
+    ouvintes.add(ouvinte);
+    return () => { ouvintes.delete(ouvinte); };
 }
 
 /** Para qualquer leitura em andamento */
 export function pararDeFalar(): void {
     if (vozSuportada()) window.speechSynthesis.cancel();
+    avisar(null);
+}
+
+// Celular bloqueado, app em segundo plano ou página fechada: para de falar
+if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pararDeFalar(); });
+    window.addEventListener('pagehide', () => pararDeFalar());
 }
 
 /**
- * Lê o texto em voz alta. Só uma leitura por vez: começar outra para a
- * anterior. `aoTerminar` é chamado no fim, ao parar ou em erro.
+ * Lê o texto em voz alta, identificado por `id` (o botão que pediu).
+ * Começar outra leitura para a anterior.
  * Devolve false se não houver voz permitida (o texto NÃO é enviado a nada)
  */
-export async function falar(texto: string, opcoes: { somenteLocal: boolean; aoTerminar?: () => void }): Promise<boolean> {
+export async function falar(texto: string, opcoes: { id: string; somenteLocal: boolean }): Promise<boolean> {
     if (!vozSuportada()) return false;
     const voz = escolherVoz(await carregarVozes(), opcoes.somenteLocal);
     if (!voz) return false;
@@ -101,10 +138,13 @@ export async function falar(texto: string, opcoes: { somenteLocal: boolean; aoTe
         fala.lang = voz.lang;
         fala.rate = 0.95; // um pouco mais devagar, para entender melhor
         if (i === trechos.length - 1) {
-            fala.onend = () => opcoes.aoTerminar?.();
-            fala.onerror = () => opcoes.aoTerminar?.();
+            // Só encerra se esta ainda for a leitura ativa
+            const terminar = () => { if (leituraAtual === opcoes.id) avisar(null); };
+            fala.onend = terminar;
+            fala.onerror = terminar;
         }
         window.speechSynthesis.speak(fala);
     });
+    avisar(opcoes.id);
     return true;
 }

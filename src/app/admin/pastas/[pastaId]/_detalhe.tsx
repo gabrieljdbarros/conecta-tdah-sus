@@ -261,8 +261,8 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 {/* Instruções genéricas (sem o nome do aluno): podem usar qualquer voz */}
                 <AppOuvir rotulo="Ouvir instruções"
                     texto={ehDona
-                        ? 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para chamar a escola ou o médico, toque em Convidar e envie o link pelo WhatsApp.'
-                        : 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar com a família, toque em Abrir conversas. Para escrever um relatório, toque em Escrever relatório.'} />
+                        ? 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para contar como a criança está em casa, toque em Escrever relatório. Para chamar a escola, toque em Convidar escola. Para chamar o médico, toque em Convidar médico. Depois, envie o link para a pessoa.'
+                        : 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para escrever um relatório, toque em Escrever relatório.'} />
             </div>
 
             {/* MENSAGENS — anunciadas pelo leitor de tela */}

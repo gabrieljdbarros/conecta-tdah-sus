@@ -130,7 +130,7 @@ export default function CadastroForm() {
                 <form onSubmit={handleSubmit} className="w-[336px] flex flex-col">
                     <h1 className="ff-default text-[30px] text-center mb-3">Criar conta</h1>
                     <AppOuvir rotulo="Ouvir instruções" className="self-center mb-3"
-                        texto="Para criar a sua conta, escolha quem você é: mãe ou responsável, escola ou médico. Depois escreva o seu nome, o seu e-mail, uma senha com pelo menos seis letras ou números, e responda as perguntas que aparecerem. No fim, toque em Criar conta." />
+                        texto="Escolha quem você é: mãe ou responsável, escola ou médico. Escreva o seu nome e o seu e-mail. Crie uma senha com pelo menos seis letras ou números. Responda as perguntas que aparecerem. No fim, toque em Criar conta." />
                     {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
                     <p role="status" className="ff-default text-[16px] text-center mb-3 empty:hidden">
                         {convite && 'Crie sua conta para aceitar o convite. Escolha o seu perfil: escola ou médico.'}

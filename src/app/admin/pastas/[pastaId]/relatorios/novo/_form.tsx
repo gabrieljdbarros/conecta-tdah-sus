@@ -143,7 +143,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                         Relatório sobre <strong>{pasta.nomeAluno}</strong>.
                     </p>
                     <AppOuvir rotulo="Ouvir instruções" className="self-start"
-                        texto="Para escrever o relatório: escolha o tipo, se aparecer a opção, escolha o assunto e escreva o texto. A tela mostra quem vai ver o relatório. Depois de enviado, ele não pode ser alterado. No fim, toque em Enviar relatório." />
+                        texto="Se aparecer a opção Tipo, escolha um. Escolha o assunto. Escreva o texto. Para falar em vez de digitar, toque no microfone do teclado. A tela mostra quem vai ver o relatório. Depois de enviado, o relatório não pode ser mudado. No fim, toque em Enviar relatório." />
 
                     {/* TIPO — só os que o papel pode escrever */}
                     {tipos.length === 1 ? (

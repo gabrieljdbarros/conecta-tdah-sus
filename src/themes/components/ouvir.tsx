@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
-import { carregarVozes, escolherVoz, falar, pararDeFalar, vozSuportada } from "@/helpers/voz";
+import { useEffect, useId, useState } from "react";
+import { acompanharLeitura, carregarVozes, escolherVoz, falar, pararDeFalar, qualLeituraAtual, vozSuportada } from "@/helpers/voz";
 
 /**
  * Diz se há voz em português para ler (com `somenteLocal`, só voz que roda
- * no aparelho). `null` enquanto verifica
+ * no aparelho). `null` enquanto verifica. As vozes são buscadas uma vez só
  */
 export function useVozDisponivel(somenteLocal: boolean): boolean | null {
     const [disponivel, setDisponivel] = useState<boolean | null>(null);
@@ -29,35 +29,48 @@ export interface AppOuvirProps {
      * que roda no aparelho (decisão travada 11). Sem ela, o botão não aparece
      */
     conteudo?: boolean;
+    /**
+     * Disponibilidade já calculada pela tela (ex.: lista de mensagens), para
+     * não verificar de novo em cada botão
+     */
+    disponivel?: boolean | null;
     className?: string;
 }
 
 /**
  * Botão de leitura em voz alta (TTS). Toque para ouvir; toque de novo para
- * parar. Só uma leitura por vez em toda a tela
+ * parar. Só uma leitura por vez em toda a tela.
+ * O rótulo troca entre "Ouvir" e "Parar" (sem aria-pressed, para o leitor
+ * de tela não anunciar o estado duas vezes)
  */
-export default function AppOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = false, className = '' }: AppOuvirProps) {
-    const disponivel = useVozDisponivel(conteudo);
+export default function AppOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = false, disponivel, className = '' }: AppOuvirProps) {
+    const id = useId();
+    const verificado = useVozDisponivel(conteudo);
+    const temVoz = disponivel !== undefined ? disponivel : verificado;
     const [falando, setFalando] = useState(false);
 
-    // Saiu da tela no meio da leitura: para de falar
-    useEffect(() => () => { if (falando) pararDeFalar(); }, [falando]);
+    // Acompanha qual botão está lendo (o fim de uma leitura cancelada não
+    // interfere na seguinte) e para de falar se este botão sair da tela
+    useEffect(() => {
+        const deixar = acompanharLeitura((atual) => setFalando(atual === id));
+        return () => {
+            deixar();
+            if (qualLeituraAtual() === id) pararDeFalar();
+        };
+    }, [id]);
 
-    if (!disponivel) return null;
+    if (!temVoz) return null;
 
     const alternar = async () => {
         if (falando) {
             pararDeFalar();
-            setFalando(false);
             return;
         }
-        setFalando(true);
-        const comecou = await falar(texto, { somenteLocal: conteudo, aoTerminar: () => setFalando(false) });
-        if (!comecou) setFalando(false);
+        await falar(texto, { id, somenteLocal: conteudo });
     };
 
     return (
-        <button type="button" onClick={alternar} aria-pressed={falando}
+        <button type="button" onClick={alternar}
             className={`inline-flex items-center gap-2 min-h-[48px] px-4 rounded-full border-2 border-(--primary-color) text-(--primary-color) bg-white ff-default text-[16px] cursor-pointer ${className}`}>
             <i className={falando ? 'ion-stop' : 'ion-volume-high'} aria-hidden="true" />
             <span>{falando ? 'Parar' : rotulo}</span>

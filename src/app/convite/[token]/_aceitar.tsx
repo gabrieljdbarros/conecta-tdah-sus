@@ -65,7 +65,7 @@ export default function AceitarConvite({ token }: { token: string }) {
                 Ao aceitar, você passa a ver a pasta deste aluno.
             </p>
             <AppOuvir rotulo="Ouvir instruções" className="self-center"
-                texto="Você recebeu um convite para acompanhar um aluno. Se ainda não entrou, toque em Entrar ou em Criar conta. Depois, toque em Aceitar convite." />
+                texto="Você recebeu um convite para acompanhar um aluno. Se você já tem conta, toque em Entrar. Se não tem, toque em Criar conta. Depois, toque em Aceitar convite." />
 
             {/* SEM CONTA/LOGIN: entra ou cria a conta e volta para cá */}
             {!user && <>

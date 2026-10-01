@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import CategoriaServices from "@/services/categoria";
 import RelatorioServices, { papelNaPasta } from "@/services/relatorio";
 import { AppButton, AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
+import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
 import { Relatorio, TIPO_LABELS, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
@@ -76,8 +77,10 @@ export default function SecaoRelatorios({ pasta }: { pasta: Pasta }) {
             )}
 
             {vozLocal === false && relatorios.length > 0 && (
-                <p className="ff-default text-[16px] text-gray-700 mb-3">
-                    Para ouvir os relatórios, o aparelho precisa ter uma voz em português instalada. Por privacidade, não usamos vozes da internet para dados de saúde.
+                <p role="status" className="ff-default text-[16px] text-gray-700 mb-3">
+                    {vozSuportada()
+                        ? 'Este aparelho não tem uma voz em português que funcione sem internet. Por segurança, este conteúdo não é lido em voz alta aqui: seus dados não saem do aparelho. Para ouvir, instale a voz em português nas configurações do celular.'
+                        : 'Este navegador não consegue ler em voz alta.'}
                 </p>
             )}
 
@@ -119,8 +122,8 @@ export default function SecaoRelatorios({ pasta }: { pasta: Pasta }) {
                                 {/* TODO: "Ler mais" para relatórios muito longos */}
                                 <p className="ff-default text-[16px] leading-relaxed max-w-prose whitespace-pre-wrap break-words">{r.texto}</p>
                                 {/* Conteúdo: só aparece com voz local no aparelho */}
-                                <AppOuvir conteudo className="self-start"
-                                    texto={`${TIPO_LABELS[r.tipo]}. Assunto: ${nomesCategorias[r.categoriaId] ?? 'não encontrado'}. Escrito por ${r.autorNome}, em ${formatarData(r.criadoEm)}. ${r.texto}`}
+                                <AppOuvir conteudo disponivel={vozLocal} className="self-start"
+                                    texto={`${TIPO_LABELS[r.tipo]}.${nomesCategorias[r.categoriaId] ? ` Assunto: ${nomesCategorias[r.categoriaId]}.` : ''} Escrito por ${r.autorNome}, em ${formatarData(r.criadoEm)}. ${r.texto}`}
                                     descricao={`${TIPO_LABELS[r.tipo]} de ${formatarData(r.criadoEm)}`} />
                             </article>
                         </li>

@@ -5,6 +5,7 @@ import PastaServices from "@/services/pasta";
 import MensagemServices from "@/services/mensagem";
 import { papelNaPasta } from "@/services/relatorio";
 import { AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
+import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
 import { PapelNaPasta } from "@/types/relatorio";
@@ -108,7 +109,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         const pertoDoFim = lista.scrollHeight - lista.scrollTop - lista.clientHeight < 120;
         if (rolarParaOFim.current || pertoDoFim) lista.scrollTop = lista.scrollHeight;
         rolarParaOFim.current = false;
-    }, [mensagens]);
+    }, [mensagens, vozLocal]);
     // ======================================================================
     // Só o botão envia. O Enter do campo quebra a linha: no celular não há
     // Shift, e uma mensagem enviada pela metade não pode ser apagada
@@ -163,10 +164,12 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         <div className="flex flex-col gap-4 max-w-[720px]">
             <h2 className="font-bold text-[20px]">Conversas sobre {pasta.nomeAluno}</h2>
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
-                texto="Aqui você conversa sobre o aluno. Cada aba mostra quem vê a conversa. Para ouvir uma mensagem, toque em Ouvir, embaixo dela. Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar." />
+                texto={`Aqui você conversa sobre o aluno. No alto, toque no nome da conversa para escolher com quem falar. A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
             {vozLocal === false && (
-                <p className="ff-default text-[16px] text-gray-700">
-                    Para ouvir as mensagens, o aparelho precisa ter uma voz em português instalada. Por privacidade, não usamos vozes da internet para as conversas.
+                <p role="status" className="ff-default text-[16px] text-gray-700">
+                    {vozSuportada()
+                        ? 'Este aparelho não tem uma voz em português que funcione sem internet. Por segurança, este conteúdo não é lido em voz alta aqui: seus dados não saem do aparelho. Para ouvir, instale a voz em português nas configurações do celular.'
+                        : 'Este navegador não consegue ler em voz alta.'}
                 </p>
             )}
 
@@ -231,10 +234,13 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                                         <span className="font-normal text-gray-700"> · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span>
                                     </p>
                                     <p className="ff-default text-[16px] leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
-                                    {/* Conteúdo: só aparece com voz local no aparelho */}
-                                    <AppOuvir conteudo className="mt-2"
-                                        texto={`${minha ? 'Você escreveu' : `${m.autorNome} escreveu`}: ${m.texto}`}
-                                        descricao={`mensagem de ${minha ? 'você' : m.autorNome}`} />
+                                    {/* Conteúdo: só com voz local no aparelho. Nas próprias
+                                        mensagens não aparece (a pessoa acabou de escrever) */}
+                                    {!minha && (
+                                        <AppOuvir conteudo disponivel={vozLocal} className="mt-2"
+                                            texto={`${m.autorNome} escreveu: ${m.texto}`}
+                                            descricao={`mensagem de ${m.autorNome}`} />
+                                    )}
                                 </li>
                             );
                         })}
