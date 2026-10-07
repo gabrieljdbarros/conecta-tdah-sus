@@ -5,8 +5,9 @@
 * CORES — todas tiradas do design da equipe (paleta original em
 * docs/design-cores.md). Cada cor tem um PAPEL, e o papel garante o
 * contraste mínimo (WCAG AA) sem mudar a cor escolhida pela designer:
-*  - destaque (laranja): só como FUNDO, com texto branco grande e negrito
-*    (19px bold = "texto grande" no WCAG; 3,1:1 passa) — nunca como texto
+*  - destaque (laranja): como FUNDO, com texto branco grande e negrito
+*    (19px bold = "texto grande" no WCAG; 3,1:1 passa); como cor de texto,
+*    só em TÍTULO grande (24px ou mais, negrito) sobre fundo BRANCO
 *  - link (azul dos links do design): links, botões de contorno, seleção e foco (7,1:1)
 *  - secundaria (verde-petróleo do "Ouvir relatório"): ações secundárias (6,48:1)
 *  - borda (cinza dos campos do design): borda e placeholder dos campos,

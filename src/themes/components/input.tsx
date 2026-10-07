@@ -48,7 +48,7 @@ export default function AppInput ({type="text", name, onChange, placeholder, val
                     className="flex-1 min-w-0 bg-transparent py-2 ff-default text-[16px] text-(--cor-texto) placeholder:text-(--cor-borda) outline-none" />
                 {openPassword &&
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"} aria-pressed={showPassword}
+                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
                         className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-700 cursor-pointer">
                         <i className={showPassword ? "ion-eye" : "ion-eye-disabled"} aria-hidden="true" />
                     </button>}
