@@ -11,7 +11,7 @@ export default async function ConversasPage({ params }: { params: Promise<{ past
 
     // ==========================================================
     return (
-        <AppMainContainer title="Conversas">
+        <AppMainContainer title="Conversas" voltar={`/admin/pastas/${pastaId}`} voltarRotulo="Voltar para a pasta">
             <Conversas pastaId={pastaId} />
         </AppMainContainer>
     )

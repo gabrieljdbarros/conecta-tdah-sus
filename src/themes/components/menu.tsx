@@ -16,7 +16,7 @@ export default function AppMenu() {
     const ehAdmin = user?.role === 'admin';
     // ==============================================================================
     return (
-         <div className={`${ehAdmin ? 'flex' : 'hidden md:flex'} w-[60px] md:w-[300px] bg-(--background-primary) flex-col pt-[40px] shadow-sm`}>
+         <div className={`${ehAdmin ? 'flex' : 'hidden md:flex'} w-[60px] md:w-[300px] bg-(--background-primary) flex-col pt-[40px] shadow-sm sticky top-0 h-screen self-start overflow-y-auto`}>
             <div className="hidden md:flex flex-col items-center gap-1 px-4">
                 <AppLogo />
                 <p className="mt-4 text-center font-bold break-all text-(--cor-texto)">{user?.nome}</p>
