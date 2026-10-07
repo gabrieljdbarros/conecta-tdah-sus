@@ -33,9 +33,10 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Conecta TDAH", statusBarStyle: "default" },
 };
 
-// Cor da barra do navegador/aplicativo instalado (a mesma do tema)
+// Cor da barra do navegador/aplicativo instalado: o cinza-claro do cabeçalho
+// do design (a barra de status do celular fica da mesma cor, com ícones escuros)
 export const viewport: Viewport = {
-  themeColor: "#ff5c00",
+  themeColor: "#f5f5f5",
 };
 
 export default function RootLayout({
