@@ -172,7 +172,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
 
     return (
         <div className="flex flex-col gap-4 max-w-[720px]">
-            <h2 className="font-bold text-[20px]">Conversas sobre {pasta.nomeAluno}</h2>
+            <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Conversas sobre {pasta.nomeAluno}</h2>
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
                 texto={`Aqui você conversa sobre o aluno. No alto, toque no nome da conversa para escolher com quem falar. A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
             {vozLocal === false && (

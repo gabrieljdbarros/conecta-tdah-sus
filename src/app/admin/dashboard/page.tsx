@@ -48,7 +48,7 @@ export default function InicioPage() {
     const ehMae = user?.role === 'mae';
 
     return (
-        <AppMainContainer title={titulo} subtitulo={hoje}>
+        <AppMainContainer title={titulo} subtitulo={hoje} destaque>
             {(carregandoSessao || carregando) && (
                 <div role="status" className="flex flex-col items-center gap-3">
                     <AppLoader size={50} className="self-center" />

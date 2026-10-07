@@ -104,7 +104,12 @@ export default function ListaRelatorios({ pastaId, tipo }: { pastaId: string, ti
 
     return (
         <div className="flex flex-col gap-4 max-w-[640px]">
-            <p className="ff-default text-[16px] text-(--cor-texto-suave)">Pasta de <strong className="text-(--cor-texto)">{pasta.nomeAluno}</strong></p>
+            <div>
+                <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">
+                    {filtro === 'orientacao_medica' ? 'Todas as orientações' : 'Relatórios do aluno'}
+                </h2>
+                <p className="ff-default text-[16px] text-(--cor-texto-suave)">Pasta de <strong className="text-(--cor-texto)">{pasta.nomeAluno}</strong></p>
+            </div>
 
             {podeEscrever && (
                 <div className="flex flex-col gap-2">

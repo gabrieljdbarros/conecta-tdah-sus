@@ -75,7 +75,7 @@ export default function PastaList() {
         <>
             <div className="max-w-[640px]">
             <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <h2 className="font-bold text-[20px]">
+                <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">
                     {ehMae ? 'Pastas dos seus filhos' : 'Pastas que você pode ver'}
                 </h2>
                 {ehMae && <AppButton title="Nova pasta" icon="plus" href="/admin/pastas/nova" form="round" />}

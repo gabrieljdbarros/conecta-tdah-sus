@@ -52,6 +52,7 @@ export default function ConversasList() {
 
     return (
         <>
+            <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto) mb-3">Uma conversa para cada aluno</h2>
             <AppOuvir rotulo="Ouvir instruções" className="mb-3"
                 texto="Aqui fica uma conversa para cada aluno. Toque no nome do aluno para abrir a conversa." />
 
