@@ -9,7 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData, setFlashData } from "@/helpers/router";
 import { Participante, Pasta, SERIE_LABELS } from "@/types/pasta";
 import { ROLE_LABELS } from "@/types/user";
-import SecaoRelatorios from "./_relatorios";
+import { papelNaPasta } from "@/services/relatorio";
+import { TEXTO_ESCREVER, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -106,6 +107,8 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
     const sucessoRef = useRef<HTMLParagraphElement>(null);
 
     const ehDona = !!user && !!pasta && pasta.donoUid === user.uid;
+    const papel = user && pasta ? papelNaPasta(user, pasta.donoUid) : null;
+    const podeEscrever = !!papel && TIPOS_QUE_ESCREVE[papel].length > 0;
 
     // ======================================================================
     useEffect(() => {
@@ -270,9 +273,10 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
 
             {/* ATALHOS (design): levam às partes da pasta e ao chat (RN05) */}
             <nav aria-label="Atalhos da pasta">
-                <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {[
-                        { href: '#relatorios', titulo: 'titulo-relatorios', icone: 'ion-clipboard', nome: 'Relatórios' },
+                        { href: `/admin/pastas/${pasta.id}/relatorios`, icone: 'ion-clipboard', nome: 'Relatórios' },
+                        { href: `/admin/pastas/${pasta.id}/relatorios?tipo=orientacao_medica`, icone: 'ion-medkit', nome: 'Orientações' },
                         { href: `/admin/pastas/${pasta.id}/conversas`, icone: 'ion-chatbubbles', nome: 'Conversas' },
                         { href: '#vinculos', titulo: 'titulo-participantes', icone: 'ion-ios-people', nome: 'Vínculos' },
                         ...(ehDona ? [{ href: '#convidar', titulo: 'titulo-convidar', icone: 'ion-person-add', nome: 'Convidar' }] : []),
@@ -288,11 +292,20 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 </ul>
             </nav>
 
+            {/* "Relatório comportamental" (design), com palavras mais simples: escrever direto da pasta */}
+            {podeEscrever && papel && (
+                <div className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-200">
+                    <p className="ff-default text-[18px] font-bold text-(--cor-texto)">Contar como o aluno está</p>
+                    <p className="ff-default text-[16px] text-(--cor-texto)">{TEXTO_ESCREVER[papel]}</p>
+                    <AppButton title="Escrever relatório" icon="compose" href={`/admin/pastas/${pasta.id}/relatorios/novo`} className="self-start" />
+                </div>
+            )}
+
             {/* Instruções genéricas (sem o nome do aluno): podem usar qualquer voz */}
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
                 texto={ehDona
-                    ? 'Esta é a pasta do aluno. Os botões de cima levam às partes da pasta. Em Relatórios, você lê os relatórios e pode contar como a criança está em casa. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Em Convidar, você chama a escola ou o médico e envia o link para a pessoa.'
-                    : 'Esta é a pasta do aluno. Os botões de cima levam às partes da pasta. Em Relatórios, você lê e escreve relatórios. Em Conversas, você conversa com a família. Em Vínculos, você vê quem acompanha o aluno.'} />
+                    ? 'Esta é a pasta do aluno. Os botões de cima levam às partes da pasta. Em Relatórios, você lê todos os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Em Convidar, você chama a escola ou o médico e envia o link para a pessoa. Para contar como a criança está em casa, toque em Escrever relatório.'
+                    : 'Esta é a pasta do aluno. Os botões de cima levam às partes da pasta. Em Relatórios, você lê os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a família. Em Vínculos, você vê quem acompanha o aluno. Para escrever um relatório, toque em Escrever relatório.'} />
 
             {/* MENSAGENS — anunciadas pelo leitor de tela */}
             <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>
@@ -366,8 +379,6 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 )}
             </section>
 
-            {/* RELATÓRIOS (cada um vê só os tipos que pode ler) */}
-            <SecaoRelatorios pasta={pasta} />
 
             {/* CONVIDAR (só a dona) */}
             {ehDona && (

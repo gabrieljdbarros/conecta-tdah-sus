@@ -99,7 +99,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
         if (success) {
             // Anunciada pela tela da pasta (role="status")
             setFlashData('Relatório enviado');
-            router.push(`/admin/pastas/${pastaId}`);
+            router.push(`/admin/pastas/${pastaId}/relatorios`);
         } else
             setError(message ?? 'Não foi possível enviar o relatório');
     };
