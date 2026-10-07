@@ -78,7 +78,7 @@ export default function LoginForm({ focarTitulo = false }: { focarTitulo?: boole
                         <div className="w-full flex flex-col">
 
                             {/* No computador, o logo já está na metade esquerda */}
-                            <AppLogo className="mb-10 lg:hidden" />
+                            <AppLogo className="mb-10 lg:hidden" largura={260} prioridade />
                             {/* Título laranja: só em tamanho grande, negrito e sobre branco (texto grande, 3,1:1) */}
                             <h1 ref={tituloRef} tabIndex={-1} className="ff-default text-[32px] leading-tight font-extrabold text-(--cor-destaque) outline-none">Bem-vindo de volta</h1>
                             <p className="ff-default text-[18px] leading-relaxed text-(--cor-texto) mt-2 mb-3">
