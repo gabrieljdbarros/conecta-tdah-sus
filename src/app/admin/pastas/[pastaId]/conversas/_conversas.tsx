@@ -51,7 +51,17 @@ function montarAbas(pasta: Pasta, papel: PapelNaPasta, uid: string): Aba[] {
 }
 
 function formatarHora(ms: number): string {
-    return new Date(ms).toLocaleString('pt-BR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatarDia(ms: number): string {
+    return new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** Iniciais do nome no círculo do autor (o design usa foto; aqui não guardamos foto) */
+function iniciais(nome: string): string {
+    const partes = nome.trim().split(/\s+/).filter(Boolean);
+    return ((partes[0]?.[0] ?? '') + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase();
 }
 
 export default function Conversas({ pastaId }: { pastaId: string }) {
@@ -166,9 +176,9 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
                 texto={`Aqui você conversa sobre o aluno. No alto, toque no nome da conversa para escolher com quem falar. A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
             {vozLocal === false && (
-                <p role="status" className="ff-default text-[16px] text-gray-700">
+                <p className="ff-default text-[16px] text-(--cor-texto-suave)">
                     {vozSuportada()
-                        ? 'Este aparelho não tem uma voz em português que funcione sem internet. Por segurança, este conteúdo não é lido em voz alta aqui: seus dados não saem do aparelho. Para ouvir, instale a voz em português nas configurações do celular.'
+                        ? 'Este aparelho não lê mensagens em voz alta. Isso protege os dados da criança. Para ouvir, instale a voz em português nas configurações do celular.'
                         : 'Este navegador não consegue ler em voz alta.'}
                 </p>
             )}
@@ -197,8 +207,8 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
             <div id="painel-conversa" role={abas.length > 1 ? 'tabpanel' : undefined}
                 aria-labelledby={abas.length > 1 ? `aba-${aba.canal}` : undefined} className="flex flex-col gap-3">
                 {/* QUEM VÊ esta conversa */}
-                <p className="ff-default text-[16px] p-3 rounded-xl bg-white border border-gray-500">
-                    <i className="ion-eye mr-2" aria-hidden="true" />{aba.quemVe}
+                <p className="ff-default text-[16px] text-(--cor-texto) p-3 rounded-xl bg-[#EEF2FF] flex items-center gap-2">
+                    <i className="ion-eye text-(--cor-secundaria)" aria-hidden="true" />{aba.quemVe}
                 </p>
 
                 {/* ESTADOS fora do log, para não serem lidos como mensagens */}
@@ -223,24 +233,36 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                         <p className="ff-default text-[16px] text-gray-700">Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</p>
                     )}
                     <ol key={canal} ref={listaRef} role="log" tabIndex={0} aria-label={`Mensagens: ${aba.titulo}`}
-                        className="flex flex-col gap-2 min-h-[200px] max-h-[50dvh] overflow-y-auto p-2 rounded-xl bg-[#f5f5f5] border border-gray-500">
-                        {mensagens.map((m) => {
+                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-200">
+                        {mensagens.map((m, i) => {
                             const minha = m.autorUid === user?.uid;
+                            const dia = formatarDia(m.criadoEm);
+                            const novoDia = i === 0 || formatarDia(mensagens[i - 1].criadoEm) !== dia;
                             return (
-                                <li key={m.id} className={`max-w-[85%] rounded-xl p-3 ${minha ? 'self-end bg-[#E0F2FE] border border-[#0369A1]' : 'self-start bg-white border border-gray-500'}`}>
-                                    {/* "Você" identifica a autoria sem depender de cor ou posição */}
-                                    <p className="ff-default text-[16px] font-bold">
-                                        {minha ? 'Você' : `${m.autorNome} (${ROLE_LABELS[m.autorPapel]})`}
-                                        <span className="font-normal text-gray-700"> · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span>
-                                    </p>
-                                    <p className="ff-default text-[16px] leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
-                                    {/* Conteúdo: só com voz local no aparelho. Nas próprias
-                                        mensagens não aparece (a pessoa acabou de escrever) */}
-                                    {!minha && (
-                                        <AppOuvir conteudo disponivel={vozLocal} className="mt-2"
-                                            texto={`${m.autorNome} escreveu: ${m.texto}`}
-                                            descricao={`mensagem de ${m.autorNome}`} />
-                                    )}
+                                <li key={m.id} className="flex flex-col gap-3">
+                                    {novoDia && <p className="self-center ff-default text-[16px] text-(--cor-texto-suave)">{dia}</p>}
+                                    <div className={`flex items-end gap-2 max-w-[90%] ${minha ? 'self-end' : 'self-start'}`}>
+                                        {!minha && (
+                                            <span aria-hidden="true" className="flex items-center justify-center w-[40px] h-[40px] shrink-0 rounded-full bg-(--cor-secundaria) text-white ff-default text-[15px] font-bold">
+                                                {iniciais(m.autorNome)}
+                                            </span>
+                                        )}
+                                        <div className={`rounded-2xl p-3 ${minha ? 'bg-[#EEF0FF] border border-[#C7CCF5]' : 'bg-[#E3F5F2] border border-[#B8E2DC]'}`}>
+                                            {/* "Você" identifica a autoria sem depender de cor ou posição */}
+                                            <p className="ff-default text-[16px] font-bold text-(--cor-texto)">
+                                                {minha ? 'Você' : `${m.autorNome} (${ROLE_LABELS[m.autorPapel]})`}
+                                                <span className="font-normal text-(--cor-texto-suave)"> · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span>
+                                            </p>
+                                            <p className="ff-default text-[16px] leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
+                                            {/* Conteúdo: só com voz local no aparelho. Nas próprias
+                                                mensagens não aparece (a pessoa acabou de escrever) */}
+                                            {!minha && (
+                                                <AppOuvir conteudo disponivel={vozLocal} className="mt-2"
+                                                    texto={`${m.autorNome} escreveu: ${m.texto}`}
+                                                    descricao={`mensagem de ${m.autorNome}`} />
+                                            )}
+                                        </div>
+                                    </div>
                                 </li>
                             );
                         })}
@@ -260,7 +282,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     <textarea id="texto-mensagem" ref={textoRef} value={texto}
                         onChange={(e) => { setTexto(e.target.value); setEnviada(false); }}
                         rows={3} maxLength={MAX_TEXTO_MENSAGEM} aria-describedby="aviso-mensagem dica-microfone"
-                        className="w-full rounded-lg border border-(--cor-borda) bg-white p-3 ff-default text-[16px] text-(--cor-texto) placeholder:text-(--cor-borda) focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
+                        className="w-full rounded-2xl border border-(--cor-borda) bg-white p-3 ff-default text-[16px] text-(--cor-texto) placeholder:text-(--cor-borda) focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
                     {erroEnvio && <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: a mensagem não foi enviada. Tente de novo.</p>}
                     <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>{enviada ? 'Mensagem enviada.' : ''}</p>
                     <button type="submit" disabled={enviando || !texto.trim()}
