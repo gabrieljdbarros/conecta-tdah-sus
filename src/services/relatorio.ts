@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { AppUser } from "@/types/user";
 import { PapelNaPasta, Relatorio, TipoRelatorio, TIPOS_QUE_LE } from "@/types/relatorio";
@@ -38,6 +38,21 @@ const RelatorioServices = {
             return { success: true, relatorios };
         } catch {
             return { success: false, relatorios: [] };
+        }
+    },
+
+    /**
+     * Um relatório só (tela de detalhe). As regras liberam a leitura só se o
+     * TIPO dele for um que o papel da pessoa pode ler: um laudo aberto pela
+     * escola (ex.: link copiado) volta como "não encontrado"
+     */
+    buscar: async (pastaId: string, relatorioId: string): Promise<{ success: boolean; relatorio?: Relatorio }> => {
+        try {
+            const snapshot = await getDoc(doc(db, "pastas", pastaId, "relatorios", relatorioId));
+            if (!snapshot.exists()) return { success: false };
+            return { success: true, relatorio: { id: snapshot.id, ...snapshot.data() } as Relatorio };
+        } catch {
+            return { success: false };
         }
     },
 
