@@ -43,9 +43,9 @@ export default function AppMainContainer({title, voltar, voltarRotulo = 'Voltar'
                         {subtitulo && <p className="ff-default text-[16px] text-[#3B3B3B]">{subtitulo}</p>}
                     </div>
                 ) : (
-                    // Nome da tela à direita, em letra normal (#3B3B3B sobre #F5F5F5: cerca de 10:1)
+                    // Nome da tela à direita, sem o negrito pesado do design antigo (#3B3B3B sobre #F5F5F5: cerca de 10:1)
                     <div className="ml-auto py-3 pl-2 text-right">
-                        <h1 className="ff-default text-[20px] md:text-[22px] text-[#3B3B3B] break-words">{title}</h1>
+                        <h1 className="ff-default text-[22px] md:text-[24px] font-semibold text-[#3B3B3B] break-words">{title}</h1>
                         {subtitulo && <p className="ff-default text-[16px] text-[#3B3B3B]">{subtitulo}</p>}
                     </div>
                 )}

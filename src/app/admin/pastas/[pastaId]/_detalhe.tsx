@@ -92,7 +92,7 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                     ].map((a) => (
                         <li key={a.nome}>
                             <Link href={a.href}
-                                className="flex flex-col items-center justify-center gap-1 min-h-[88px] p-2 bg-white rounded-xl border border-gray-200 shadow-sm ff-default text-[16px] font-bold text-(--cor-texto)">
+                                className="flex flex-col items-center justify-center gap-1 min-h-[88px] p-2 bg-white rounded-xl border border-gray-300 shadow-sm ff-default text-[16px] font-bold text-(--cor-texto)">
                                 <i className={`${a.icone} text-[28px] text-(--cor-link)`} aria-hidden="true" />
                                 {a.nome}
                             </Link>
@@ -103,7 +103,7 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
 
             {/* "Relatório comportamental" (design), com palavras mais simples: escrever direto da pasta */}
             {podeEscrever && papel && (
-                <div className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-200">
+                <div className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-300">
                     <p className="ff-default text-[18px] font-bold text-(--cor-texto)">Contar como o aluno está</p>
                     <p className="ff-default text-[16px] text-(--cor-texto)">{TEXTO_ESCREVER[papel]}</p>
                     <AppButton title="Escrever relatório" icon="compose" href={`${base}/relatorios/novo`} className="self-start" />

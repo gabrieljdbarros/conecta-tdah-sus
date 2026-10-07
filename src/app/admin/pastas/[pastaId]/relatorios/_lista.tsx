@@ -175,7 +175,7 @@ export default function ListaRelatorios({ pastaId, tipo }: { pastaId: string, ti
                                 relatório inteiro está no detalhe) */}
                             <Link href={`${base}/${r.id}`}
                                 aria-labelledby={`rel-${r.id}-tipo rel-${r.id}-data`} aria-describedby={`rel-${r.id}-autor`}
-                                className="flex gap-3 p-4 bg-white rounded-xl border border-gray-200 shadow-sm ff-default">
+                                className="flex gap-3 p-4 bg-white rounded-xl border border-gray-300 shadow-sm ff-default">
                                 <i className={`${ICONE_TIPO[r.tipo]} text-[24px] text-(--cor-link) mt-1`} aria-hidden="true" />
                                 <span className="flex flex-col gap-1 flex-1 min-w-0">
                                     <span id={`rel-${r.id}-tipo`} className="text-[18px] font-bold text-(--cor-texto)">{TIPO_LABELS[r.tipo]}</span>

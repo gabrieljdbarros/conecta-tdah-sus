@@ -38,24 +38,25 @@ export default function UserList() {
                 <p className="ff-default text-[16px]">Carregando os usuários...</p>
             </div>}
 
-            {!loading && <div className="overflow-x-auto">
+            {!loading && <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-300">
                 <table className="min-w-full bg-white">
+                    <caption className="sr-only">Lista de usuários cadastrados</caption>
                     <thead>
                         <tr>
-                            <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">Nome</th>
-                            <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">Email</th>
-                            <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">Perfil</th>
-                            <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">Detalhes</th>
+                            <th scope="col" className="py-2 px-4 border-b border-gray-300 text-left text-[16px] font-semibold text-gray-700">Nome</th>
+                            <th scope="col" className="py-2 px-4 border-b border-gray-300 text-left text-[16px] font-semibold text-gray-700">Email</th>
+                            <th scope="col" className="py-2 px-4 border-b border-gray-300 text-left text-[16px] font-semibold text-gray-700">Perfil</th>
+                            <th scope="col" className="py-2 px-4 border-b border-gray-300 text-left text-[16px] font-semibold text-gray-700">Detalhes</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         {users.map(user => (
                             <tr key={user.uid}>
-                                <td className="py-2 px-4 border-b border-gray-200 text-sm">{user.nome}</td>
-                                <td className="py-2 px-4 border-b border-gray-200 text-sm">{user.email}</td>
-                                <td className="py-2 px-4 border-b border-gray-200 text-sm">{ROLE_LABELS[user.role]}</td>
-                                <td className="py-2 px-4 border-b border-gray-200 text-sm">{detalhesPerfil(user)}</td>
+                                <td className="py-2 px-4 border-b border-gray-300 text-[16px]">{user.nome}</td>
+                                <td className="py-2 px-4 border-b border-gray-300 text-[16px]">{user.email}</td>
+                                <td className="py-2 px-4 border-b border-gray-300 text-[16px]">{ROLE_LABELS[user.role]}</td>
+                                <td className="py-2 px-4 border-b border-gray-300 text-[16px]">{detalhesPerfil(user)}</td>
                             </tr>
                         ))}
 

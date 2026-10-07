@@ -120,7 +120,7 @@ export default function DetalheRelatorio({ pastaId, relatorioId }: { pastaId: st
                 {quemVe.length > 0 && (
                     <ul className="flex flex-col gap-2">
                         {quemVe.map(([uid, p]) => (
-                            <li key={uid} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-white rounded-xl border border-gray-200">
+                            <li key={uid} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-white rounded-xl border border-gray-300">
                                 <span className="ff-default text-[16px] font-bold text-(--cor-texto)">
                                     {uid === user?.uid ? `${p.nome} (você)` : p.nome}
                                     <span className="sr-only">, </span>

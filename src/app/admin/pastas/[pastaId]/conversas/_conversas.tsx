@@ -233,7 +233,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                         <p className="ff-default text-[16px] text-gray-700">Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</p>
                     )}
                     <ol key={canal} ref={listaRef} role="log" tabIndex={0} aria-label={`Mensagens: ${aba.titulo}`}
-                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-200">
+                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-300">
                         {mensagens.map((m, i) => {
                             const minha = m.autorUid === user?.uid;
                             const dia = formatarDia(m.criadoEm);

@@ -299,7 +299,7 @@ export default function Vinculos({ pastaId }: { pastaId: string }) {
                 ) : (
                     <ul className="flex flex-col gap-2">
                         {participantes.map(([uid, p]) => (
-                            <li key={uid} className="flex flex-wrap items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                            <li key={uid} className="flex flex-wrap items-center gap-3 bg-white rounded-xl p-3 border border-gray-300">
                                 <i className={`${p.papel === 'escola' ? 'ion-university' : p.papel === 'medico' ? 'ion-medkit' : 'ion-person'} text-[24px] text-gray-700`} aria-hidden="true" />
                                 <div className="flex-1">
                                     <p className="ff-default text-[16px] font-bold">
@@ -400,7 +400,7 @@ export default function Vinculos({ pastaId }: { pastaId: string }) {
                             <h3 className="font-bold text-[18px] mb-2">Convites esperando resposta</h3>
                             <ul className="flex flex-col gap-2">
                                 {pendentes.map((c) => (
-                                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl p-3 border border-gray-300">
                                         <div>
                                             <p className="ff-default text-[16px] font-bold">Convite para {PARA_QUEM[c.papel]}</p>
                                             <p className="ff-default text-[16px] text-(--cor-texto-suave) flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function Vinculos({ pastaId }: { pastaId: string }) {
                             <h3 className="font-bold text-[18px] mb-2">Convites vencidos</h3>
                             <ul className="flex flex-col gap-2">
                                 {vencidos.map((c) => (
-                                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl p-3 border border-gray-300">
                                         <div>
                                             <p className="ff-default text-[16px] font-bold">Convite para {PARA_QUEM[c.papel]}</p>
                                             <p className={`ff-default text-[16px] ${COR_ERRO} flex items-center gap-2`}>

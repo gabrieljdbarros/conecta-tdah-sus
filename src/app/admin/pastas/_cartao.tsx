@@ -8,7 +8,7 @@ import { Pasta, SERIE_LABELS } from "@/types/pasta";
 export function CartaoPasta({ pasta }: { pasta: Pasta }) {
     return (
         <Link href={`/admin/pastas/${pasta.id}`}
-            className="flex items-center gap-4 min-h-[80px] p-4 bg-white rounded-xl border border-gray-200 shadow-sm ff-default">
+            className="flex items-center gap-4 min-h-[80px] p-4 bg-white rounded-xl border border-gray-300 shadow-sm ff-default">
             <span aria-hidden="true" className="flex items-center justify-center w-[48px] h-[48px] shrink-0 rounded-full bg-(--background-secondary) text-(--cor-link) text-[24px]">
                 <i className="ion-folder" />
             </span>
@@ -36,7 +36,7 @@ export function ListaPastas({ pastas }: { pastas: Pasta[] }) {
  */
 export function CartaoCriarPasta() {
     return (
-        <div className="flex flex-col gap-2 p-5 rounded-xl border border-gray-200 bg-linear-to-br from-white to-[#FFF1E0]">
+        <div className="flex flex-col gap-2 p-5 rounded-xl border border-gray-300 bg-linear-to-br from-white to-[#FFF1E0]">
             <p className="ff-default text-[16px] font-bold tracking-wide uppercase text-(--cor-secundaria)">Pasta do aluno</p>
             <h2 className="ff-default text-[26px] font-extrabold text-(--cor-texto) leading-tight">Cadastre o aluno</h2>
             <p className="ff-default text-[16px] text-(--cor-texto)">
