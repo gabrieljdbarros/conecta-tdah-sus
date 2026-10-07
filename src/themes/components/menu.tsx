@@ -3,6 +3,7 @@ import AppMenuItem from "./menu-item";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROLE_LABELS } from "@/types/user";
 import { AppSair, itensDoMenu } from "./navegacao";
+import AppLogo from "./logo";
 
 /**
  * Menu lateral (computador). No celular:
@@ -17,11 +18,7 @@ export default function AppMenu() {
     return (
          <div className={`${ehAdmin ? 'flex' : 'hidden md:flex'} w-[60px] md:w-[300px] bg-(--background-primary) flex-col pt-[40px] shadow-sm`}>
             <div className="hidden md:flex flex-col items-center gap-1 px-4">
-                {/* Logo em texto (o leitor de tela consegue ler) */}
-                <p className="text-center leading-none font-extrabold text-(--cor-link)">
-                    <span className="block text-[30px] tracking-tight">CONECTA</span>
-                    <span className="block text-[20px]">TDAH | SUS</span>
-                </p>
+                <AppLogo />
                 <p className="mt-4 text-center font-bold break-all text-(--cor-texto)">{user?.nome}</p>
                 {user && <p className="text-center text-[16px] text-(--cor-texto-suave)">{ROLE_LABELS[user.role]}</p>}
 
