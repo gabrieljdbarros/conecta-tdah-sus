@@ -56,7 +56,7 @@ export default function AppModal({children, title, onClose}: AppModalProps) {
             <div className="fixed top-0 left-0 h-full w-full flex justify-center items-center p-4 overflow-y-auto pointer-events-none">
                 <div ref={janelaRef} role="dialog" aria-modal="true" aria-labelledby={title ? idTitulo : undefined}
                     tabIndex={-1} onKeyDown={aoTeclar}
-                    className="bg-white opacity-100 p-6 md:p-[50px] rounded-xl max-w-[600px] w-full max-h-full overflow-y-auto flex-col pointer-events-auto outline-none">
+                    className="bg-white opacity-100 p-6 md:p-[50px] rounded-2xl border border-(--cor-destaque) max-w-[600px] w-full max-h-full overflow-y-auto flex-col pointer-events-auto outline-none">
                     <div className="flex items-center justify-between gap-3">
                         {title && <h2 id={idTitulo} className="ff-default text-[26px] mb-5 font-bold">{title}</h2>}
                         {onClose &&

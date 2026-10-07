@@ -260,7 +260,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     <textarea id="texto-mensagem" ref={textoRef} value={texto}
                         onChange={(e) => { setTexto(e.target.value); setEnviada(false); }}
                         rows={3} maxLength={MAX_TEXTO_MENSAGEM} aria-describedby="aviso-mensagem dica-microfone"
-                        className="w-full rounded-xl border-2 border-gray-600 bg-white p-3 ff-default text-[16px] focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
+                        className="w-full rounded-lg border border-(--cor-borda) bg-white p-3 ff-default text-[16px] text-(--cor-texto) placeholder:text-(--cor-borda) focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
                     {erroEnvio && <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: a mensagem não foi enviada. Tente de novo.</p>}
                     <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>{enviada ? 'Mensagem enviada.' : ''}</p>
                     <button type="submit" disabled={enviando || !texto.trim()}

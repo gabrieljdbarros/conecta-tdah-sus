@@ -9,6 +9,8 @@
 *    (19px bold = "texto grande" no WCAG; 3,1:1 passa) — nunca como texto
 *  - link (azul dos links do design): links, botões de contorno, seleção e foco (7,1:1)
 *  - secundaria (verde-petróleo do "Ouvir relatório"): ações secundárias (6,48:1)
+*  - borda (cinza dos campos do design): borda e placeholder dos campos,
+*    sempre sobre fundo branco (4,5:1; sobre o lilás do fundo cairia para 4,27)
 */
 :root {
   --background-primary: #ffffff;
@@ -18,6 +20,7 @@
   --cor-secundaria: #006a63;
   --cor-texto: #242424;
   --cor-texto-suave: #5a5a5a;
+  --cor-borda: #737686;
 }
 
 /*
@@ -42,13 +45,8 @@
 * LOADER
 */
 .loader {
-  border: 16px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 16px solid #3498db;
-  width: 120px;
-  height: 120px;
-  -webkit-animation: spin 2s linear infinite; /* Safari */
-  animation: spin 2s linear infinite;
+  -webkit-animation: spin 1s linear infinite; /* Safari */
+  animation: spin 1s linear infinite;
 }
 
 /* Safari */

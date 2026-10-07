@@ -201,7 +201,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                         <label htmlFor={ID_CAMPO.texto} className="ff-default text-[16px] font-bold">Texto do relatório (obrigatório):</label>
                         <textarea id={ID_CAMPO.texto} name="texto" value={values.texto} onChange={handleChange}
                             rows={8} maxLength={MAX_TEXTO_RELATORIO} aria-describedby="dica-microfone contador-texto aviso-imutavel"
-                            className="w-full rounded-xl border-2 border-gray-600 bg-[#f5f5f5] p-3 ff-default text-[16px] leading-relaxed focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
+                            className="w-full rounded-lg border border-(--cor-borda) bg-white p-3 ff-default text-[16px] text-(--cor-texto) placeholder:text-(--cor-borda) leading-relaxed focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
                         {/* Ditado pelo teclado do celular: ajuda quem tem dificuldade para escrever */}
                         <p id="dica-microfone" className="ff-default text-[16px] text-gray-700">
                             <i className="ion-mic-a mr-1" aria-hidden="true" />Dica: no celular, toque no microfone do teclado para falar em vez de digitar.
