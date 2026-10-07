@@ -33,7 +33,10 @@ export default function UserList() {
     // ======================================================================
     return (
         <>
-            {loading && <div className="flex justify-center"><AppLoader size={50} className="self-center" /></div>}
+            {loading && <div role="status" className="flex flex-col items-center gap-3">
+                <AppLoader size={50} className="self-center" />
+                <p className="ff-default text-[16px]">Carregando os usuários...</p>
+            </div>}
 
             {!loading && <div className="overflow-x-auto">
                 <table className="min-w-full bg-white">

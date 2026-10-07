@@ -50,6 +50,7 @@ O mínimo é 4,5:1 para texto normal e 3:1 para texto grande (19px em negrito ou
 | `--cor-destaque` | `#FF5C00` | só **fundo** (botão principal, menu ativo), com texto branco **19px negrito**; nunca como cor de texto |
 | `--cor-link` | `#0155A0` | links, botões de contorno, item selecionado, anel de foco |
 | `--cor-secundaria` | `#006A63` | botão "Ouvir" |
+| `--cor-borda` | `#737686` | borda e placeholder dos campos, sempre sobre fundo branco (4,5:1) |
 | `--cor-texto` / `--cor-texto-suave` | `#242424` / `#5A5A5A` | texto |
 | `--background-secondary` / `--background-primary` | `#FAF8FF` / `#FFFFFF` | fundo das telas / dos cartões |
 

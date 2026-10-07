@@ -36,8 +36,8 @@ export default function AppInput ({type="text", name, onChange, placeholder, val
     // -------------------------------------------------------------------------
     return (
         <div className={className} style={style}>
-            {label && <label htmlFor={id} className="block ff-default text-[16px] ml-3">{label}</label>}
-            <div className="rounded-xl border-2 border-gray-500 px-2 flex items-center bg-[#f5f5f5] my-1 min-h-[48px] focus-within:border-(--cor-link) focus-within:ring-2 focus-within:ring-(--cor-link)">
+            {label && <label htmlFor={id} className="block ff-default text-[16px] text-(--cor-texto)">{label}</label>}
+            <div className="rounded-lg border border-(--cor-borda) px-2 flex items-center bg-white my-1 min-h-[48px] has-[[aria-invalid=true]]:border-[#B91C1C] has-[[aria-invalid=true]]:ring-1 has-[[aria-invalid=true]]:ring-[#B91C1C] has-[input:focus]:border-(--cor-link) has-[input:focus]:ring-2 has-[input:focus]:ring-(--cor-link)">
                 {icon && <i className={`ion-${icon} mx-2 text-gray-700`} aria-hidden="true" />}
                 <input id={id} type={openPassword ? showPassword ? "text" : "password" : type} name={name} placeholder={placeholder}
                     value={value} onChange={onChange} onBlur={() => setTouched(true)}
@@ -45,7 +45,7 @@ export default function AppInput ({type="text", name, onChange, placeholder, val
                     // Sem rótulo visível (ex.: login antigo), o placeholder vira o nome acessível
                     aria-label={label ? undefined : placeholder}
                     aria-invalid={exibirErro || undefined} aria-describedby={exibirErro ? idErro : undefined}
-                    className="flex-1 min-w-0 bg-transparent py-2 ff-default text-[16px] outline-none" />
+                    className="flex-1 min-w-0 bg-transparent py-2 ff-default text-[16px] text-(--cor-texto) placeholder:text-(--cor-borda) outline-none" />
                 {openPassword &&
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Esconder senha" : "Mostrar senha"} aria-pressed={showPassword}
@@ -53,7 +53,7 @@ export default function AppInput ({type="text", name, onChange, placeholder, val
                         <i className={showPassword ? "ion-eye" : "ion-eye-disabled"} aria-hidden="true" />
                     </button>}
             </div>
-            {exibirErro && <p id={idErro} aria-live="polite" className="text-[#B91C1C] ff-default text-[16px] ml-3">{error}</p>}
+            {exibirErro && <p id={idErro} aria-live="polite" className="text-[#B91C1C] ff-default text-[16px]">{error}</p>}
         </div>
     )
 }

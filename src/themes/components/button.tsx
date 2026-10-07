@@ -25,7 +25,7 @@ export interface AppButtonProps {
  *  - `disabled` desabilita de fato
  *  - alvo de 48px; texto de 19px negrito no sólido e 16px no contorno
  */
-export default function AppButton({title, onClick, color, textColor='white', form='square', type='solid', submit = false, disabled, icon, href, style = {}, className = ''}: AppButtonProps) {
+export default function AppButton({title, onClick, color, textColor='white', form='round', type='solid', submit = false, disabled, icon, href, style = {}, className = ''}: AppButtonProps) {
 
     // Padrão: sólido em laranja (destaque); contorno em azul (link), porque
     // laranja como cor de texto não tem contraste suficiente (ver globals.css)
