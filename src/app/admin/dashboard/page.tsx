@@ -48,7 +48,7 @@ export default function InicioPage() {
     const ehMae = user?.role === 'mae';
 
     return (
-        <AppMainContainer title={titulo} subtitulo={hoje}>
+        <AppMainContainer title={titulo} subtitulo={hoje} destaque>
             {(carregandoSessao || carregando) && (
                 <div role="status" className="flex flex-col items-center gap-3">
                     <AppLoader size={50} className="self-center" />
@@ -60,10 +60,10 @@ export default function InicioPage() {
             {!carregandoSessao && user?.role === 'admin' && (
                 <div className="flex flex-col gap-3 max-w-[640px]">
                     <p className="ff-default text-[18px] text-(--cor-texto)">O que você quer fazer?</p>
-                    <Link href="/admin/usuarios" className="flex items-center gap-4 min-h-[72px] p-4 bg-white rounded-xl border border-gray-200 shadow-sm ff-default text-[18px] font-bold text-(--cor-texto)">
+                    <Link href="/admin/usuarios" className="flex items-center gap-4 min-h-[72px] p-4 bg-white rounded-xl border border-gray-300 shadow-sm ff-default text-[18px] font-bold text-(--cor-texto)">
                         <i className="ion-ios-people text-[28px] text-(--cor-link)" aria-hidden="true" />Gerenciar usuários
                     </Link>
-                    <Link href="/admin/categorias" className="flex items-center gap-4 min-h-[72px] p-4 bg-white rounded-xl border border-gray-200 shadow-sm ff-default text-[18px] font-bold text-(--cor-texto)">
+                    <Link href="/admin/categorias" className="flex items-center gap-4 min-h-[72px] p-4 bg-white rounded-xl border border-gray-300 shadow-sm ff-default text-[18px] font-bold text-(--cor-texto)">
                         <i className="ion-pricetags text-[28px] text-(--cor-link)" aria-hidden="true" />Gerenciar categorias de acompanhamento
                     </Link>
                 </div>
@@ -94,7 +94,7 @@ export default function InicioPage() {
 
                     {pastas.length > 0 && (
                         <section aria-labelledby="titulo-alunos" className="flex flex-col gap-3">
-                            <h2 id="titulo-alunos" className="font-bold text-[20px] text-(--cor-texto)">
+                            <h2 id="titulo-alunos" className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">
                                 {ehMae ? 'Pastas dos seus filhos' : 'Alunos que você acompanha'}
                             </h2>
                             <ListaPastas pastas={pastas} />

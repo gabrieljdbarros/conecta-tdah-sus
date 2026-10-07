@@ -172,7 +172,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
 
     return (
         <div className="flex flex-col gap-4 max-w-[720px]">
-            <h2 className="font-bold text-[20px]">Conversas sobre {pasta.nomeAluno}</h2>
+            <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Conversas sobre {pasta.nomeAluno}</h2>
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
                 texto={`Aqui você conversa sobre o aluno. No alto, toque no nome da conversa para escolher com quem falar. A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
             {vozLocal === false && (
@@ -233,7 +233,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                         <p className="ff-default text-[16px] text-gray-700">Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</p>
                     )}
                     <ol key={canal} ref={listaRef} role="log" tabIndex={0} aria-label={`Mensagens: ${aba.titulo}`}
-                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-200">
+                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-300">
                         {mensagens.map((m, i) => {
                             const minha = m.autorUid === user?.uid;
                             const dia = formatarDia(m.criadoEm);

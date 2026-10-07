@@ -11,8 +11,8 @@ import { Categoria, CATEGORIAS_SUGERIDAS } from "@/types/categoria";
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
 
-const CLASSE_TH = "py-2 px-4 border-b border-gray-200 text-left text-[16px] font-semibold text-gray-700";
-const CLASSE_TD = "py-2 px-4 border-b border-gray-200 text-[16px]";
+const CLASSE_TH = "py-2 px-4 border-b border-gray-300 text-left text-[16px] font-semibold text-gray-700";
+const CLASSE_TD = "py-2 px-4 border-b border-gray-300 text-[16px]";
 const CLASSE_ACAO = "min-h-[48px] px-4 inline-flex items-center rounded-full border-2 ff-default text-[16px] cursor-pointer";
 
 export default function CategoriaList() {
@@ -93,7 +93,7 @@ export default function CategoriaList() {
     return (
         <>
             <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <h2 className="font-bold text-[20px]">Categorias</h2>
+                <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Categorias cadastradas</h2>
                 <AppButton title="Nova categoria" icon="plus" href="/admin/categorias/nova" form="round" />
             </div>
 
@@ -123,7 +123,7 @@ export default function CategoriaList() {
                 </div>
             )}
 
-            {categorias.length > 0 && <div className="overflow-x-auto">
+            {categorias.length > 0 && <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-300">
                 <table className="min-w-full bg-white">
                     <caption className="sr-only">Lista das categorias de acompanhamento</caption>
                     <thead>

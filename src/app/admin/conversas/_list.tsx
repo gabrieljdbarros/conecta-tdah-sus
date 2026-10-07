@@ -52,6 +52,7 @@ export default function ConversasList() {
 
     return (
         <>
+            <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto) mb-3">Uma conversa para cada aluno</h2>
             <AppOuvir rotulo="Ouvir instruções" className="mb-3"
                 texto="Aqui fica uma conversa para cada aluno. Toque no nome do aluno para abrir a conversa." />
 
@@ -73,16 +74,17 @@ export default function ConversasList() {
             {pastas.length > 0 && (
                 <ul className="flex flex-col">
                     {pastas.map((pasta) => (
-                        <li key={pasta.id} className="border-b border-gray-200">
+                        <li key={pasta.id} className="border-b border-gray-300">
                             <Link href={`/admin/pastas/${pasta.id}/conversas`}
                                 className="flex items-center gap-4 min-h-[72px] py-2 ff-default">
-                                <span aria-hidden="true" className="flex items-center justify-center w-[48px] h-[48px] shrink-0 rounded-full bg-(--background-secondary) text-(--cor-link) text-[24px]">
+                                <span aria-hidden="true" className="flex items-center justify-center w-[48px] h-[48px] shrink-0 rounded-full bg-white border border-gray-300 text-(--cor-link) text-[24px]">
                                     <i className="ion-chatbubbles" />
                                 </span>
                                 <span className="flex flex-col">
                                     <span className="text-[18px] font-bold text-(--cor-texto)">Conversa de {pasta.nomeAluno}</span>
                                     <span className="text-[16px] text-(--cor-texto-suave)">{SERIE_LABELS[pasta.serie] ?? ''}</span>
                                 </span>
+                                <i className="ion-chevron-right ml-auto text-[20px] text-(--cor-texto-suave)" aria-hidden="true" />
                             </Link>
                         </li>
                     ))}

@@ -11,7 +11,7 @@ export default function UsuariosPage() {
     return (
         <AppMainContainer title="Usuários">
             <div className="flex justify-between items-center">
-                <h2 className="font-bold text-[20px]">Lista de usuários</h2>
+                <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Quem tem acesso ao sistema</h2>
             </div>
 
             <p className="text-[16px] text-gray-700 mt-1 mb-3">
