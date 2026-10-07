@@ -63,7 +63,8 @@ const ConviteServices = {
     },
 
     /**
-     * Convites da pasta que ainda não foram usados nem expiraram.
+     * Convites da pasta que ainda não foram usados (válidos e vencidos: a
+     * tela mostra os vencidos para gerar um novo).
      * O filtro `criadoPor` é obrigatório: as regras só liberam os próprios.
      */
     pendentes: async (uid: string, pastaId: string): Promise<{ success: boolean; convites: ConvitePendente[] }> => {
@@ -74,10 +75,8 @@ const ConviteServices = {
                 where("pastaId", "==", pastaId),
                 where("usadoEm", "==", null),
             ));
-            const agora = Date.now();
             const convites = snapshot.docs
                 .map((d) => ({ id: d.id, papel: d.data().papel, expiraEm: d.data().expiraEm }))
-                .filter((c) => c.expiraEm > agora)
                 .sort((a, b) => a.expiraEm - b.expiraEm);
             return { success: true, convites };
         } catch {
