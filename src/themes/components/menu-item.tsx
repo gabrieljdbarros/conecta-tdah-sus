@@ -24,7 +24,7 @@ export default function AppMenuItem ({title, icon, url, exato = false}: AppMenuI
 
     return (
         <Link href={url} aria-current={ativado ? 'page' : undefined}
-            className={`flex items-center min-h-[48px] md:pl-[10px] cursor-pointer mb-[5px] rounded-s-full text-[17px] ${ativado ?  'text-white bg-(--primary-color)' : 'text-black'}`}>
+            className={`flex items-center min-h-[48px] md:pl-[10px] cursor-pointer mb-[5px] rounded-s-full ${ativado ?  'text-white bg-(--cor-destaque) text-[19px] font-bold' : 'text-black text-[17px]'}`}>
             <i className={`ion-${icon} mx-2`} aria-hidden="true" />
             <span className="sr-only md:not-sr-only">{title}</span>
         </Link>

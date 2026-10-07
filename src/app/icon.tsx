@@ -20,7 +20,7 @@ export default function Icon({ id }: { id: string }) {
             // das bordas, para o Android poder recortar em círculo (maskable)
             <div style={{
                 width: "100%", height: "100%", display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center", background: "#0069ad", color: "white",
+                alignItems: "center", justifyContent: "center", background: "#ff5c00", color: "white",
                 fontWeight: 700, fontFamily: "sans-serif",
             }}>
                 {/* Só "TDAH": na tela inicial o ícone tem ~48px, e um segundo texto

@@ -173,7 +173,7 @@ export default function CadastroForm() {
                     <AppButton title={isSubmitting ? "Criando..." : "Criar conta"} submit disabled={isSubmitting} form="round" className="mt-4" />
 
                     <Link href={convite ? `/?convite=${convite}` : "/"} className="min-h-[48px] mt-2 flex items-center justify-center">
-                        <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer">Já tenho conta — fazer login</p>
+                        <p className="ff-default text-center text-[16px] text-(--cor-link) underline cursor-pointer">Já tenho conta — fazer login</p>
                     </Link>
                 </form>
             )}

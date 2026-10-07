@@ -31,7 +31,7 @@ const ID_CAMPO: Record<keyof FormValues, string> = {
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
-const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
+const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
 /**
  * Resumo dos erros ao tentar enviar: diz O QUE fazer ("Escolha o assunto"),
@@ -154,7 +154,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                         <fieldset id={ID_CAMPO.tipo} aria-describedby={submitCount > 0 && errors.tipo ? 'erro-tipo' : undefined} className="flex flex-col gap-2">
                             <legend className="ff-default text-[16px] font-bold mb-2">Tipo de relatório (obrigatório):</legend>
                             {tipos.map((t) => (
-                                <label key={t} className={`flex items-start gap-3 min-h-[48px] p-3 rounded-xl border-2 cursor-pointer ${values.tipo === t ? 'border-(--primary-color) bg-white' : 'border-gray-500'}`}>
+                                <label key={t} className={`flex items-start gap-3 min-h-[48px] p-3 rounded-xl border-2 cursor-pointer ${values.tipo === t ? 'border-(--cor-link) bg-white' : 'border-gray-500'}`}>
                                     <input type="radio" name="tipo" value={t} checked={values.tipo === t} onChange={handleChange} className="mt-1 w-5 h-5" />
                                     <span className="ff-default text-[16px]">
                                         <span className="block font-bold">{TIPO_LABELS[t]}</span>
@@ -201,7 +201,7 @@ export default function NovoRelatorioForm({ pastaId }: { pastaId: string }) {
                         <label htmlFor={ID_CAMPO.texto} className="ff-default text-[16px] font-bold">Texto do relatório (obrigatório):</label>
                         <textarea id={ID_CAMPO.texto} name="texto" value={values.texto} onChange={handleChange}
                             rows={8} maxLength={MAX_TEXTO_RELATORIO} aria-describedby="dica-microfone contador-texto aviso-imutavel"
-                            className="w-full rounded-xl border-2 border-gray-600 bg-[#f5f5f5] p-3 ff-default text-[16px] leading-relaxed focus:border-(--primary-color) focus:outline-none" />
+                            className="w-full rounded-xl border-2 border-gray-600 bg-[#f5f5f5] p-3 ff-default text-[16px] leading-relaxed focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
                         {/* Ditado pelo teclado do celular: ajuda quem tem dificuldade para escrever */}
                         <p id="dica-microfone" className="ff-default text-[16px] text-gray-700">
                             <i className="ion-mic-a mr-1" aria-hidden="true" />Dica: no celular, toque no microfone do teclado para falar em vez de digitar.

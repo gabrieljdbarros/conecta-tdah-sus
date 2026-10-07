@@ -8,7 +8,17 @@ import { useEffect } from "react";
  */
 export default function RegistrarServiceWorker() {
     useEffect(() => {
-        if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
+        if (!("serviceWorker" in navigator)) return;
+        if (process.env.NODE_ENV !== "production") {
+            // No desenvolvimento, desliga o service worker que tenha ficado de um
+            // teste da versão de produção (npm run preview) no mesmo endereço:
+            // no dev os arquivos de /_next/static não mudam de nome, e ele
+            // continuaria entregando código e estilos antigos
+            navigator.serviceWorker.getRegistrations()
+                .then((registros) => registros.forEach((registro) => registro.unregister()))
+                .catch(() => {});
+            return;
+        }
         navigator.serviceWorker.register("/sw.js").catch(() => {
             // Sem service worker o site continua funcionando normalmente
         });

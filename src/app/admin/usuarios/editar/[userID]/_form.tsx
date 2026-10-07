@@ -98,7 +98,7 @@ function montarDadosPerfil(role: UserRole, values: FormValues): DadosPerfil {
 // Link de saída para as telas sem formulário (alvo de toque grande)
 function LinkVoltar() {
     return (
-        <Link href="/admin/dashboard" className="self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]">
+        <Link href="/admin/dashboard" className="self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]">
             Voltar ao início
         </Link>
     );

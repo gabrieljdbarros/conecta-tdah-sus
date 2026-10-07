@@ -1,11 +1,36 @@
 @import "tailwindcss";
 @import "./styles/ionicons.css";
 
+/*
+* CORES — todas tiradas do design da equipe (paleta original em
+* docs/design-cores.md). Cada cor tem um PAPEL, e o papel garante o
+* contraste mínimo (WCAG AA) sem mudar a cor escolhida pela designer:
+*  - destaque (laranja): só como FUNDO, com texto branco grande e negrito
+*    (19px bold = "texto grande" no WCAG; 3,1:1 passa) — nunca como texto
+*  - link (azul dos links do design): links, botões de contorno, seleção e foco (7,1:1)
+*  - secundaria (verde-petróleo do "Ouvir relatório"): ações secundárias (6,48:1)
+*/
 :root {
-  /* CORES */
   --background-primary: #ffffff;
-  --background-secondary: #f2f3f0;
-  --primary-color: #0069ad;
+  --background-secondary: #faf8ff;
+  --cor-destaque: #ff5c00;
+  --cor-link: #0155a0;
+  --cor-secundaria: #006a63;
+  --cor-texto: #242424;
+  --cor-texto-suave: #5a5a5a;
+}
+
+/*
+* FOCO — anel azul em tudo que recebe foco pelo teclado. O afastamento (offset)
+* põe o anel sobre o fundo da página (7,1:1), e não sobre o laranja.
+* Fica em @layer base para que os componentes possam trocar o anel (ex.: o
+* campo de texto já mostra o anel no contorno do campo inteiro)
+*/
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--cor-link);
+    outline-offset: 2px;
+  }
 }
 
 .ff-default {

@@ -10,8 +10,8 @@ import { ROLE_LABELS } from "@/types/user";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
-const CLASSE_LINK = "min-h-[48px] px-6 flex items-center justify-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
-const CLASSE_LINK_PRINCIPAL = `${CLASSE_LINK} bg-(--primary-color) text-white`;
+const CLASSE_LINK = "min-h-[48px] px-6 flex items-center justify-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
+const CLASSE_LINK_PRINCIPAL = "min-h-[48px] px-6 flex items-center justify-center rounded-full border-2 border-(--cor-destaque) bg-(--cor-destaque) text-white ff-default text-[19px] font-bold";
 
 export default function AceitarConvite({ token }: { token: string }) {
     const router = useRouter();
@@ -95,7 +95,7 @@ export default function AceitarConvite({ token }: { token: string }) {
                     </button>
                 </>}
 
-                <Link href="/admin/pastas" className="ff-default text-[16px] text-center text-(--primary-color) underline min-h-[48px] flex items-center justify-center">
+                <Link href="/admin/pastas" className="ff-default text-[16px] text-center text-(--cor-link) underline min-h-[48px] flex items-center justify-center">
                     Ir para as minhas pastas
                 </Link>
             </>}

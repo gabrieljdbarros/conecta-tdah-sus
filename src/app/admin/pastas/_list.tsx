@@ -65,7 +65,7 @@ export default function PastaList() {
         return (
             <div className="flex flex-col">
                 <p className="ff-default text-[16px]">Administradores não acessam as pastas dos alunos, para proteger os dados de saúde das crianças.</p>
-                <Link href="/admin/dashboard" className="self-start mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]">
+                <Link href="/admin/dashboard" className="self-start mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]">
                     Voltar ao painel
                 </Link>
             </div>
@@ -121,7 +121,7 @@ export default function PastaList() {
                         {pastas.map(pasta => (
                             <tr key={pasta.id}>
                                 <th scope="row" className={`${CLASSE_TD} text-left font-normal`}>
-                                    <Link href={`/admin/pastas/${pasta.id}`} className="min-h-[48px] flex items-center gap-2 text-(--primary-color) underline">
+                                    <Link href={`/admin/pastas/${pasta.id}`} className="min-h-[48px] flex items-center gap-2 text-(--cor-link) underline">
                                         <i className="ion-folder" aria-hidden="true" />
                                         {pasta.nomeAluno}
                                     </Link>

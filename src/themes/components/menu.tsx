@@ -21,7 +21,7 @@ export default function AppMenu() {
                 <p className="text-center">Bem-vindo(a)!</p>
                 <p className="text-center font-bold break-all">{user?.nome} ({user?.email})</p>
                 {user && <p className="text-center text-[14px] text-gray-700">{ROLE_LABELS[user.role]}</p>}
-                <Link href={`/admin/usuarios/editar/${user?.uid}`} className="min-h-[48px] flex items-center underline text-(--primary-color)">
+                <Link href={`/admin/usuarios/editar/${user?.uid}`} className="min-h-[48px] flex items-center underline text-(--cor-link)">
                     Editar perfil
                 </Link>
 

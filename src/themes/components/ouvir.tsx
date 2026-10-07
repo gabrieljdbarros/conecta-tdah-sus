@@ -78,7 +78,7 @@ export default function AppOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo 
 
     return (
         <button type="button" onClick={alternar}
-            className={`inline-flex items-center gap-2 min-h-[48px] px-4 rounded-full border-2 border-(--primary-color) text-(--primary-color) bg-white ff-default text-[16px] cursor-pointer ${className}`}>
+            className={`inline-flex items-center gap-2 min-h-[48px] px-4 rounded-full border-2 border-(--cor-secundaria) text-white bg-(--cor-secundaria) ff-default text-[16px] cursor-pointer ${className}`}>
             <i className={falando ? 'ion-stop' : 'ion-volume-high'} aria-hidden="true" />
             <span>{falando ? 'Parar' : rotulo}</span>
             {descricao && <span className="sr-only"> {descricao}</span>}

@@ -23,7 +23,7 @@ function ErroAoSalvar({ mensagem, tentativas }: { mensagem?: string; tentativas:
     if (!mostrar) return null;
     return <p ref={ref} tabIndex={-1} className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {mensagem}</p>;
 }
-const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
+const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
 /**
  * Formulário de categoria — o mesmo para criar (sem `categoriaId`) e editar

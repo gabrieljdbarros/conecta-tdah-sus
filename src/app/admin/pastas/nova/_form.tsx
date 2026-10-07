@@ -25,7 +25,7 @@ const ROTULOS: Record<keyof FormValues, string> = {
 const COR_ERRO = 'text-[#B91C1C]';
 
 // Botão de saída com alvo de toque grande
-const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
+const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
 // Limite igual ao das Security Rules (textoValido em firestore.rules)
 const MAX = 100;
