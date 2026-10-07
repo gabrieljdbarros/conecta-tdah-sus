@@ -11,7 +11,7 @@ export function semanaAtual(agora = new Date()): { inicio: Date; fim: Date } {
     return { inicio, fim };
 }
 
-/** "6 a 12 de outubro" ou "29 de setembro a 5 de outubro" */
+/** "5 a 11 de outubro" ou "28 de setembro a 4 de outubro" */
 export function rotuloSemana({ inicio, fim }: { inicio: Date; fim: Date }): string {
     const domingo = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate() - 1);
     const mes = (d: Date) => d.toLocaleDateString('pt-BR', { month: 'long' });
