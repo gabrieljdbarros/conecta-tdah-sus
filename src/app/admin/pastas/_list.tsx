@@ -5,14 +5,12 @@ import PastaServices from "@/services/pasta";
 import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData } from "@/helpers/router";
-import { Pasta, SERIE_LABELS } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
+import { CartaoCriarPasta, ListaPastas } from "./_cartao";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
-
-const CLASSE_TH = "py-2 px-4 border-b border-gray-200 text-left text-[16px] font-semibold text-gray-700";
-const CLASSE_TD = "py-2 px-4 border-b border-gray-200 text-[16px]";
 
 export default function PastaList() {
     const { user, loading: carregandoSessao } = useAuth();
@@ -75,6 +73,7 @@ export default function PastaList() {
 
     return (
         <>
+            <div className="max-w-[640px]">
             <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
                 <h2 className="font-bold text-[20px]">
                     {ehMae ? 'Pastas dos seus filhos' : 'Pastas que você pode ver'}
@@ -98,40 +97,13 @@ export default function PastaList() {
                 </div>
             )}
 
-            {!erro && pastas.length === 0 && (
-                <p className="ff-default text-[16px]">
-                    {ehMae
-                        ? 'Você ainda não criou nenhuma pasta. Toque em "Nova pasta" para começar.'
-                        : 'Você ainda não tem nenhuma pasta. Peça à família o link de convite.'}
-                </p>
-            )}
+            {!erro && pastas.length === 0 && (ehMae
+                ? <CartaoCriarPasta />
+                : <p className="ff-default text-[16px]">Você ainda não tem nenhuma pasta. Peça à família o link de convite.</p>)}
 
-            {/* O nome do aluno abre a pasta (participantes e convites) */}
-            {pastas.length > 0 && <div className="overflow-x-auto">
-                <table className="min-w-full bg-white">
-                    <caption className="sr-only">Lista das pastas dos alunos</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col" className={CLASSE_TH}>Aluno</th>
-                            <th scope="col" className={CLASSE_TH}>Série</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {pastas.map(pasta => (
-                            <tr key={pasta.id}>
-                                <th scope="row" className={`${CLASSE_TD} text-left font-normal`}>
-                                    <Link href={`/admin/pastas/${pasta.id}`} className="min-h-[48px] flex items-center gap-2 text-(--cor-link) underline">
-                                        <i className="ion-folder" aria-hidden="true" />
-                                        {pasta.nomeAluno}
-                                    </Link>
-                                </th>
-                                <td className={CLASSE_TD}>{SERIE_LABELS[pasta.serie] ?? '-'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>}
+            {/* O cartão inteiro abre a pasta */}
+            {pastas.length > 0 && <ListaPastas pastas={pastas} />}
+            </div>
         </>
     )
 }

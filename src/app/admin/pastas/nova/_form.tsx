@@ -102,16 +102,17 @@ export default function NovaPastaForm() {
             onSubmit={handleOnSubmit}
         >
             {({ handleChange, handleSubmit, values, isSubmitting, errors, submitCount }) => (
-                <form onSubmit={handleSubmit} className="w-full max-w-[336px] flex flex-col">
-                    <p className="ff-default text-[16px] mb-3">
-                        A pasta reúne tudo sobre o acompanhamento do aluno. Depois você poderá convidar a escola e o médico.
+                <form onSubmit={handleSubmit} className="w-full max-w-[480px] flex flex-col">
+                    <h2 className="ff-default text-[26px] font-extrabold leading-tight text-(--cor-texto)">Cadastre o aluno</h2>
+                    <p className="ff-default text-[16px] text-(--cor-texto) mt-1 mb-3">
+                        Com estas informações você já pode começar a conectar a escola e os médicos. Sem burocracia.
                     </p>
                     <AppOuvir rotulo="Ouvir instruções" className="self-start mb-3"
                         texto="Para criar a pasta, escreva o nome completo do aluno, escolha a série em que ele estuda e toque em Criar pasta. Depois você poderá convidar a escola e o médico." />
 
-                    <AppInput label={`${ROTULOS.nomeAluno}:`} placeholder="Nome completo do aluno" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} icon="person" error={errors.nomeAluno} mostrarErro={submitCount > 0} />
+                    <AppInput label={ROTULOS.nomeAluno} placeholder="Nome completo da criança ou jovem" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} error={errors.nomeAluno} mostrarErro={submitCount > 0} className="mb-2" />
 
-                    <AppSelect label={`${ROTULOS.serie}:`} name="serie" value={values.serie} onChange={handleChange} error={errors.serie} mostrarErro={submitCount > 0}>
+                    <AppSelect label={ROTULOS.serie} name="serie" value={values.serie} onChange={handleChange} error={errors.serie} mostrarErro={submitCount > 0}>
                         <option value="">Escolha a série...</option>
                         {(Object.entries(SERIE_LABELS) as [Serie, string][]).map(([codigo, rotulo]) => (
                             <option key={codigo} value={codigo}>{rotulo}</option>
@@ -125,8 +126,27 @@ export default function NovaPastaForm() {
                     {error && <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: {error}</p>}
 
                     {/* Botão só bloqueia durante o envio: com erro, o clique mostra o resumo acima */}
-                    <AppButton title={isSubmitting ? 'Criando...' : 'Criar pasta'} submit disabled={isSubmitting} form="round" className="mt-4" />
+                    <AppButton title={isSubmitting ? 'Criando...' : 'Criar pasta'} submit disabled={isSubmitting} className="mt-4" />
                     <Link href="/admin/pastas" className={CLASSE_LINK_VOLTAR}>Voltar sem criar</Link>
+
+                    {/* "Quem terá acesso a esta pasta?" (design): explica o convite antes de criar */}
+                    <section aria-labelledby="titulo-acesso" className="mt-8 p-4 rounded-xl bg-[#EEF2FF] flex flex-col gap-2">
+                        <h3 id="titulo-acesso" className="ff-default text-[18px] font-bold text-(--cor-texto) flex items-center gap-2">
+                            <i className="ion-locked text-(--cor-secundaria)" aria-hidden="true" />Quem terá acesso a esta pasta?
+                        </h3>
+                        <p className="ff-default text-[16px] text-(--cor-texto)">
+                            Só você decide. A escola e o médico só veem a pasta se você enviar um convite: um link
+                            que vale 48 horas e só funciona para uma pessoa. A escola não vê os laudos nem o que você conta sobre a casa.
+                        </p>
+                        <ul className="flex flex-wrap gap-2 mt-1">
+                            <li className="ff-default text-[16px] font-bold text-(--cor-texto) bg-white rounded-lg px-3 py-2 flex items-center gap-2">
+                                <i className="ion-key text-(--cor-secundaria)" aria-hidden="true" />Acesso só por convite
+                            </li>
+                            <li className="ff-default text-[16px] font-bold text-(--cor-texto) bg-white rounded-lg px-3 py-2 flex items-center gap-2">
+                                <i className="ion-eye-disabled text-(--cor-secundaria)" aria-hidden="true" />Nada fica público
+                            </li>
+                        </ul>
+                    </section>
                 </form>
             )}
         </Formik>

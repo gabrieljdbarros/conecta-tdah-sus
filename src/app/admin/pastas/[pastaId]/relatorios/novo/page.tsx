@@ -11,7 +11,7 @@ export default async function NovoRelatorioPage({ params }: { params: Promise<{ 
 
     // ==========================================================
     return (
-        <AppMainContainer title="Escrever relatório">
+        <AppMainContainer title="Escrever relatório" voltar={`/admin/pastas/${pastaId}`} voltarRotulo="Voltar para a pasta">
             <NovoRelatorioForm pastaId={pastaId} />
         </AppMainContainer>
     )

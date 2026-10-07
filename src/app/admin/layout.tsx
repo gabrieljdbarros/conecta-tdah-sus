@@ -14,7 +14,9 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="bg-(--background-secondary) flex h-screen">
+    <div className="bg-(--background-secondary) flex min-h-screen">
+        {/* min-h (e não h fixo): a página cresce com o conteúdo, e o espaço do fim
+            do <main> fica de fato depois do último item (a barra de abas não o cobre) */}
         {/* Primeiro item do Tab: pula o menu e vai direto ao conteúdo */}
         <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:p-3 focus:rounded-xl focus:border-2 focus:border-(--cor-link)">
           Pular para o conteúdo

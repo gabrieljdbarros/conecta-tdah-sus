@@ -5,6 +5,10 @@ export interface AppMainContainerProps {
     title: string;
     /** Endereço da seta de voltar da barra superior (sem ele, a seta não aparece) */
     voltar?: string;
+    /** Para onde a seta leva, lido pelo leitor de tela (ex.: "Voltar para as pastas") */
+    voltarRotulo?: string;
+    /** Linha menor abaixo do título (ex.: a data de hoje no Início) */
+    subtitulo?: string;
     children?: React.ReactNode;
 }
 
@@ -13,7 +17,7 @@ export interface AppMainContainerProps {
  * de voltar + título). O título da tela é o <h1> (as seções dentro dela usam
  * h2/h3). `id="conteudo"` é o destino do link "Pular para o conteúdo" do layout
  */
-export default function AppMainContainer({title, voltar, children}: AppMainContainerProps) {
+export default function AppMainContainer({title, voltar, voltarRotulo = 'Voltar', subtitulo, children}: AppMainContainerProps) {
 
     return (
          <main id="conteudo" tabIndex={-1} className="flex flex-col flex-1 min-w-0 outline-none pb-[96px] md:pb-0">
@@ -23,9 +27,12 @@ export default function AppMainContainer({title, voltar, children}: AppMainConta
                 {voltar &&
                     <Link href={voltar} className="min-w-[48px] min-h-[48px] flex items-center justify-center text-[26px] text-(--cor-texto) rounded-full">
                         <i className="ion-arrow-left-c" aria-hidden="true" />
-                        <span className="sr-only">Voltar</span>
+                        <span className="sr-only">{voltarRotulo}</span>
                     </Link>}
-                <h1 className={`font-bold text-[24px] md:text-[30px] text-(--cor-texto) ${voltar ? '' : 'pl-2'}`}>{title}</h1>
+                <div className={`py-2 ${voltar ? '' : 'pl-2'}`}>
+                    <h1 className="font-bold text-[24px] md:text-[30px] text-(--cor-texto) break-words">{title}</h1>
+                    {subtitulo && <p className="ff-default text-[16px] text-(--cor-texto-suave)">{subtitulo}</p>}
+                </div>
             </header>
 
             <section className="flex-1 bg-(--background-primary) p-4 md:p-[20px] md:rounded-ss-xl">
