@@ -2,6 +2,7 @@
 import Link from "next/link"
 import { Ionicons } from "../../types/ionicos"
 import { usePathname } from "next/navigation";
+import { estaAberto } from "./navegacao";
 
 
 export interface AppMenuItemProps {
@@ -20,7 +21,7 @@ export interface AppMenuItemProps {
 export default function AppMenuItem ({title, icon, url, exato = false}: AppMenuItemProps) {
 
     const path = usePathname();
-    const ativado = exato ? path === url : path.startsWith(url);
+    const ativado = estaAberto(path, { title, icon, url, exato });
 
     return (
         <Link href={url} aria-current={ativado ? 'page' : undefined}
