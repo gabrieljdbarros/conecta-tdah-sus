@@ -11,7 +11,7 @@ export default async function PastaPage({ params }: { params: Promise<{ pastaId:
 
     // ==========================================================
     return (
-        <AppMainContainer title="Pasta do aluno">
+        <AppMainContainer title="Pasta do aluno" voltar="/admin/pastas" voltarRotulo="Voltar para as pastas">
             <DetalhePasta pastaId={pastaId} />
         </AppMainContainer>
     )

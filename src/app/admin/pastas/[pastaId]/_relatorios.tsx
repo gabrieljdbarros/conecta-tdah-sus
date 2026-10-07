@@ -63,9 +63,9 @@ export default function SecaoRelatorios({ pasta }: { pasta: Pasta }) {
     if (!papel) return null;
 
     return (
-        <section aria-labelledby="titulo-relatorios">
+        <section id="relatorios" aria-labelledby="titulo-relatorios" className="scroll-mt-4">
             <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
-                <h3 id="titulo-relatorios" ref={tituloRef} tabIndex={-1} className="font-bold text-[18px]">Relatórios</h3>
+                <h3 id="titulo-relatorios" ref={tituloRef} tabIndex={-1} className="font-bold text-[20px]">Relatórios</h3>
                 {podeEscrever && <AppButton title="Escrever relatório" icon="compose" href={`/admin/pastas/${pasta.id}/relatorios/novo`} form="round" />}
             </div>
 

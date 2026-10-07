@@ -27,6 +27,18 @@ type Acao = 'remover' | 'sair' | 'cancelar';
 // Id do botão que abre cada pergunta — para devolver o foco a ele no "Não"
 const idBotao = (acao: Acao, id: string) => `botao-${acao}-${id}`;
 
+/**
+ * Atalho para uma parte da pasta: rola até o título E leva o foco até ele,
+ * para o teclado e o leitor de tela continuarem dali
+ */
+function irParaTitulo(id: string) {
+    const titulo = document.getElementById(id);
+    if (!titulo) return;
+    const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    titulo.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' });
+    titulo.focus({ preventScroll: true });
+}
+
 function formatarValidade(ms: number): string {
     return new Date(ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
@@ -249,21 +261,38 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
 
     return (
         <div className="flex flex-col gap-6 max-w-[640px]">
-            {/* CABEÇALHO */}
-            <div>
-                <h2 className="font-bold text-[22px]">{pasta.nomeAluno}</h2>
-                <p className="ff-default text-[16px]">{SERIE_LABELS[pasta.serie] ?? '-'}</p>
+            {/* CABEÇALHO (design: "PASTA DO ESTUDANTE", nome e série) — o resto do sistema diz "aluno" */}
+            <div className="border-b-2 border-(--cor-destaque) pb-3">
+                <p className="ff-default text-[16px] font-bold tracking-wide uppercase text-(--cor-secundaria)">Pasta do aluno</p>
+                <h2 className="ff-default text-[28px] font-extrabold leading-tight text-(--cor-texto) break-words">{pasta.nomeAluno}</h2>
+                <p className="ff-default text-[16px] text-(--cor-texto-suave)">{SERIE_LABELS[pasta.serie] ?? '-'}</p>
             </div>
 
-            {/* CHAT (RN05): tela própria, com o grupo e os canais privados */}
-            <div className="self-start flex flex-wrap gap-3">
-                <AppButton title="Abrir conversas" icon="chatbubbles" href={`/admin/pastas/${pasta.id}/conversas`} form="round" />
-                {/* Instruções genéricas (sem o nome do aluno): podem usar qualquer voz */}
-                <AppOuvir rotulo="Ouvir instruções"
-                    texto={ehDona
-                        ? 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para contar como a criança está em casa, toque em Escrever relatório. Para chamar a escola, toque em Convidar escola. Para chamar o médico, toque em Convidar médico. Depois, envie o link para a pessoa.'
-                        : 'Esta é a pasta do aluno. Aqui você vê quem acompanha o aluno e os relatórios. Para conversar, toque em Abrir conversas. Para escrever um relatório, toque em Escrever relatório.'} />
-            </div>
+            {/* ATALHOS (design): levam às partes da pasta e ao chat (RN05) */}
+            <nav aria-label="Atalhos da pasta">
+                <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                        { href: '#relatorios', titulo: 'titulo-relatorios', icone: 'ion-clipboard', nome: 'Relatórios' },
+                        { href: `/admin/pastas/${pasta.id}/conversas`, icone: 'ion-chatbubbles', nome: 'Conversas' },
+                        { href: '#vinculos', titulo: 'titulo-participantes', icone: 'ion-ios-people', nome: 'Vínculos' },
+                        ...(ehDona ? [{ href: '#convidar', titulo: 'titulo-convidar', icone: 'ion-person-add', nome: 'Convidar' }] : []),
+                    ].map((a) => (
+                        <li key={a.nome}>
+                            <Link href={a.href} onClick={a.titulo ? (e) => { e.preventDefault(); irParaTitulo(a.titulo); } : undefined}
+                                className="flex flex-col items-center justify-center gap-1 min-h-[88px] p-2 bg-white rounded-xl border border-gray-200 shadow-sm ff-default text-[16px] font-bold text-(--cor-texto)">
+                                <i className={`${a.icone} text-[28px] text-(--cor-link)`} aria-hidden="true" />
+                                {a.nome}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+
+            {/* Instruções genéricas (sem o nome do aluno): podem usar qualquer voz */}
+            <AppOuvir rotulo="Ouvir instruções" className="self-start"
+                texto={ehDona
+                    ? 'Esta é a pasta do aluno. Os botões de cima levam às partes da pasta. Em Relatórios, você lê os relatórios e pode contar como a criança está em casa. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Em Convidar, você chama a escola ou o médico e envia o link para a pessoa.'
+                    : 'Esta é a pasta do aluno. Os botões de cima levam às partes da pasta. Em Relatórios, você lê e escreve relatórios. Em Conversas, você conversa com a família. Em Vínculos, você vê quem acompanha o aluno.'} />
 
             {/* MENSAGENS — anunciadas pelo leitor de tela */}
             <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>
@@ -272,8 +301,8 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
             {erro && <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: {erro}</p>}
 
             {/* PARTICIPANTES */}
-            <section aria-labelledby="titulo-participantes">
-                <h3 id="titulo-participantes" className="font-bold text-[18px] mb-2">Quem acompanha este aluno</h3>
+            <section id="vinculos" aria-labelledby="titulo-participantes" className="scroll-mt-4">
+                <h3 id="titulo-participantes" tabIndex={-1} className="font-bold text-[20px] mb-2">Vínculos: quem acompanha este aluno</h3>
                 {participantes.length === 0 ? (
                     <p className="ff-default text-[16px]">
                         {pasta.membrosUids.length} {pasta.membrosUids.length === 1 ? 'participante' : 'participantes'}
@@ -342,8 +371,8 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
 
             {/* CONVIDAR (só a dona) */}
             {ehDona && (
-                <section aria-labelledby="titulo-convidar">
-                    <h3 id="titulo-convidar" className="font-bold text-[18px] mb-2">Convidar</h3>
+                <section id="convidar" aria-labelledby="titulo-convidar" className="scroll-mt-4">
+                    <h3 id="titulo-convidar" tabIndex={-1} className="font-bold text-[20px] mb-2">Convidar</h3>
                     <p className="ff-default text-[16px] mb-3">
                         O convite é um link. Você envia o link para a escola ou para o médico
                         (por exemplo, pelo WhatsApp), e quem abrir o link passa a acompanhar este aluno.
@@ -414,7 +443,6 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 </section>
             )}
 
-            <Link href="/admin/pastas" className={CLASSE_LINK_VOLTAR}>Voltar para as pastas</Link>
         </div>
     );
 }
