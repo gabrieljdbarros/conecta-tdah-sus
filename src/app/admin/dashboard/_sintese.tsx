@@ -5,24 +5,22 @@ import RelatorioServices, { papelNaPasta } from "@/services/relatorio";
 import { AppLoader } from "@/themes/components";
 import { AppUser } from "@/types/user";
 import { Pasta } from "@/types/pasta";
-import { TIPO_LABELS, TipoRelatorio } from "@/types/relatorio";
 import { rotuloSemana, semanaAtual } from "@/helpers/semana";
 
 const COR_ERRO = 'text-[#B91C1C]';
 
-// Ordem fixa dos tipos na lista (não a ordem em que os relatórios chegam)
-const ORDEM_TIPOS: TipoRelatorio[] = ['orientacao_medica', 'laudo', 'avaliacao_escolar', 'relato_familia'];
-
 interface Resumo {
     pasta: Pasta;
     total: number;
-    porTipo: Partial<Record<TipoRelatorio, number>>;
     erro: boolean;
 }
 
 /**
  * RESUMO DA SEMANA (design: "Síntese da Semana", com palavra mais simples):
- * quantos relatórios cada aluno teve nesta semana, por tipo.
+ * quantos relatórios cada aluno teve nesta semana.
+ * Só o TOTAL, sem o tipo: a primeira tela pode ser vista por outras pessoas
+ * (celular dividido, alguém olhando) e "Laudo diagnóstico: 1" revelaria um
+ * fato de saúde da criança sem nenhum toque. O tipo fica na tela de relatórios
  * Conta só o que a pessoa JÁ pode ler: a consulta é a mesma da lista de
  * relatórios, filtrada pelos tipos do papel (as regras garantem — a escola
  * nunca conta laudos nem relatos da família). Mensagens do chat não entram:
@@ -48,12 +46,10 @@ export default function SinteseDaSemana({ user, pastas }: { user: AppUser; pasta
         (async () => {
             const lista = await Promise.all(pastas.map(async (pasta): Promise<Resumo> => {
                 const papel = papelNaPasta(user, pasta.donoUid);
-                if (!papel) return { pasta, total: 0, porTipo: {}, erro: true };
+                if (!papel) return { pasta, total: 0, erro: true };
                 const { success, relatorios } = await RelatorioServices.listar(pasta.id, papel);
-                const daSemana = relatorios.filter((r) => r.criadoEm >= inicioMs && r.criadoEm < fimMs);
-                const porTipo: Partial<Record<TipoRelatorio, number>> = {};
-                daSemana.forEach((r) => { porTipo[r.tipo] = (porTipo[r.tipo] ?? 0) + 1; });
-                return { pasta, total: daSemana.length, porTipo, erro: !success };
+                const total = relatorios.filter((r) => r.criadoEm >= inicioMs && r.criadoEm < fimMs).length;
+                return { pasta, total, erro: !success };
             }));
             if (!ativo) return;
             setResumos(lista);
@@ -95,7 +91,7 @@ export default function SinteseDaSemana({ user, pastas }: { user: AppUser; pasta
 
             {resumos && resumos.length > 0 && (
                 <ul className="flex flex-col gap-3">
-                    {resumos.map(({ pasta, total, porTipo, erro }) => (
+                    {resumos.map(({ pasta, total, erro }) => (
                         <li key={pasta.id} className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-300 shadow-sm">
                             <h3 className="ff-default text-[18px] font-bold text-(--cor-texto)">{pasta.nomeAluno}</h3>
                             {erro ? (
@@ -105,18 +101,9 @@ export default function SinteseDaSemana({ user, pastas }: { user: AppUser; pasta
                             ) : total === 0 ? (
                                 <p className="ff-default text-[16px] text-(--cor-texto)">Nenhum relatório nesta semana.</p>
                             ) : (
-                                <>
-                                    <p className="ff-default text-[16px] text-(--cor-texto)">
-                                        <strong>{total} {total === 1 ? 'relatório' : 'relatórios'}</strong> nesta semana:
-                                    </p>
-                                    <ul className="flex flex-col gap-1 list-disc pl-6">
-                                        {ORDEM_TIPOS.filter((t) => porTipo[t]).map((t) => (
-                                            <li key={t} className="ff-default text-[16px] text-(--cor-texto)">
-                                                {TIPO_LABELS[t]}: {porTipo[t]}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </>
+                                <p className="ff-default text-[16px] text-(--cor-texto)">
+                                    <strong>{total} {total === 1 ? 'relatório' : 'relatórios'}</strong> nesta semana.
+                                </p>
                             )}
                             <Link href={`/admin/pastas/${pasta.id}/relatorios`} className="self-start min-h-[48px] inline-flex items-center ff-default text-[16px] text-(--cor-link) underline">
                                 <span>Ver relatórios <span className="sr-only">de {pasta.nomeAluno}</span></span>
