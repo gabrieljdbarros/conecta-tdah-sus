@@ -7,3 +7,5 @@ export { default as AppButton } from './button';
 export { default as AppSelect } from './select';
 export { default as AppLoader } from './loader';
 export { default as AppOuvir, useVozDisponivel } from './ouvir';
+export { default as AppBarraInferior } from './barra-inferior';
+export { AppSair } from './navegacao';
