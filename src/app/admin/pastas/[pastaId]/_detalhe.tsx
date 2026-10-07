@@ -14,7 +14,7 @@ import SecaoRelatorios from "./_relatorios";
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
-const CLASSE_LINK_VOLTAR = "self-start mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
+const CLASSE_LINK_VOLTAR = "self-start mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 const CLASSE_BOTAO_PERIGO = "min-h-[48px] px-4 rounded-full border-2 border-[#B91C1C] text-[#B91C1C] ff-default text-[16px] cursor-pointer";
 
 const PARA_QUEM: Record<PapelConvidado, string> = { escola: 'a escola', medico: 'o médico' };
@@ -354,7 +354,7 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                     </div>
 
                     {linkGerado && (
-                        <div className="mt-4 p-4 rounded-xl border-2 border-(--primary-color) bg-white flex flex-col gap-3">
+                        <div className="mt-4 p-4 rounded-xl border-2 border-(--cor-destaque) bg-white flex flex-col gap-3">
                             {/* Anúncio curto (o leitor de tela não soletra a URL inteira) */}
                             <p ref={linkRef} tabIndex={-1} role="status" className="ff-default text-[16px] font-bold">
                                 Link para {PARA_QUEM[linkGerado.papel]} pronto.

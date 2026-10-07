@@ -145,12 +145,12 @@ export default function CategoriaList() {
                                 <td className={CLASSE_TD}>
                                     <div className="flex flex-wrap gap-2">
                                         <Link href={`/admin/categorias/editar/${c.id}`}
-                                            className={`${CLASSE_ACAO} border-(--primary-color) text-(--primary-color)`}>
+                                            className={`${CLASSE_ACAO} border-(--cor-link) text-(--cor-link)`}>
                                             Editar<span className="sr-only"> {c.nome}</span>
                                         </Link>
                                         {/* Cor neutra: desativar não é destrutivo (dá para reativar) */}
                                         <button type="button" onClick={() => alternarAtiva(c)} aria-disabled={salvando === c.id}
-                                            className={`${CLASSE_ACAO} border-(--primary-color) text-(--primary-color) aria-disabled:opacity-50`}>
+                                            className={`${CLASSE_ACAO} border-(--cor-link) text-(--cor-link) aria-disabled:cursor-not-allowed`}>
                                             {salvando === c.id ? 'Salvando...' : c.ativa ? 'Desativar' : 'Reativar'}
                                             <span className="sr-only"> {c.nome}</span>
                                         </button>

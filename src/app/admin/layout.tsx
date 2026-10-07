@@ -16,7 +16,7 @@ export default function AdminLayout({
   return (
     <div className="bg-(--background-secondary) flex h-screen">
         {/* Primeiro item do Tab: pula o menu e vai direto ao conteúdo */}
-        <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:p-3 focus:rounded-xl focus:border-2 focus:border-(--primary-color)">
+        <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:p-3 focus:rounded-xl focus:border-2 focus:border-(--cor-link)">
           Pular para o conteúdo
         </a>
         {/* MENU */}

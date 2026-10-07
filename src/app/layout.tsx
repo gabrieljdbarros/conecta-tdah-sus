@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 
 // Cor da barra do navegador/aplicativo instalado (a mesma do tema)
 export const viewport: Viewport = {
-  themeColor: "#0069ad",
+  themeColor: "#ff5c00",
 };
 
 export default function RootLayout({

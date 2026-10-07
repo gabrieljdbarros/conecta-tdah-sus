@@ -82,7 +82,7 @@ export default function LoginForm() {
                             <AppInput label="E-mail:" placeholder="Digite seu e-mail" name="email" onChange={handleChange} icon="ios-email" autoComplete="email" error={errors.email} mostrarErro={submitCount > 0} />
                             <AppInput label="Senha:" placeholder="Digite sua senha" name="password" type="password" onChange={handleChange} icon="locked" openPassword autoComplete="current-password" error={errors.password} mostrarErro={submitCount > 0} />
                             
-                            <button type="button" className="self-start min-h-[48px] cursor-pointer text-[16px] ff-default text-[#4703D0] underline" onClick={() => setShowResetPasswordModal(true)}>Esqueci minha senha</button>
+                            <button type="button" className="self-start min-h-[48px] cursor-pointer text-[16px] ff-default text-(--cor-link) underline" onClick={() => setShowResetPasswordModal(true)}>Esqueci minha senha</button>
 
                             {errorLogin && <p role="alert" className="text-[#B91C1C] ff-default text-[16px] text-center mt-3">Erro: {errorLogin}</p>}
 
@@ -91,7 +91,7 @@ export default function LoginForm() {
                             <AppButton title={isSubmitting ? "Entrando..." : "Entrar"} submit disabled={isSubmitting} form="round" className="mt-2" />
 
                             <Link href={convite ? `/cadastro?convite=${convite}` : "/cadastro"} className="min-h-[48px] flex items-center justify-center">
-                                <p className="ff-default text-center text-[16px] text-[#4703D0] cursor-pointer"> Não tem conta? Cadastre-se</p>
+                                <p className="ff-default text-center text-[16px] text-(--cor-link) underline cursor-pointer"> Não tem conta? Cadastre-se</p>
                             </Link>
                         </div>
                     </form>
@@ -113,7 +113,7 @@ export default function LoginForm() {
 
                     <div className="flex flex-wrap justify-between gap-3">
                         <button type="button" className="bg-white border-2 border-[#B91C1C] text-[#B91C1C] rounded-full flex-1 min-w-[140px] min-h-[48px] mt-5 cursor-pointer" onClick={closeModal}>Cancelar</button>
-                        <button type="button" className="bg-(--primary-color) text-white rounded-full flex-1 min-w-[140px] min-h-[48px] mt-5 cursor-pointer" onClick={onSubmitResetPassword}>Enviar</button>
+                        <button type="button" className="bg-(--cor-destaque) text-white text-[19px] font-bold rounded-full flex-1 min-w-[140px] min-h-[48px] mt-5 cursor-pointer" onClick={onSubmitResetPassword}>Enviar</button>
                     </div>
                 </div>
             </AppModal>}

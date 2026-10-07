@@ -12,7 +12,7 @@ export default function AppleIcon() {
         (
             <div style={{
                 width: "100%", height: "100%", display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center", background: "#0069ad", color: "white",
+                alignItems: "center", justifyContent: "center", background: "#ff5c00", color: "white",
                 fontWeight: 700, fontFamily: "sans-serif",
             }}>
                 {/* Mesmo desenho do icon.tsx (26% do tamanho) */}

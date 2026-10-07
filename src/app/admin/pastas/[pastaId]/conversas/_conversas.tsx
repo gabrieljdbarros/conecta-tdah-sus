@@ -15,7 +15,7 @@ import { ROLE_LABELS } from "@/types/user";
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
-const CLASSE_LINK_VOLTAR = "self-start min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px]";
+const CLASSE_LINK_VOLTAR = "self-start min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
 interface Aba {
     canal: string;
@@ -187,7 +187,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                             id={`aba-${a.canal}`} type="button" role="tab"
                             aria-selected={i === abaAtiva} aria-controls="painel-conversa" tabIndex={i === abaAtiva ? 0 : -1}
                             onClick={() => setAbaAtiva(i)} onKeyDown={(e) => aoTeclarAba(e, i)}
-                            className={`min-h-[48px] px-4 rounded-full border-2 ff-default text-[16px] cursor-pointer ${i === abaAtiva ? 'bg-(--primary-color) border-(--primary-color) text-white' : 'border-(--primary-color) text-(--primary-color) bg-white'}`}>
+                            className={`min-h-[48px] px-4 rounded-full border-2 ff-default text-[16px] cursor-pointer ${i === abaAtiva ? 'bg-(--cor-link) border-(--cor-link) text-white' : 'border-(--cor-link) text-(--cor-link) bg-white'}`}>
                             {a.titulo}
                         </button>
                     ))}
@@ -207,7 +207,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     <div className="flex flex-col items-start gap-2">
                         <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: não deu para carregar as mensagens.</p>
                         <button type="button" onClick={() => setTentativa((n) => n + 1)}
-                            className="min-h-[48px] px-4 rounded-full border-2 border-(--primary-color) text-(--primary-color) ff-default text-[16px] cursor-pointer">
+                            className="min-h-[48px] px-4 rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px] cursor-pointer">
                             Tentar de novo
                         </button>
                     </div>
@@ -260,11 +260,11 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     <textarea id="texto-mensagem" ref={textoRef} value={texto}
                         onChange={(e) => { setTexto(e.target.value); setEnviada(false); }}
                         rows={3} maxLength={MAX_TEXTO_MENSAGEM} aria-describedby="aviso-mensagem dica-microfone"
-                        className="w-full rounded-xl border-2 border-gray-600 bg-white p-3 ff-default text-[16px] focus:border-(--primary-color) focus:outline-none" />
+                        className="w-full rounded-xl border-2 border-gray-600 bg-white p-3 ff-default text-[16px] focus:border-(--cor-link) focus:ring-2 focus:ring-(--cor-link) focus:outline-none" />
                     {erroEnvio && <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: a mensagem não foi enviada. Tente de novo.</p>}
                     <p role="status" className={`${COR_SUCESSO} ff-default text-[16px] empty:hidden`}>{enviada ? 'Mensagem enviada.' : ''}</p>
                     <button type="submit" disabled={enviando || !texto.trim()}
-                        className="self-end min-h-[48px] px-6 rounded-full bg-(--primary-color) text-white ff-default text-[16px] cursor-pointer disabled:bg-gray-300 disabled:text-gray-700 disabled:cursor-not-allowed">
+                        className="self-end min-h-[48px] px-6 rounded-full bg-(--cor-destaque) text-white ff-default text-[19px] font-bold cursor-pointer disabled:bg-gray-300 disabled:text-gray-700 disabled:cursor-not-allowed">
                         <i className="ion-paper-airplane mr-2" aria-hidden="true" />
                         {enviando ? 'Enviando...' : 'Enviar'}
                     </button>
