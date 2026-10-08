@@ -1,13 +1,15 @@
+import Image from "next/image";
+
 /**
- * Logo "CONECTA TDAH | SUS", como no design, mas em TEXTO (e não imagem):
- * o leitor de tela lê o nome, não pesa na internet e fica nítido em
- * qualquer tamanho. Azul de link do design (7,1:1)
+ * Logo "CONECTA TDAH | SUS" do design (imagem da equipe, fundo transparente).
+ * - alt com o nome: o leitor de tela lê "Conecta TDAH SUS"
+ * - o Next entrega a imagem otimizada e no tamanho certo (pouco consumo de dados)
+ * - texto em imagem é permitido para logotipos (WCAG 1.4.5)
+ * `prioridade`: carregar já (logo no topo da tela de entrada no celular)
  */
-export default function AppLogo({ className = '' }: { className?: string }) {
+export default function AppLogo({ className = '', largura = 240, prioridade = false }: { className?: string, largura?: number, prioridade?: boolean }) {
     return (
-        <p className={`text-center leading-none font-extrabold text-(--cor-link) ${className}`}>
-            <span className="block text-[34px] tracking-tight">CONECTA</span>
-            <span className="block text-[22px]">TDAH | SUS</span>
-        </p>
+        <Image src="/assets/img/logo.png" alt="Conecta TDAH SUS" width={largura} height={Math.round(largura * 134 / 500)}
+            priority={prioridade} className={`mx-auto h-auto ${className}`} />
     );
 }

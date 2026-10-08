@@ -11,7 +11,7 @@ export default function MolduraEntrada({ children }: { children: React.ReactNode
         <div className="flex min-h-screen bg-(--background-primary)">
             {/* ESQUERDA (computador): decorativa */}
             <div className="flex-1 flex-col gap-8 justify-center items-center bg-(--background-secondary) hidden lg:flex">
-                <AppLogo />
+                <AppLogo largura={360} />
                 {/* Sem "priority": no celular (escondida) o navegador não a baixa */}
                 <Image src="/assets/img/boas-vindas.png" alt="" width={456} height={356} />
             </div>
