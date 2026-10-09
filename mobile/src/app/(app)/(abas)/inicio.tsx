@@ -49,9 +49,10 @@ export default function Inicio() {
 
                 {!carregando && !erro && user && <>
                     {ehMae && pastas.length === 0 && <CartaoCriarPasta />}
-                    {!ehMae && pastas.length === 0 && (
+                    {!ehMae && pastas.length === 0 && <>
                         <Paragrafo>Você ainda não acompanha nenhum aluno. Peça à família o link de convite.</Paragrafo>
-                    )}
+                        <Botao titulo="Entrar numa pasta (colar convite)" icone="enter-outline" aoTocar={() => router.push('/entrar-pasta' as never)} />
+                    </>}
 
                     {/* "Relatório comportamental / Novo registro" (design). Sem aluno não aparece */}
                     {pastas.length > 0 && (
