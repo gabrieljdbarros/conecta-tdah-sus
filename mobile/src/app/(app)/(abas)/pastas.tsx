@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { Aviso, Botao, Carregando, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { CartaoCriarPasta, ListaPastas } from "~/componentes/cartoes";
 import { useAuth } from "~/contexto/AuthContext";
 import { useMinhasPastas } from "~/ganchos/useMinhasPastas";
@@ -13,6 +14,9 @@ export default function Pastas() {
     return (
         <Tela emAba>
             <Titulo nivel={2}>{ehMae ? 'Pastas dos seus filhos' : 'Alunos que você acompanha'}</Titulo>
+            <BotaoOuvir rotulo="Ouvir instruções" texto={ehMae
+                ? 'Aqui ficam as pastas dos seus filhos. Toque no nome do aluno para abrir a pasta. Para criar uma pasta nova, toque em Nova pasta ou em Criar pasta do aluno.'
+                : 'Aqui ficam as pastas dos alunos que você acompanha. Toque no nome do aluno para abrir a pasta. Para entrar numa pasta nova, peça o link de convite à família e toque em Entrar numa pasta.'} />
             {carregando && <Carregando texto="Carregando as pastas..." />}
 
             {!carregando && erro && <>

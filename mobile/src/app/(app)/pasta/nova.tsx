@@ -5,6 +5,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Campo, Opcoes, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos } from "~/componentes/cartoes";
 import { useAuth } from "~/contexto/AuthContext";
 import PastaServicos from "~/servicos/pasta";
@@ -72,6 +73,7 @@ export default function NovaPasta() {
                         <View style={{ gap: 12 }}>
                             <Titulo nivel={2}>Cadastre o aluno</Titulo>
                             <Paragrafo>Com estas informações você já pode começar a conectar a escola e os médicos. Sem burocracia.</Paragrafo>
+                            <BotaoOuvir rotulo="Ouvir instruções" texto="Para criar a pasta, escreva o nome completo do aluno. Escolha a etapa da escola e depois o ano ou a série. No fim, toque em Criar pasta. Depois você poderá convidar a escola e o médico." />
                             <Campo ref={refNome} rotulo="Nome do aluno" value={values.nomeAluno} onChangeText={handleChange('nomeAluno')}
                                 placeholder="Como o aluno é chamado" erro={submitCount > 0 ? errors.nomeAluno : undefined} />
                             <Opcoes<Etapa> rotulo="Etapa da escola" valor={etapa} aoEscolher={escolherEtapa}

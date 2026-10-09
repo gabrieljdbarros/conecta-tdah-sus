@@ -11,6 +11,9 @@
       ],
       "@/helpers/semana": [
         "../src/helpers/semana"
+      ],
+      "@/helpers/voz": [
+        "../src/helpers/voz"
       ]
     }
   },

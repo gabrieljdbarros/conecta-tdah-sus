@@ -3,6 +3,7 @@ import { Alert, Text, TextInput, View } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { anunciar, Aviso, Botao, Campo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos } from "~/componentes/cartoes";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
@@ -93,6 +94,7 @@ export default function Perfil() {
                     return (
                         <View style={{ gap: 12 }}>
                             <Titulo nivel={2}>Seus dados</Titulo>
+                            <BotaoOuvir rotulo="Ouvir instruções" texto="Aqui você muda o seu nome e os seus dados. Depois toque em Salvar alterações. Para sair, toque em Sair do aplicativo, lá embaixo." />
                             <Campo ref={registrar('nome')} rotulo="Nome" value={values.nome} onChangeText={mudar('nome')} autoComplete="name" erro={e('nome')} />
                             {papel === 'mae' && (
                                 <Campo ref={registrar('grauParentesco')} rotulo="Grau de parentesco" value={values.grauParentesco} onChangeText={mudar('grauParentesco')} erro={e('grauParentesco')} />

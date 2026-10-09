@@ -4,6 +4,7 @@ import { Redirect, router } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { anunciar, Aviso, Botao, Campo, LinkTexto, Opcoes, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
 import { DadosPerfil, UserRole } from "@/types/user";
@@ -111,6 +112,7 @@ export default function Cadastro() {
                         <View style={{ gap: 12 }}>
                             <Titulo destaque>Crie seu acesso</Titulo>
                             <Paragrafo>Cadastre-se para participar do acompanhamento do aluno.</Paragrafo>
+                            <BotaoOuvir rotulo="Ouvir instruções" texto="Escreva o seu nome. Escolha quem você é: mãe ou responsável, escola ou médico. Responda as perguntas que aparecerem. Depois escreva o seu e-mail e crie uma senha com pelo menos seis letras ou números. No fim, toque em Criar conta." />
 
                             <Campo ref={registrar('nome')} rotulo="Nome" value={values.nome} onChangeText={handleChange('nome')}
                                 autoComplete="name" placeholder="Nome completo" erro={e('nome')} />

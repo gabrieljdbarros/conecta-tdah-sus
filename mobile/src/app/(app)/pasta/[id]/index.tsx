@@ -2,6 +2,7 @@ import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos } from "~/componentes/cartoes";
 import { usePasta } from "~/ganchos/usePasta";
 import { useAuth } from "~/contexto/AuthContext";
@@ -50,6 +51,9 @@ export default function PastaDoAluno() {
                 <Text style={[estilos.tituloCartao, { fontSize: 28 }]}>{pasta.nomeAluno}</Text>
                 <Text style={estilos.suave}>{SERIE_LABELS[pasta.serie] ?? ''}</Text>
             </View>
+            <BotaoOuvir rotulo="Ouvir instruções" texto={pasta.donoUid === user?.uid
+                ? 'Esta é a pasta do aluno. Os botões levam às partes da pasta. Em Relatórios, você lê todos os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar. Para escrever um relatório, toque em Escrever relatório.'
+                : `Esta é a pasta do aluno. Os botões levam às partes da pasta. Em Relatórios, você lê os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta.${podeEscrever ? ' Para escrever um relatório, toque em Escrever relatório.' : ''}`} />
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: medidas.espaco - 4 }}>
                 <Atalho nome="Relatórios" icone="clipboard" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios`)} />

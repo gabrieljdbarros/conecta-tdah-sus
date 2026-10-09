@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
+import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
 import MensagemServicos from "~/servicos/mensagem";
@@ -76,6 +77,8 @@ export default function Conversas() {
     const insets = useSafeAreaInsets();
     const [alturaTeclado, setAlturaTeclado] = useState(0);
     const tecladoAberto = alturaTeclado > 0;
+    // Verificada uma vez para a lista inteira (não em cada mensagem)
+    const vozLocal = useVozDisponivel(true);
 
     // TECLADO: no Android "de ponta a ponta" a janela não encolhe e o
     // KeyboardAvoidingView não basta. Esta tela vai até o fim da tela do
@@ -148,8 +151,12 @@ export default function Conversas() {
             <Stack.Screen options={{ title: 'Conversas' }} />
             <View style={{ flex: 1 }}>
                 <View style={{ padding: medidas.espaco, paddingBottom: 8, gap: 10 }}>
-                    {/* Com o teclado aberto o título sai, para sobrar espaço para as mensagens */}
-                    {!tecladoAberto && <Text accessibilityRole="header" style={estilos.tituloSecao}>Conversas sobre {pasta.nomeAluno}</Text>}
+                    {/* Com o teclado aberto o título e as instruções saem, para sobrar espaço para as mensagens */}
+                    {!tecladoAberto && <>
+                        <Text accessibilityRole="header" style={estilos.tituloSecao}>Conversas sobre {pasta.nomeAluno}</Text>
+                        <BotaoOuvir rotulo="Ouvir instruções"
+                            texto={`Aqui você conversa sobre o aluno. ${abas.length > 1 ? 'No alto, toque no nome da conversa para escolher com quem falar. ' : ''}A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Depois de enviada, a mensagem não pode ser apagada.`} />
+                    </>}
 
                     {/* CANAIS: um por vez, lado a lado (um embaixo do outro com fonte grande) */}
                     {abas.length > 1 && (
@@ -193,8 +200,13 @@ export default function Conversas() {
                         onScroll={({ nativeEvent: e }) => { pertoDoFim.current = e.contentOffset.y + e.layoutMeasurement.height >= e.contentSize.height - 80; }}
                         scrollEventThrottle={200}
                         onContentSizeChange={() => { if (pertoDoFim.current) lista.current?.scrollToEnd({ animated: false }); }}
-                        ListHeaderComponent={mensagens.length >= LIMITE_MENSAGENS
-                            ? <Text style={[estilos.suave, { textAlign: 'center' }]}>Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</Text> : null}
+                        // No começo da conversa (sobe junto com ela)
+                        ListHeaderComponent={
+                            <View style={{ gap: 8 }}>
+                                {vozLocal === false && <SemVozLocal oQue="mensagens" />}
+                                {mensagens.length >= LIMITE_MENSAGENS && <Text style={[estilos.suave, { textAlign: 'center' }]}>Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</Text>}
+                            </View>
+                        }
                         ListEmptyComponent={<Text style={[estilos.texto, { textAlign: 'center' }]}>Ainda não há mensagens. Escreva a primeira!</Text>}
                         renderItem={({ item: m, index }) => {
                             const minha = m.autorUid === user.uid;
@@ -210,16 +222,23 @@ export default function Conversas() {
                                                 <Text maxFontSizeMultiplier={1.2} style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>{iniciais(m.autorNome)}</Text>
                                             </View>
                                         )}
-                                        {/* Lida de uma vez: "Fulano (Médico), 10:30: texto" */}
-                                        <View accessible accessibilityLabel={`${autor}, ${hora(m.criadoEm)}: ${m.texto}`}
-                                            style={{
-                                                flexShrink: 1, borderRadius: 16, padding: 12, borderWidth: 1,
-                                                backgroundColor: minha ? '#EEF0FF' : '#E3F5F2', borderColor: minha ? '#C7CCF5' : '#B8E2DC',
-                                            }}>
-                                            <Text style={{ fontSize: 16, fontWeight: '700', color: cores.texto }}>
-                                                {autor}<Text style={{ fontWeight: '400', color: cores.textoSuave }}> · {hora(m.criadoEm)}</Text>
-                                            </Text>
-                                            <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>
+                                        <View style={{
+                                            flexShrink: 1, borderRadius: 16, padding: 12, borderWidth: 1, gap: 8,
+                                            backgroundColor: minha ? '#EEF0FF' : '#E3F5F2', borderColor: minha ? '#C7CCF5' : '#B8E2DC',
+                                        }}>
+                                            {/* Lida de uma vez: "Fulano (Médico), 10:30: texto" */}
+                                            <View accessible accessibilityLabel={`${autor}, ${hora(m.criadoEm)}: ${m.texto}`}>
+                                                <Text style={{ fontSize: 16, fontWeight: '700', color: cores.texto }}>
+                                                    {autor}<Text style={{ fontWeight: '400', color: cores.textoSuave }}> · {hora(m.criadoEm)}</Text>
+                                                </Text>
+                                                <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>
+                                            </View>
+                                            {/* Conteúdo: só com voz do aparelho. Nas próprias mensagens
+                                                não aparece (a pessoa acabou de escrever) */}
+                                            {!minha && (
+                                                <BotaoOuvir conteudo disponivel={vozLocal} pequeno
+                                                    texto={`${m.autorNome} escreveu: ${m.texto}`} descricao={`mensagem de ${m.autorNome}`} />
+                                            )}
                                         </View>
                                     </View>
                                 </View>
