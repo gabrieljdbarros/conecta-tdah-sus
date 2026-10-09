@@ -18,9 +18,18 @@ type NomeIcone = keyof typeof Ionicons.glyphMap;
  *  - avisos e erros são ANUNCIADOS pelo leitor de tela quando aparecem
  */
 
-/** Fala um aviso no TalkBack/VoiceOver (funciona nos dois sistemas) */
-export function anunciar(texto: string) {
-    AccessibilityInfo.announceForAccessibility(texto);
+/**
+ * Fala um aviso no TalkBack/VoiceOver (funciona nos dois sistemas). Espera um
+ * pouco: assim não atropela o que o leitor fala ao tocar ("marcado", o nome
+ * do botão) nem a troca de tela
+ */
+export function anunciar(texto: string, esperaMs = 450) {
+    setTimeout(() => AccessibilityInfo.announceForAccessibility(texto), esperaMs);
+}
+
+/** Leva o foco do leitor de tela até um elemento (ex.: a primeira opção com erro) */
+export function focarLeitor(elemento: View | null) {
+    if (elemento) setTimeout(() => AccessibilityInfo.sendAccessibilityEvent(elemento, 'focus'), 450);
 }
 
 /**
@@ -29,11 +38,13 @@ export function anunciar(texto: string) {
  *   lilás do fundo o laranja cai para 2,9:1 e reprova)
  * - `semCabecalho`: sem a barra do topo, a própria tela desvia da barra de
  *   status do celular (no Android atual o app ocupa a tela inteira)
+ * - `emAba`: tela dentro das abas. A barra de abas já desvia dos botões do
+ *   Android; sem isto, sobraria uma faixa vazia em cima dela
  */
-export function Tela({ children, centralizar = false, branco = false, semCabecalho = false }: {
-    children: ReactNode; centralizar?: boolean; branco?: boolean; semCabecalho?: boolean;
+export function Tela({ children, centralizar = false, branco = false, semCabecalho = false, emAba = false }: {
+    children: ReactNode; centralizar?: boolean; branco?: boolean; semCabecalho?: boolean; emAba?: boolean;
 }) {
-    const bordas: Edge[] = semCabecalho ? ['top', 'bottom', 'left', 'right'] : ['bottom', 'left', 'right'];
+    const bordas: Edge[] = [...(semCabecalho ? ['top' as const] : []), ...(emAba ? [] : ['bottom' as const]), 'left', 'right'];
     return (
         <SafeAreaView style={[estilos.tela, branco && { backgroundColor: '#FFFFFF' }]} edges={bordas}>
             {/* "padding" nos dois sistemas: o teclado não cobre o campo em uso */}
@@ -118,7 +129,7 @@ export function Campo({ rotulo, erro, senha = false, ref, ...props }: TextInputP
                     placeholderTextColor={cores.borda}
                     onFocus={(e) => { setFocado(true); props.onFocus?.(e); }}
                     onBlur={(e) => { setFocado(false); props.onBlur?.(e); }}
-                    style={estilos.entrada} />
+                    style={[estilos.entrada, props.multiline && { minHeight: 160, textAlignVertical: 'top' }]} />
                 {senha && (
                     <Pressable onPress={() => setMostrar(!mostrar)} accessibilityRole="switch"
                         accessibilityLabel="Mostrar senha" accessibilityState={{ checked: mostrar }} style={estilos.olho}>
@@ -138,8 +149,10 @@ export function Campo({ rotulo, erro, senha = false, ref, ...props }: TextInputP
  * nome do grupo ("Tipo de perfil: Escola"), porque o TalkBack nem sempre
  * anuncia o grupo
  */
-export function Opcoes<T extends string>({ rotulo, opcoes, valor, aoEscolher, erro }: {
-    rotulo: string; opcoes: { valor: T; titulo: string }[]; valor: T | ''; aoEscolher: (v: T) => void; erro?: string;
+export function Opcoes<T extends string>({ rotulo, opcoes, valor, aoEscolher, erro, refPrimeira }: {
+    rotulo: string; opcoes: { valor: T; titulo: string; descricao?: string }[]; valor: T | ''; aoEscolher: (v: T) => void; erro?: string;
+    /** Primeira opção (para levar o foco até ela quando o grupo tem erro) */
+    refPrimeira?: Ref<View>;
 }) {
     return (
         <View style={estilos.grupoCampo} accessibilityRole="radiogroup">
@@ -147,12 +160,15 @@ export function Opcoes<T extends string>({ rotulo, opcoes, valor, aoEscolher, er
             {opcoes.map((o, i) => {
                 const marcado = o.valor === valor;
                 return (
-                    <Pressable key={o.valor} onPress={() => aoEscolher(o.valor)}
+                    <Pressable key={o.valor} onPress={() => aoEscolher(o.valor)} ref={i === 0 ? refPrimeira : undefined}
                         accessibilityRole="radio" accessibilityState={{ checked: marcado }}
-                        accessibilityLabel={`${rotulo}: ${o.titulo}${i === 0 && erro ? `. Erro: ${erro}` : ''}`}
+                        accessibilityLabel={`${rotulo}: ${o.titulo}${o.descricao ? `. ${o.descricao}` : ''}${i === 0 && erro ? `. Erro: ${erro}` : ''}`}
                         style={[estilos.opcao, marcado && estilos.opcaoMarcada]}>
                         <Ionicons name={marcado ? 'radio-button-on' : 'radio-button-off'} size={24} color={marcado ? cores.link : cores.textoSuave} />
-                        <Text style={[estilos.textoOpcao, marcado && { fontWeight: '700' }]}>{o.titulo}</Text>
+                        <View style={{ flexShrink: 1 }}>
+                            <Text style={[estilos.textoOpcao, marcado && { fontWeight: '700' }]}>{o.titulo}</Text>
+                            {o.descricao && <Text style={{ fontSize: 16, color: cores.textoSuave }}>{o.descricao}</Text>}
+                        </View>
                     </Pressable>
                 );
             })}

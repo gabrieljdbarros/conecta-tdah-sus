@@ -1,43 +1,68 @@
-import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { Aviso, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
-import PastaServicos from "~/servicos/pasta";
-import { cores } from "~/tema/cores";
-import { Pasta, SERIE_LABELS } from "@/types/pasta";
+import { usePasta } from "~/ganchos/usePasta";
+import { cores, medidas } from "~/tema/cores";
+import { SERIE_LABELS } from "@/types/pasta";
+import { TEXTO_ESCREVER, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
+
+type NomeIcone = keyof typeof Ionicons.glyphMap;
+
+/** Atalho em grade (design): ícone e nome, alvo grande */
+function Atalho({ nome, icone, aoTocar }: { nome: string; icone: NomeIcone; aoTocar: () => void }) {
+    // Com a fonte grande do celular, vira uma coluna só (o nome não quebra no meio)
+    const { fontScale } = useWindowDimensions();
+    return (
+        <Pressable onPress={aoTocar} accessibilityRole="button" accessibilityLabel={nome} android_ripple={{ color: '#E5E7EB' }}
+            style={({ pressed }) => [estilos.cartao, {
+                flexBasis: fontScale > 1.3 ? '100%' : '47%', flexGrow: 1, minHeight: 96, alignItems: 'center', justifyContent: 'center', gap: 6,
+            }, pressed && { opacity: 0.85 }]}>
+            <Ionicons name={icone} size={30} color={cores.link} importantForAccessibility="no" />
+            <Text style={[estilos.nome, { textAlign: 'center' }]}>{nome}</Text>
+        </Pressable>
+    );
+}
 
 /**
- * Pasta do aluno: cabeçalho (nome e série).
- * TODO (dia 3, feat/mobile-relatorios): atalhos Relatórios, Orientações,
- * Conversas e Vínculos, e "Contar como o aluno está"
+ * Pasta do aluno (design): cabeçalho, atalhos para cada parte e o atalho
+ * para escrever. Mesma estrutura da web
  */
 export default function PastaDoAluno() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const [pasta, setPasta] = useState<Pasta | null>(null);
-    const [carregando, setCarregando] = useState(true);
-
-    useEffect(() => {
-        let ativo = true;
-        PastaServicos.buscar(id).then(({ pasta }) => {
-            if (!ativo) return;
-            setPasta(pasta ?? null);
-            setCarregando(false);
-        });
-        return () => { ativo = false; };
-    }, [id]);
+    const { pasta, papel, carregando } = usePasta(id);
 
     if (carregando) return <Tela><Carregando texto="Abrindo a pasta..." /></Tela>;
-    if (!pasta) return <Tela><Aviso tipo="erro" texto="não foi possível abrir esta pasta. Ela pode não existir, ou você não faz parte dela." /></Tela>;
+    if (!pasta || !papel) return <Tela><Aviso tipo="erro" texto="não foi possível abrir esta pasta. Ela pode não existir, ou você não faz parte dela." /></Tela>;
+
+    const podeEscrever = TIPOS_QUE_ESCREVE[papel].length > 0;
+    const ir = (caminho: string) => router.push(caminho as never);
 
     return (
         <Tela>
-            <View style={{ borderBottomWidth: 2, borderBottomColor: cores.destaque, paddingBottom: 12, gap: 2 }}>
+            {/* Cabeçalho lido de uma vez: "Pasta do aluno: Pedro, 4º ano" */}
+            <View accessible accessibilityRole="header" accessibilityLabel={`Pasta do aluno: ${[pasta.nomeAluno, SERIE_LABELS[pasta.serie]].filter(Boolean).join(', ')}`}
+                style={{ borderBottomWidth: 2, borderBottomColor: cores.destaque, paddingBottom: 12, gap: 2 }}>
                 <Text style={estilos.rotulo}>PASTA DO ALUNO</Text>
-                <Text accessibilityRole="header" style={[estilos.tituloCartao, { fontSize: 28 }]}>{pasta.nomeAluno}</Text>
+                <Text style={[estilos.tituloCartao, { fontSize: 28 }]}>{pasta.nomeAluno}</Text>
                 <Text style={estilos.suave}>{SERIE_LABELS[pasta.serie] ?? ''}</Text>
             </View>
-            <Paragrafo>Os relatórios, os vínculos e as conversas desta pasta chegam nas próximas etapas do aplicativo.</Paragrafo>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: medidas.espaco - 4 }}>
+                <Atalho nome="Relatórios" icone="clipboard" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios`)} />
+                <Atalho nome="Orientações" icone="medkit" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios?tipo=orientacao_medica`)} />
+                {/* TODO (dias 4 e 5): Vínculos e Conversas abrem as telas próprias */}
+            </View>
+
+            {/* "Relatório comportamental" (design), com palavras mais simples */}
+            {podeEscrever && (
+                <View style={[estilos.cartao, { gap: 8 }]}>
+                    <Text accessibilityRole="header" style={estilos.nome}>Contar como o aluno está</Text>
+                    <Text style={estilos.texto}>{TEXTO_ESCREVER[papel]}</Text>
+                    <Botao titulo="Escrever relatório" icone="create-outline" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios/novo`)} />
+                </View>
+            )}
         </Tela>
     );
 }
