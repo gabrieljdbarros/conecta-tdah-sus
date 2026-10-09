@@ -26,7 +26,7 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Chat por aluno (RN05): grupo com todos e canal privado mãe–médico | ✅ Pronto |
 | Aplicativo instalável no celular (PWA) | ✅ Pronto |
 | Leitura em voz alta: instruções das telas, relatórios e mensagens | ✅ Pronto |
-| App mobile (Android/iOS) | ⏳ Depois do painel web |
+| App nativo em React Native (Expo) para mãe, escola e médico | ✅ Pronto (testado no Android, sem publicação nas lojas) |
 
 ## Perfis e acesso aos relatórios
 
@@ -58,6 +58,7 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
 ## Tecnologias
 
 - **Painel web:** [Next.js 15](https://nextjs.org/), TypeScript, Tailwind CSS, Formik e Yup
+- **App nativo:** [Expo](https://expo.dev/) (React Native) com expo-router, na pasta `mobile/`
 - **Backend:** Firebase (Authentication, Firestore e Cloud Functions)
 - **Testes:** Firebase Emulator, `@firebase/rules-unit-testing` e o executor de testes nativo do Node.js
 
@@ -116,6 +117,7 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
 |---|---|
 | `npm run dev` | Servidor local de desenvolvimento |
 | `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
+| `npm run emulators:rede` | Os mesmos emuladores, abertos para a rede local (para o app no celular; use só em rede confiável) |
 | `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
 | `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
 | `npm run test:unit` | Testes de lógica sem emulador (ex.: escolha da voz da leitura em voz alta) |
@@ -140,6 +142,55 @@ Professores e médicos não precisam instalar nada: o mesmo endereço funciona n
 
 Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview` e abra http://localhost:3000. O Chrome mostra o botão de instalar na barra de endereço. A versão de produção não roda no modo emulador, então use `NEXT_PUBLIC_USE_EMULATORS=false`. No celular, a instalação exige o site publicado num endereço com HTTPS.
 
+## Aplicativo nativo (React Native)
+
+Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app usa **o mesmo Firebase, as mesmas Security Rules e as mesmas Cloud Functions** da web, e importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, a regra de quem vê cada relatório existe num lugar só.
+
+O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, pastas, relatórios, convites e vínculos, chat e leitura em voz alta.
+
+> O app **não é publicado nas lojas**: ele roda pelo **Expo Go**, ligado aos emuladores do computador pela rede Wi-Fi. No convite, a escola e o médico **colam o link** recebido. Abrir o app direto pelo link (deep link) exige o site publicado e fica para depois.
+
+### Como rodar no celular
+
+1. No celular (Android ou iPhone), instale o app **Expo Go** pela loja.
+2. Ligue o computador e o celular na **mesma rede Wi-Fi**. Use uma rede confiável, como a de casa: a rede pública da faculdade pode bloquear a conexão entre os aparelhos.
+3. Descubra o endereço do computador na rede. No Windows, rode `ipconfig` e procure a linha **"Endereço IPv4"** (ex.: `192.168.1.4`).
+4. Na pasta `mobile/`, copie `.env.local.example` para `.env.local` e coloque esse endereço em `EXPO_PUBLIC_EMULADOR_HOST`. O `.env.local` **não** é versionado.
+5. Na raiz do projeto, suba os emuladores abertos para a rede e deixe o terminal aberto:
+   ```bash
+   npm run emulators:rede
+   ```
+6. Em outro terminal, inicie o app:
+   ```bash
+   cd mobile
+   npm install
+   npx expo start --clear
+   ```
+7. Abra o Expo Go e leia o QR code que aparece no terminal.
+
+**Se der erro de conexão:**
+- *"Could not reach Cloud Firestore backend"* ou *"network-request-failed"*: o endereço do computador mudou, porque o roteador às vezes troca. Rode `ipconfig` de novo, corrija `EXPO_PUBLIC_EMULADOR_HOST` e reinicie com `npx expo start --clear`. Para não acontecer mais, reserve um endereço fixo para o computador no roteador ("reserva de DHCP").
+- *"failed to download remote update"* no Expo Go: no Windows, a rede precisa estar como **Privada**, e o firewall precisa liberar as portas 8081 (Expo), 9099 (Auth), 8080 (Firestore) e 5001 (Functions).
+
+### Comandos do app (dentro de `mobile/`)
+
+| Comando | O que faz |
+|---|---|
+| `npx expo start --clear` | Inicia o app (o `--clear` relê o `.env.local`) |
+| `npx expo install <pacote>` | Instala uma dependência na versão compatível com o Expo |
+| `npx expo lint` | Verificação de código |
+| `npx tsc --noEmit` | Verificação de tipos |
+
+### Leitura em voz alta no app
+
+Os botões "Ouvir instruções" usam qualquer voz em português. Já relatórios e mensagens só são lidos com uma voz que **comprovadamente roda no aparelho**, para que dado de saúde não vá a servidores externos. No Android, isso é a voz do Google marcada como do aparelho. Na dúvida, o app não lê. Se o botão "Ouvir relatório" não aparecer:
+
+1. Abra Configurações do celular → **Saída de texto para voz** (em Acessibilidade ou em Gerenciamento geral).
+2. Escolha **"Serviços de fala do Google"** como mecanismo preferido.
+3. Em Instalar dados de voz → **Português (Brasil)**, baixe a voz.
+
+> **Limitação conhecida:** a biblioteca de voz (`expo-speech`) não informa se uma voz do Google ainda não baixada usa a internet. Por isso, o passo 3 é importante.
+
 ## Estrutura principal
 
 ```
@@ -149,6 +200,9 @@ src/
   services/       Acesso ao Firebase (usuários, pastas, convites)
   themes/         Componentes visuais do template
   types/          Modelos de dados
+mobile/           App nativo Expo (mãe, escola e médico)
+  src/app/        Telas (expo-router)
+  src/servicos/   Acesso ao Firebase e leitura em voz alta
 functions/        Cloud Functions (gerar e aceitar convite)
 tests/            Testes das Security Rules
 tests/functions/  Testes das Cloud Functions
