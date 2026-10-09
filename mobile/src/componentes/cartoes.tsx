@@ -11,11 +11,13 @@ import { Pasta, SERIE_LABELS } from "@/types/pasta";
  */
 
 /** Cartão de um aluno: o cartão inteiro é tocável e o nome lido é "aluno, série" */
-export function CartaoPasta({ pasta }: { pasta: Pasta }) {
+/** `conversas`: o cartão abre o chat do aluno em vez da pasta (aba Conversas) */
+export function CartaoPasta({ pasta, conversas }: { pasta: Pasta; conversas?: boolean }) {
     const serie = SERIE_LABELS[pasta.serie] ?? '';
     return (
-        <Pressable onPress={() => router.push({ pathname: '/pasta/[id]', params: { id: pasta.id } })}
-            accessibilityRole="button" accessibilityLabel={[pasta.nomeAluno, serie].filter(Boolean).join(', ')} accessibilityHint="Abre a pasta do aluno"
+        <Pressable onPress={() => router.push({ pathname: conversas ? '/pasta/[id]/conversas' : '/pasta/[id]', params: { id: pasta.id } })}
+            accessibilityRole="button" accessibilityLabel={[pasta.nomeAluno, serie].filter(Boolean).join(', ')}
+            accessibilityHint={conversas ? 'Abre as conversas sobre o aluno' : 'Abre a pasta do aluno'}
             android_ripple={{ color: '#E5E7EB' }}
             style={({ pressed }) => [estilos.cartao, estilos.linha, pressed && { opacity: 0.85 }]}>
             <View style={estilos.circulo} importantForAccessibility="no">
@@ -31,8 +33,8 @@ export function CartaoPasta({ pasta }: { pasta: Pasta }) {
 }
 
 /** Lista de cartões de alunos */
-export function ListaPastas({ pastas }: { pastas: Pasta[] }) {
-    return <View style={{ gap: 12 }}>{pastas.map((p) => <CartaoPasta key={p.id} pasta={p} />)}</View>;
+export function ListaPastas({ pastas, conversas }: { pastas: Pasta[]; conversas?: boolean }) {
+    return <View style={{ gap: 12 }}>{pastas.map((p) => <CartaoPasta key={p.id} pasta={p} conversas={conversas} />)}</View>;
 }
 
 /** Cartão "Cadastre o aluno" (design), para a mãe que ainda não tem pasta */
