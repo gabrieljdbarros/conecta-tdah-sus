@@ -28,6 +28,8 @@ export default function Pastas() {
                 {!ehMae && pastas.length === 0 && (
                     <Paragrafo>Você ainda não tem nenhuma pasta. Peça à família o link de convite.</Paragrafo>
                 )}
+                {!ehMae && <Botao titulo="Entrar numa pasta (colar convite)" icone="enter-outline" tipo={pastas.length === 0 ? 'solido' : 'contorno'}
+                    aoTocar={() => router.push('/entrar-pasta' as never)} />}
                 <ListaPastas pastas={pastas} />
             </>}
         </Tela>

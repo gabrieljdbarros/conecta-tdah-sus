@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
 import { usePasta } from "~/ganchos/usePasta";
+import { useAuth } from "~/contexto/AuthContext";
 import { cores, medidas } from "~/tema/cores";
 import { SERIE_LABELS } from "@/types/pasta";
 import { TEXTO_ESCREVER, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
@@ -32,6 +33,7 @@ function Atalho({ nome, icone, aoTocar }: { nome: string; icone: NomeIcone; aoTo
 export default function PastaDoAluno() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { pasta, papel, carregando } = usePasta(id);
+    const { user } = useAuth();
 
     if (carregando) return <Tela><Carregando texto="Abrindo a pasta..." /></Tela>;
     if (!pasta || !papel) return <Tela><Aviso tipo="erro" texto="não foi possível abrir esta pasta. Ela pode não existir, ou você não faz parte dela." /></Tela>;
@@ -52,7 +54,10 @@ export default function PastaDoAluno() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: medidas.espaco - 4 }}>
                 <Atalho nome="Relatórios" icone="clipboard" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios`)} />
                 <Atalho nome="Orientações" icone="medkit" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios?tipo=orientacao_medica`)} />
-                {/* TODO (dias 4 e 5): Vínculos e Conversas abrem as telas próprias */}
+                <Atalho nome="Vínculos" icone="people" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos`)} />
+                {/* "Cód. de convite" do design: aqui o convite é um link seguro, em Vínculos */}
+                {pasta.donoUid === user?.uid && <Atalho nome="Convidar" icone="person-add" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos?convidar=1`)} />}
+                {/* TODO (dia 5): Conversas */}
             </View>
 
             {/* "Relatório comportamental" (design), com palavras mais simples */}

@@ -25,6 +25,7 @@ export default function LayoutLogado() {
             <Stack.Screen name="(abas)" options={{ headerShown: false }} />
             <Stack.Screen name="pasta/nova" options={{ title: 'Criar pasta' }} />
             <Stack.Screen name="pasta/[id]/index" options={{ title: 'Pasta do aluno' }} />
+            <Stack.Screen name="entrar-pasta" options={{ title: 'Entrar numa pasta' }} />
             {/* As telas de relatórios definem o próprio título (Stack.Screen dentro delas) */}
         </Stack>
     );
