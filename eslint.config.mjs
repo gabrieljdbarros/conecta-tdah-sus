@@ -21,6 +21,8 @@ const eslintConfig = [
       "functions/lib/**",
       "functions/node_modules/**",
       ".emulator-data/**",
+      // App nativo (Expo): tem o próprio lint e as próprias dependências
+      "mobile/**",
     ],
   },
 ];

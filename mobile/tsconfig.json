@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      // Código do próprio app
+      "~/*": ["./src/*"],
+      // Tipos e lógica pura COMPARTILHADOS com a web (um lugar só para a
+      // matriz de acesso, os rótulos e o cálculo da semana)
+      "@/types/*": ["../src/types/*"],
+      "@/helpers/semana": ["../src/helpers/semana"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+}
