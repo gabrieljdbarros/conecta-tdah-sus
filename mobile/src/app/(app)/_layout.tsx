@@ -6,7 +6,8 @@ import { cores } from "~/tema/cores";
 /**
  * Área logada. Sem sessão, volta para o login. Isso é experiência de uso:
  * quem protege os dados são as Security Rules (iguais às da web).
- * TODO (dia 2): abas no rodapé (Início, Pastas, Conversas, Perfil)
+ * As abas ficam em (abas); as telas que se abrem por cima delas (pasta,
+ * criar pasta...) ficam aqui, com a seta de voltar na barra do topo
  */
 export default function LayoutLogado() {
     const { user, carregando } = useAuth();
@@ -20,6 +21,10 @@ export default function LayoutLogado() {
             headerTitleStyle: { color: cores.tituloBarra, fontSize: 20, fontWeight: '600' },
             contentStyle: { backgroundColor: cores.fundo },
             headerBackButtonDisplayMode: 'minimal',
-        }} />
+        }}>
+            <Stack.Screen name="(abas)" options={{ headerShown: false }} />
+            <Stack.Screen name="pasta/nova" options={{ title: 'Criar pasta' }} />
+            <Stack.Screen name="pasta/[id]/index" options={{ title: 'Pasta do aluno' }} />
+        </Stack>
     );
 }

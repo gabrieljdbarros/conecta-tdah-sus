@@ -25,9 +25,6 @@
       "expo-router",
       "expo-status-bar"
     ],
-    "scheme": "conectatdah",
-    "experiments": {
-      "typedRoutes": true
-    }
+    "scheme": "conectatdah"
   }
 }
