@@ -54,10 +54,10 @@ export default function PastaDoAluno() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: medidas.espaco - 4 }}>
                 <Atalho nome="Relatórios" icone="clipboard" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios`)} />
                 <Atalho nome="Orientações" icone="medkit" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios?tipo=orientacao_medica`)} />
+                <Atalho nome="Conversas" icone="chatbubbles" aoTocar={() => ir(`/pasta/${pasta.id}/conversas`)} />
                 <Atalho nome="Vínculos" icone="people" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos`)} />
                 {/* "Cód. de convite" do design: aqui o convite é um link seguro, em Vínculos */}
                 {pasta.donoUid === user?.uid && <Atalho nome="Convidar" icone="person-add" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos?convidar=1`)} />}
-                {/* TODO (dia 5): Conversas */}
             </View>
 
             {/* "Relatório comportamental" (design), com palavras mais simples */}
