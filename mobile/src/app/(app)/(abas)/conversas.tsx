@@ -1,4 +1,5 @@
 import { Aviso, Carregando, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { useMinhasPastas } from "~/ganchos/useMinhasPastas";
 import { ListaPastas } from "~/componentes/cartoes";
 
@@ -8,6 +9,7 @@ export default function Conversas() {
     return (
         <Tela emAba>
             <Titulo nivel={2}>Uma conversa para cada aluno</Titulo>
+            <BotaoOuvir rotulo="Ouvir instruções" texto="Aqui fica uma conversa para cada aluno. Toque no nome do aluno para abrir a conversa." />
             <Paragrafo>Toque no aluno para abrir as conversas sobre ele.</Paragrafo>
             {carregando && <Carregando texto="Carregando..." />}
             {!carregando && erro && <Aviso tipo="erro" texto="não deu para carregar os alunos." />}

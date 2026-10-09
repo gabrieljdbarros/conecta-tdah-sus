@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { router, Stack } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { anunciar, Aviso, Botao, Campo, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import ConviteServicos, { codigoDoTexto } from "~/servicos/convite";
 
@@ -54,6 +55,7 @@ export default function EntrarPasta() {
             <Stack.Screen options={{ title: 'Entrar numa pasta' }} />
             <View style={{ gap: 12 }}>
                 <Titulo nivel={2}>Recebeu um convite?</Titulo>
+                <BotaoOuvir rotulo="Ouvir instruções" texto="Para entrar na pasta de um aluno, copie o link que a família mandou. Depois toque em Colar o link copiado e em Entrar na pasta. O link vale 48 horas e só funciona uma vez." />
                 <Paragrafo>A família manda um link, por exemplo, pelo WhatsApp. Ele vale 48 horas e só funciona uma vez.</Paragrafo>
                 {/* Passo a passo: copiar é feito fora do app, e é onde as pessoas travam */}
                 <Paragrafo>1. No WhatsApp, segure o dedo na mensagem com o link e toque em Copiar.</Paragrafo>

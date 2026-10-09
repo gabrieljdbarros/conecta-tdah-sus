@@ -5,6 +5,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Campo, Carregando, focarLeitor, Opcoes, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos } from "~/componentes/cartoes";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
@@ -94,6 +95,7 @@ export default function NovoRelatorio() {
                             <View>
                                 <Titulo nivel={2}>Escrever relatório</Titulo>
                                 <Paragrafo suave>Pasta de {pasta.nomeAluno}</Paragrafo>
+                                <BotaoOuvir rotulo="Ouvir instruções" texto="Se aparecer a opção Tipo, escolha um. Escolha o assunto. Escreva o texto. A tela mostra quem vai ver o relatório. Depois de enviado, o relatório não pode ser mudado. No fim, toque em Enviar relatório." />
                             </View>
 
                             {tipos.length > 1 ? (

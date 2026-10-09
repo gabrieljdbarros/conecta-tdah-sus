@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos } from "~/componentes/cartoes";
 import { usePasta } from "~/ganchos/usePasta";
 import CategoriaServicos from "~/servicos/categoria";
@@ -79,6 +80,7 @@ export default function Relatorios() {
                 <Titulo nivel={2}>{filtroValido === 'orientacao_medica' ? 'Todas as orientações' : 'Relatórios do aluno'}</Titulo>
                 <Paragrafo suave>Pasta de {pasta.nomeAluno}</Paragrafo>
             </View>
+            <BotaoOuvir rotulo="Ouvir instruções" texto={`Aqui ficam os relatórios do aluno, do mais novo para o mais antigo. Para escolher que tipo de relatório ver, toque em Todos ou no nome do tipo. Para ler um relatório inteiro, toque nele.${TIPOS_QUE_ESCREVE[papel].length > 0 ? ' Para escrever um relatório novo, toque em Escrever relatório.' : ''}`} />
 
             {veioDeEnviar && <Aviso tipo="sucesso" texto="relatório enviado." silencioso />}
 

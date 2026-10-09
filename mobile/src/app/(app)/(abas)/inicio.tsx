@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Aviso, Botao, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { CartaoCriarPasta, estilos, ListaPastas, Secao } from "~/componentes/cartoes";
 import { ResumoSemana } from "~/componentes/resumoSemana";
 import { useAuth } from "~/contexto/AuthContext";
@@ -48,6 +49,11 @@ export default function Inicio() {
                 </>}
 
                 {!carregando && !erro && user && <>
+                    <BotaoOuvir rotulo="Ouvir instruções" texto={pastas.length === 0
+                        ? ehMae
+                            ? 'Esta é a tela de início. Você ainda não tem pasta. Para começar, toque em Criar pasta do aluno.'
+                            : 'Esta é a tela de início. Você ainda não acompanha nenhum aluno. Peça à família o link de convite e toque em Entrar numa pasta.'
+                        : `Esta é a tela de início. Para contar como o aluno está, toque em ${pastas.length === 1 ? 'Escrever relatório' : 'Escrever sobre e o nome do aluno'}. Embaixo ficam ${ehMae ? 'as pastas dos seus filhos' : 'os alunos que você acompanha'}: toque no nome do aluno para abrir a pasta. Na barra de baixo você muda de tela: Início, Pastas, Conversas e Perfil.`} />
                     {ehMae && pastas.length === 0 && <CartaoCriarPasta />}
                     {!ehMae && pastas.length === 0 && <>
                         <Paragrafo>Você ainda não acompanha nenhum aluno. Peça à família o link de convite.</Paragrafo>

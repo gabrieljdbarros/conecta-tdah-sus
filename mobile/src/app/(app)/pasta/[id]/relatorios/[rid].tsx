@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Aviso, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
 import { estilos, Secao } from "~/componentes/cartoes";
+import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import CategoriaServicos from "~/servicos/categoria";
 import PastaServicos from "~/servicos/pasta";
@@ -20,7 +21,7 @@ const ORDEM_PAPEL = { mae: 0, escola: 1, medico: 2 } as const;
  * Um relatório inteiro, com "Quem vê este relatório" (design: "Rede que vê
  * este registro"). A leitura é protegida pelas regras pelo TIPO (RN06): se o
  * papel não pode ler, o relatório não abre — e o erro é o mesmo de "não existe".
- * TODO (dia 6): "Ouvir relatório" (só com voz do próprio celular)
+ * "Ouvir relatório" só com voz que roda no próprio celular (decisão travada 11)
  */
 export default function DetalheRelatorio() {
     const { id, rid } = useLocalSearchParams<{ id: string; rid: string }>();
@@ -29,6 +30,7 @@ export default function DetalheRelatorio() {
     const [relatorio, setRelatorio] = useState<Relatorio | null>(null);
     const [assunto, setAssunto] = useState<string | null>(null);
     const [carregando, setCarregando] = useState(true);
+    const vozLocal = useVozDisponivel(true);
 
     useEffect(() => {
         let ativo = true;
@@ -67,6 +69,14 @@ export default function DetalheRelatorio() {
                 <Text style={estilos.suave}>{data}</Text>
                 <Text style={estilos.texto}>Escrito por <Text style={{ fontWeight: '700' }}>{relatorio.autorNome}</Text> ({ROLE_LABELS[relatorio.autorPapel]})</Text>
                 <Text style={estilos.texto}><Text style={{ fontWeight: '700' }}>Assunto:</Text> {assunto ?? 'não encontrado'}</Text>
+            </View>
+
+            {/* OUVIR: só com voz que roda no aparelho. Espaço reservado enquanto
+                verifica a voz: o texto abaixo não "pula" */}
+            <View style={{ minHeight: vozLocal === null ? 48 : undefined, gap: 6 }}>
+                <BotaoOuvir conteudo disponivel={vozLocal} rotulo="Ouvir relatório"
+                    texto={`${TIPO_LABELS[relatorio.tipo]}.${assunto ? ` Assunto: ${assunto}.` : ''} Escrito por ${relatorio.autorNome}, em ${data}. ${relatorio.texto}`} />
+                {vozLocal === false && <SemVozLocal oQue="relatórios" />}
             </View>
 
             {/* Sem "copiar": o texto de saúde não vai para a área de transferência,

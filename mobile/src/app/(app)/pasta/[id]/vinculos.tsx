@@ -4,6 +4,7 @@ import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router
 import * as Clipboard from "expo-clipboard";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, focarLeitor, Paragrafo, Tela } from "~/componentes/basicos";
+import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos, Secao } from "~/componentes/cartoes";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
@@ -145,6 +146,9 @@ export default function Vinculos() {
         <Tela>
             <Stack.Screen options={{ title: 'Vínculos' }} />
             <Text accessibilityRole="header" style={estilos.suave}>Pasta de {pasta.nomeAluno}</Text>
+            <BotaoOuvir rotulo="Ouvir instruções" texto={ehDona
+                ? 'Aqui você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar escola ou Convidar médico. Depois toque em Compartilhar ou em Copiar link e envie para a pessoa. O link vale 48 horas e só funciona uma vez. Para tirar alguém da pasta, toque em Remover.'
+                : 'Aqui você vê quem acompanha o aluno. Se não quiser mais acompanhar, toque em Sair da pasta.'} />
             {/* Mensagem das ações: recebe o foco depois de cancelar, remover etc. */}
             <View ref={refAviso} accessible={!!aviso} accessibilityLabel={aviso ? `${aviso.ok ? 'Pronto' : 'Erro'}: ${aviso.texto}` : undefined}>
                 {aviso && <Aviso tipo={aviso.ok ? 'sucesso' : 'erro'} texto={aviso.texto} silencioso />}
