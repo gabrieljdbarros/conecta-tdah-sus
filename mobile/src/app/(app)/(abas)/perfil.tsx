@@ -50,7 +50,7 @@ export default function Perfil() {
     });
 
     return (
-        <Tela>
+        <Tela emAba>
             <View style={[estilos.cartao, { gap: 8 }]}>
                 <View accessible accessibilityLabel={`E-mail: ${user.email}. Não pode ser alterado.`}>
                     <Text style={estilos.suave}>E-mail (não pode ser alterado)</Text>

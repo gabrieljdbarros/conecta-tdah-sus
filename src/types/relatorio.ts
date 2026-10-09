@@ -60,7 +60,7 @@ export const QUEM_VE: Record<TipoRelatorio, string> = {
 export const TEXTO_ESCREVER: Record<PapelNaPasta, string> = {
     mae: 'Conte como a criança está em casa. O seu relato é visto pela família e pelo médico. A escola não vê.',
     escola: 'Conte como o aluno está na escola. A avaliação é vista pela família, pela escola e pelo médico.',
-    medico: 'Escreva uma orientação ou um laudo. Na próxima tela você vê quem poderá ler cada um.',
+    medico: 'Escreva uma orientação ou um laudo. Ao escolher o tipo, você vê quem poderá ler.',
 };
 
 export interface RelatorioDocument {

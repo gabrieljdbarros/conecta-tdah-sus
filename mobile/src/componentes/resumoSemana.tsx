@@ -66,7 +66,7 @@ export function ResumoSemana({ user, pastas }: { user: AppUser; pastas: Pasta[] 
                         : <Text style={estilos.texto}>{total === 0 ? 'Nenhum relatório nesta semana.' : `${total} ${total === 1 ? 'relatório' : 'relatórios'} nesta semana.`}</Text>}
                     <View style={{ alignSelf: 'flex-start' }}>
                         <LinkTexto titulo={`Ver relatórios de ${pasta.nomeAluno}`}
-                            aoTocar={() => router.push({ pathname: '/pasta/[id]', params: { id: pasta.id } })} />
+                            aoTocar={() => router.push(`/pasta/${pasta.id}/relatorios` as never)} />
                     </View>
                 </View>
             ))}

@@ -9,7 +9,7 @@ import { ListaPastas } from "~/componentes/cartoes";
 export default function Conversas() {
     const { pastas, carregando, erro } = useMinhasPastas();
     return (
-        <Tela>
+        <Tela emAba>
             <Titulo nivel={2}>Uma conversa para cada aluno</Titulo>
             <Paragrafo>As conversas chegam numa próxima etapa do aplicativo. Por enquanto, toque no aluno para abrir a pasta.</Paragrafo>
             {carregando && <Carregando texto="Carregando..." />}

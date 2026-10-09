@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { Aviso, Botao, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
-import { CartaoCriarPasta, ListaPastas, Secao } from "~/componentes/cartoes";
+import { CartaoCriarPasta, estilos, ListaPastas, Secao } from "~/componentes/cartoes";
 import { ResumoSemana } from "~/componentes/resumoSemana";
 import { useAuth } from "~/contexto/AuthContext";
 import { useMinhasPastas } from "~/ganchos/useMinhasPastas";
 import { cores } from "~/tema/cores";
+import { PapelNaPasta, TEXTO_ESCREVER } from "@/types/relatorio";
 
 // "Quarta-feira, 8 de outubro" (no fuso do celular)
 function dataDeHoje(): string {
@@ -37,7 +39,7 @@ export default function Inicio() {
                 </View>
             </SafeAreaView>
 
-            <Tela>
+            <Tela emAba>
                 {carregando && <Carregando texto="Carregando os alunos..." />}
 
                 {!carregando && erro && <>
@@ -49,6 +51,22 @@ export default function Inicio() {
                     {ehMae && pastas.length === 0 && <CartaoCriarPasta />}
                     {!ehMae && pastas.length === 0 && (
                         <Paragrafo>Você ainda não acompanha nenhum aluno. Peça à família o link de convite.</Paragrafo>
+                    )}
+
+                    {/* "Relatório comportamental / Novo registro" (design). Sem aluno não aparece */}
+                    {pastas.length > 0 && (
+                        <View style={[estilos.cartao, { gap: 10 }]}>
+                            <Text accessibilityRole="header" style={estilos.tituloSecao}>Contar como o aluno está</Text>
+                            {/* Escola/médico têm o papel do perfil; a mãe é dona das próprias pastas */}
+                            <Text style={estilos.texto}>{TEXTO_ESCREVER[user.role as PapelNaPasta]}</Text>
+                            {pastas.length === 1
+                                ? <Botao titulo="Escrever relatório" icone="create-outline" aoTocar={() => router.push(`/pasta/${pastas[0].id}/relatorios/novo` as never)} />
+                                // Mais de um aluno: a pessoa escolhe sobre quem vai escrever
+                                : pastas.map((p) => (
+                                    <Botao key={p.id} tipo="contorno" icone="add" titulo={`Escrever sobre ${p.nomeAluno}`}
+                                        aoTocar={() => router.push(`/pasta/${p.id}/relatorios/novo` as never)} />
+                                ))}
+                        </View>
                     )}
 
                     <ResumoSemana user={user} pastas={pastas} />

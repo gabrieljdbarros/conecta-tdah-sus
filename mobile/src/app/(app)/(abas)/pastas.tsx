@@ -11,7 +11,7 @@ export default function Pastas() {
     const ehMae = user?.role === 'mae';
 
     return (
-        <Tela>
+        <Tela emAba>
             <Titulo nivel={2}>{ehMae ? 'Pastas dos seus filhos' : 'Alunos que você acompanha'}</Titulo>
             {carregando && <Carregando texto="Carregando as pastas..." />}
 

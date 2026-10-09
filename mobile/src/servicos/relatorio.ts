@@ -1,7 +1,7 @@
 import { addDoc, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "~/servicos/firebase";
 import { AppUser } from "@/types/user";
-import { PapelNaPasta, Relatorio, TipoRelatorio, TIPOS_QUE_LE } from "@/types/relatorio";
+import { PapelNaPasta, Relatorio, TipoRelatorio, TIPOS_QUE_ESCREVE, TIPOS_QUE_LE } from "@/types/relatorio";
 
 /**
  * SERVIÇOS DOS RELATÓRIOS (decisão travada 9 / RN06), iguais aos da web.
@@ -46,10 +46,16 @@ const RelatorioServicos = {
     /** Envia um relatório. Depois de enviado, não pode ser alterado */
     enviar: async (pastaId: string, autor: AppUser, papel: PapelNaPasta,
         dados: { tipo: TipoRelatorio; categoriaId: string; texto: string }): Promise<{ success: boolean; message?: string }> => {
+        // Defesa extra (a barreira real é a regra): só os tipos que o papel escreve
+        if (!TIPOS_QUE_ESCREVE[papel].includes(dados.tipo))
+            return { success: false, message: "Você não pode escrever este tipo de relatório" };
         try {
+            // A regra exige o nome IGUAL ao do perfil: lê o nome atual (pode ter
+            // sido editado na web ou em outro aparelho depois de entrar no app)
+            const perfil = await getDoc(doc(db, "users", autor.uid));
             await addDoc(collection(db, "pastas", pastaId, "relatorios"), {
                 tipo: dados.tipo, categoriaId: dados.categoriaId, texto: dados.texto,
-                autorUid: autor.uid, autorNome: autor.nome, autorPapel: papel, criadoEm: Date.now(),
+                autorUid: autor.uid, autorNome: perfil.data()?.nome ?? autor.nome, autorPapel: papel, criadoEm: Date.now(),
             });
             return { success: true };
         } catch {
