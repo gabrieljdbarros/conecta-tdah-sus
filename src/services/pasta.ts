@@ -2,7 +2,7 @@ import { addDoc, collection, doc, DocumentData, getDoc, getDocs, query, where } 
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/services/firebase";
 import { mensagemErro } from "@/services/convite";
-import { Pasta, Serie } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
 import { AppUser } from "@/types/user";
 
 /**
@@ -16,7 +16,6 @@ function paraPasta(id: string, data: DocumentData): Pasta {
     return {
         id,
         nomeAluno: data.nomeAluno,
-        serie: data.serie,
         donoUid: data.donoUid,
         membrosUids: data.membrosUids ?? [],
         // Pastas criadas antes da lista de participantes não têm o campo
@@ -34,12 +33,11 @@ const PastaServices = {
      */
     criar: async (
         dona: AppUser,
-        dados: { nomeAluno: string; serie: Serie }
+        dados: { nomeAluno: string }
     ): Promise<{ success: boolean; message?: string }> => {
         try {
             await addDoc(collection(db, "pastas"), {
                 nomeAluno: dados.nomeAluno,
-                serie: dados.serie,
                 donoUid: dona.uid,
                 membrosUids: [dona.uid],
                 participantes: { [dona.uid]: { nome: dona.nome, papel: "mae" } },

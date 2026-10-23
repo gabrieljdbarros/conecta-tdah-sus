@@ -8,31 +8,9 @@
  *    consulta `array-contains` ("minhas pastas") validada pelas Rules
  *  - As permissões usam o `role` em `users`; `participantes` serve só para
  *    exibir quem está na pasta
- *  - Minimização (LGPD): só nome e série; nada de data de nascimento, CPF etc.
+ *  - Minimização (LGPD): só o nome da criança, a pedido da cliente; nada de
+ *    série, data de nascimento, cartão SUS, CPF etc.
  */
-
-// Códigos fixos (validados também em firestore.rules). O rótulo exibido
-// fica separado para poder mudar o texto sem mexer nos dados salvos
-export type Serie =
-    | 'infantil'
-    | 'ef1' | 'ef2' | 'ef3' | 'ef4' | 'ef5' | 'ef6' | 'ef7' | 'ef8' | 'ef9'
-    | 'em1' | 'em2' | 'em3';
-
-export const SERIE_LABELS: Record<Serie, string> = {
-    infantil: 'Educação Infantil',
-    ef1: '1º ano (Fundamental)',
-    ef2: '2º ano (Fundamental)',
-    ef3: '3º ano (Fundamental)',
-    ef4: '4º ano (Fundamental)',
-    ef5: '5º ano (Fundamental)',
-    ef6: '6º ano (Fundamental)',
-    ef7: '7º ano (Fundamental)',
-    ef8: '8º ano (Fundamental)',
-    ef9: '9º ano (Fundamental)',
-    em1: '1ª série (Ensino Médio)',
-    em2: '2ª série (Ensino Médio)',
-    em3: '3ª série (Ensino Médio)',
-};
 
 /** Papel de cada pessoa NA PASTA (a mãe é a dona; escola e médico entram por convite) */
 export type PapelNaPasta = 'mae' | 'escola' | 'medico';
@@ -54,7 +32,6 @@ export interface Participante {
  */
 export interface PastaDocument {
     nomeAluno: string;
-    serie: Serie;
     donoUid: string;
     membrosUids: string[];
     participantes: Record<string, Participante>;

@@ -32,7 +32,6 @@ const USUARIOS = {
 // convite fará na próxima etapa)
 const PASTA = {
     nomeAluno: "Aluno Fictício",
-    serie: "ef3",
     donoUid: "mae1",
     membrosUids: ["mae1", "escola1"],
     participantes: {
@@ -48,7 +47,6 @@ const semLogin = () => testEnv.unauthenticatedContext().firestore();
 // Pasta nova válida, criada por `uid`
 const novaPasta = (uid) => ({
     nomeAluno: "Outro Aluno Fictício",
-    serie: "infantil",
     donoUid: uid,
     membrosUids: [uid],
     // O nome precisa ser igual ao do perfil em `users` (todos são "Fictício")
@@ -112,14 +110,24 @@ describe("criar pasta", () => {
         await assertFails(criar("mae1", { ...novaPasta("mae1"), diagnostico: "texto" }));
     });
 
-    test("NÃO: faltando a série", async () => {
-        const semSerie = novaPasta("mae1");
-        delete semSerie.serie;
-        await assertFails(criar("mae1", semSerie));
+    // RF03: só o nome da criança (minimização). Série, data de nascimento e
+    // cartão SUS saíram a pedido da cliente e não podem voltar pela porta dos fundos
+    test("NÃO: com a série (campo retirado)", async () => {
+        await assertFails(criar("mae1", { ...novaPasta("mae1"), serie: "ef3" }));
     });
 
-    test("NÃO: série fora da lista", async () => {
-        await assertFails(criar("mae1", { ...novaPasta("mae1"), serie: "10º ano" }));
+    test("NÃO: com data de nascimento", async () => {
+        await assertFails(criar("mae1", { ...novaPasta("mae1"), dataNascimento: "2015-01-01" }));
+    });
+
+    test("NÃO: com cartão SUS", async () => {
+        await assertFails(criar("mae1", { ...novaPasta("mae1"), cartaoSus: "000000000000000" }));
+    });
+
+    test("NÃO: faltando o nome do aluno", async () => {
+        const semNome = novaPasta("mae1");
+        delete semNome.nomeAluno;
+        await assertFails(criar("mae1", semNome));
     });
 
     test("NÃO: nome do aluno vazio", async () => {
@@ -205,8 +213,8 @@ describe("ler pasta", () => {
 describe("editar pasta", () => {
     const editar = (uid, dados) => updateDoc(doc(como(uid), "pastas/pasta1"), dados);
 
-    test("dona altera nome e série", async () => {
-        await assertSucceeds(editar("mae1", { nomeAluno: "Nome Corrigido", serie: "ef4" }));
+    test("dona altera o nome", async () => {
+        await assertSucceeds(editar("mae1", { nomeAluno: "Nome Corrigido" }));
     });
 
     test("NÃO: dona adiciona membro (vínculo só por convite)", async () => {
@@ -225,23 +233,27 @@ describe("editar pasta", () => {
         await assertFails(editar("mae1", { donoUid: "mae2" }));
     });
 
-    test("NÃO: série inválida", async () => {
-        await assertFails(editar("mae1", { serie: "qualquer" }));
+    test("NÃO: dona acrescenta a série (campo retirado)", async () => {
+        await assertFails(editar("mae1", { serie: "ef4" }));
+    });
+
+    test("NÃO: dona acrescenta outro dado da criança", async () => {
+        await assertFails(editar("mae1", { nomeAluno: "Nome Corrigido", dataNascimento: "2015-01-01" }));
     });
 
     test("NÃO: membro que não é dono (escola) edita", async () => {
-        await assertFails(editar("escola1", { serie: "ef4" }));
+        await assertFails(editar("escola1", { nomeAluno: "Nome Corrigido" }));
     });
 
     test("NÃO: não membro edita", async () => {
-        await assertFails(editar("mae2", { serie: "ef4" }));
+        await assertFails(editar("mae2", { nomeAluno: "Nome Corrigido" }));
     });
 
     test("NÃO: dona que não é mais membro edita", async () => {
         await testEnv.withSecurityRulesDisabled(async (ctx) => {
             await setDoc(doc(ctx.firestore(), "pastas/pasta2"), { ...PASTA, membrosUids: ["escola1"] });
         });
-        await assertFails(updateDoc(doc(como("mae1"), "pastas/pasta2"), { serie: "ef4" }));
+        await assertFails(updateDoc(doc(como("mae1"), "pastas/pasta2"), { nomeAluno: "Nome Corrigido" }));
     });
 });
 
