@@ -14,6 +14,12 @@
       ],
       "@/helpers/pasta": [
         "../src/helpers/pasta"
+      ],
+      "@/helpers/linhas": [
+        "../src/helpers/linhas"
+      ],
+      "@/helpers/convite": [
+        "../src/helpers/convite"
       ]
     }
   },

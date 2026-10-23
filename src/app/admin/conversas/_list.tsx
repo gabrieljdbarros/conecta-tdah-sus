@@ -12,8 +12,7 @@ const COR_ERRO = 'text-[#B91C1C]';
 /**
  * Aba "Conversas": um chat por aluno (RN05), como a lista "Chat" do design.
  * Usa as mesmas pastas da aba "Pastas" — quem não participa da pasta não
- * a vê aqui, e as regras do Firestore bloqueiam as mensagens de qualquer forma.
- * TODO (notificações): prévia da última mensagem e número de não lidas
+ * a vê aqui, e o RLS do banco bloqueia as mensagens de qualquer forma.
  */
 export default function ConversasList() {
     const { user, loading: carregandoSessao } = useAuth();

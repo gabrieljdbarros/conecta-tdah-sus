@@ -1,100 +1,66 @@
-import {
-    createUserWithEmailAndPassword,
-    sendPasswordResetEmail,
-    signInWithEmailAndPassword,
-    signOut,
-} from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { FirebaseError } from "firebase/app";
-import { auth, db } from "~/servicos/firebase";
+import { SITE, supabase } from "~/servicos/supabase";
+import { COLUNAS_PERFIL, mensagemErroAuth as mensagemErro, paraAppUser } from "@/helpers/linhas";
 import { AppUser, DadosPerfil, UserRole } from "@/types/user";
 
 /**
  * SERVIÇOS DE USUÁRIO (app). Mesma lógica de src/services/user.ts da web:
  * cada função devolve { success, ... } e nunca lança erro para a tela.
- * As Security Rules conferem o formato do perfil no servidor
+ * O banco confere o formato do perfil (restrições da tabela e RLS)
  */
 
-function mensagemErro(error: unknown): string {
-    const codigo = error instanceof FirebaseError ? error.code : '';
-    switch (codigo) {
-        case "auth/invalid-email":
-            return "E-mail inválido";
-        case "auth/user-not-found":
-        case "auth/wrong-password":
-        case "auth/invalid-credential":
-            return "E-mail ou senha incorretos";
-        case "auth/email-already-in-use":
-            return "Já existe uma conta com este e-mail";
-        case "auth/weak-password":
-            return "A senha precisa ter pelo menos 6 caracteres";
-        case "auth/too-many-requests":
-            return "Muitas tentativas. Tente novamente em alguns minutos";
-        case "auth/network-request-failed":
-            return "Sem conexão. Confira a internet e tente de novo";
-        default:
-            return "Não foi possível concluir. Tente novamente";
-    }
-}
-
-/** Lê `users/{uid}` (o próprio perfil; as regras não deixam ler o de outros) */
+/** Lê o próprio perfil em `perfis` (o RLS não deixa ler o de outros) */
 export async function buscarPerfil(uid: string): Promise<AppUser | null> {
-    const snapshot = await getDoc(doc(db, "users", uid));
-    if (!snapshot.exists()) return null;
-    const data = snapshot.data();
-    return { uid, nome: data.nome, email: data.email, role: data.role, dadosPerfil: data.dadosPerfil ?? {} };
+    const { data, error } = await supabase.from("perfis").select(COLUNAS_PERFIL).eq("id", uid).maybeSingle();
+    if (error) throw error;
+    return data ? paraAppUser(data) : null;
 }
 
 const UsuarioServicos = {
     entrar: async (email: string, senha: string): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await signInWithEmailAndPassword(auth, email.trim(), senha);
-            return { success: true };
-        } catch (error) {
-            return { success: false, message: mensagemErro(error) };
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
+        return error ? { success: false, message: mensagemErro(error) } : { success: true };
     },
 
-    /** Cria a conta no Auth e o perfil em `users/{uid}` (mesmo formato da web) */
+    /** Cria a conta no Auth e a linha em `perfis` (mesmo formato da web) */
     cadastrar: async (dados: {
         nome: string; email: string; senha: string; role: UserRole; dadosPerfil: DadosPerfil;
     }): Promise<{ success: boolean; message?: string }> => {
-        try {
-            const credencial = await createUserWithEmailAndPassword(auth, dados.email.trim(), dados.senha);
-            await setDoc(doc(db, "users", credencial.user.uid), {
-                nome: dados.nome,
-                email: dados.email.trim(),
-                role: dados.role,
-                dadosPerfil: dados.dadosPerfil,
-                criadoEm: Date.now(),
-            });
-            return { success: true };
-        } catch (error) {
-            return { success: false, message: mensagemErro(error) };
-        }
+        const { data, error } = await supabase.auth.signUp({ email: dados.email.trim(), password: dados.senha });
+        if (error) return { success: false, message: mensagemErro(error) };
+        // Com a confirmação de e-mail ligada (projeto real), não há sessão
+        // até a pessoa confirmar
+        if (!data.user || !data.session)
+            return { success: false, message: "Confirme o seu e-mail pelo link que enviamos e depois entre." };
+
+        // TODO: se isto falhar, a conta fica no Auth sem perfil (ver a web)
+        const { error: erroPerfil } = await supabase.from("perfis").insert({
+            id: data.user.id,
+            nome: dados.nome,
+            email: dados.email.trim(),
+            role: dados.role,
+            dados_perfil: dados.dadosPerfil,
+        });
+        if (erroPerfil) return { success: false, message: "Não foi possível concluir o cadastro. Tente novamente" };
+        return { success: true };
     },
 
-    /** Só `nome` e `dadosPerfil` (as regras recusam mudar perfil ou e-mail) */
+    /** Só `nome` e `dados_perfil` (o banco não libera mudar perfil ou e-mail) */
     atualizarPerfil: async (uid: string, dados: { nome: string; dadosPerfil: DadosPerfil }): Promise<{ success: boolean }> => {
-        try {
-            await updateDoc(doc(db, "users", uid), { nome: dados.nome, dadosPerfil: dados.dadosPerfil });
-            return { success: true };
-        } catch {
-            return { success: false };
-        }
+        const { data, error } = await supabase.from("perfis")
+            .update({ nome: dados.nome, dados_perfil: dados.dadosPerfil })
+            .eq("id", uid)
+            .select("id");
+        return { success: !error && !!data?.length };
     },
 
+    /** O link do e-mail abre a página /nova-senha do site */
     redefinirSenha: async (email: string): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await sendPasswordResetEmail(auth, email.trim());
-            return { success: true };
-        } catch (error) {
-            return { success: false, message: mensagemErro(error) };
-        }
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${SITE}/nova-senha` });
+        return error ? { success: false, message: mensagemErro(error) } : { success: true };
     },
 
     sair: async () => {
-        await signOut(auth);
+        await supabase.auth.signOut();
     },
 };
 

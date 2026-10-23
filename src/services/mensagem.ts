@@ -2,32 +2,13 @@ import { supabase } from "@/services/supabase";
 import { AppUser } from "@/types/user";
 import { PapelNaPasta } from "@/types/pasta";
 import { LIMITE_MENSAGENS, Mensagem } from "@/types/mensagem";
+import { COLUNAS_MENSAGEM, juntarMensagens, LinhaMensagem, paraMensagem } from "@/helpers/linhas";
 
 /**
  * SERVICES DO CHAT DA PASTA (RN05, decisão travada 7)
  * Um único chat em grupo por pasta. As permissões estão nas políticas RLS
  * da tabela `mensagens` (o Realtime também as respeita).
  */
-
-interface LinhaMensagem {
-    id: string;
-    texto: string;
-    autor_id: string | null;
-    autor_nome: string;
-    autor_papel: PapelNaPasta;
-    criado_em: string;
-}
-
-function paraMensagem(linha: LinhaMensagem): Mensagem {
-    return {
-        id: linha.id,
-        texto: linha.texto,
-        autorUid: linha.autor_id ?? '',
-        autorNome: linha.autor_nome,
-        autorPapel: linha.autor_papel,
-        criadoEm: new Date(linha.criado_em).getTime(),
-    };
-}
 
 const MensagemServices = {
     /**
@@ -46,9 +27,7 @@ const MensagemServices = {
         const pendentes: Mensagem[] = []; // chegaram antes da carga inicial
 
         const juntar = (novas: Mensagem[]) => {
-            const porId = new Map(lista.map((m) => [m.id, m]));
-            for (const m of novas) porId.set(m.id, m);
-            lista = [...porId.values()].sort((a, b) => a.criadoEm - b.criadoEm).slice(-LIMITE_MENSAGENS);
+            lista = juntarMensagens(lista, novas, LIMITE_MENSAGENS);
             aoMudar(lista);
         };
 
@@ -71,7 +50,7 @@ const MensagemServices = {
                 if (status !== "SUBSCRIBED" || carregou) return;
 
                 const { data, error } = await supabase.from("mensagens")
-                    .select("id, texto, autor_id, autor_nome, autor_papel, criado_em")
+                    .select(COLUNAS_MENSAGEM)
                     .eq("pasta_id", pastaId)
                     .order("criado_em", { ascending: false })
                     .limit(LIMITE_MENSAGENS);

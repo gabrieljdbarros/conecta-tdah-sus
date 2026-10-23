@@ -24,7 +24,7 @@ const COR_ERRO = 'text-[#B91C1C]';
 // Botão de saída com alvo de toque grande
 const CLASSE_LINK_VOLTAR = "self-center mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
-// Limite igual ao das Security Rules (textoValido em firestore.rules)
+// Limite igual ao do banco (texto_valido, em supabase/migrations)
 const MAX = 100;
 
 const validationSchema = Yup.object({
@@ -81,7 +81,7 @@ export default function NovaPastaForm() {
         );
 
     // Só a mãe/responsável cria pasta (decisão travada 6). Checagem de UX —
-    // as Security Rules também recusam
+    // o banco também recusa
     if (user?.role !== 'mae')
         return (
             <div className="flex flex-col">

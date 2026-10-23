@@ -10,11 +10,8 @@ import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
 import MensagemServicos from "~/servicos/mensagem";
 import { cores, medidas } from "~/tema/cores";
-import { CANAL_GRUPO, LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
+import { LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
-
-// Um único chat em grupo por pasta (RN05, decisão travada 7), igual à web
-const CANAL = CANAL_GRUPO;
 
 const hora = (ms: number) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const dia = (ms: number) => new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -67,7 +64,7 @@ export default function Conversas() {
         if (!pastaId) return;
         conhecidas.current = null;
         pertoDoFim.current = true;
-        return MensagemServicos.ouvir(pastaId, CANAL, (novas) => {
+        return MensagemServicos.ouvir(pastaId, (novas) => {
             // Mensagens novas dos OUTROS (depois da primeira carga) são anunciadas,
             // só com o nome de quem mandou (o texto não é falado sem pedir)
             if (conhecidas.current) {
@@ -91,7 +88,7 @@ export default function Conversas() {
         if (!limpo || enviando) return;
         setEnviando(true);
         setErroEnvio(null);
-        const { success, semConexao } = await MensagemServicos.enviar(pasta.id, CANAL, user, papel, limpo);
+        const { success, semConexao } = await MensagemServicos.enviar(pasta.id, user, papel, limpo);
         setEnviando(false);
         if (success) {
             setTexto('');

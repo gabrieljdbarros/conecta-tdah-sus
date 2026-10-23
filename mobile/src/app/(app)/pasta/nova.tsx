@@ -11,7 +11,7 @@ import { useAuth } from "~/contexto/AuthContext";
 import PastaServicos from "~/servicos/pasta";
 import { cores } from "~/tema/cores";
 
-// Limite igual ao das Security Rules
+// Limite igual ao do banco (texto_valido, em supabase/migrations)
 const MAX = 100;
 const esquema = Yup.object({
     nomeAluno: Yup.string().trim().max(MAX, `Use no máximo ${MAX} caracteres`).required('Escreva o nome do aluno'),
@@ -35,7 +35,7 @@ export default function NovaPasta() {
             <Formik initialValues={{ nomeAluno: '' }} validationSchema={esquema}
                 onSubmit={async (v) => {
                     setErro(null);
-                    const { success, message } = await PastaServicos.criar(user, { nomeAluno: v.nomeAluno.trim() });
+                    const { success, message } = await PastaServicos.criar({ nomeAluno: v.nomeAluno.trim() });
                     if (success) {
                         anunciar('Pronto: pasta criada.');
                         router.back();

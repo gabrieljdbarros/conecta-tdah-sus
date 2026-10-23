@@ -18,9 +18,6 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
-      "functions/lib/**",
-      "functions/node_modules/**",
-      ".emulator-data/**",
       // App nativo (Expo): tem o próprio lint e as próprias dependências
       "mobile/**",
     ],

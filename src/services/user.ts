@@ -1,45 +1,7 @@
-import { AuthError } from "@supabase/supabase-js";
 import Cookies from "js-cookie";
 import { supabase } from "@/services/supabase";
+import { COLUNAS_PERFIL, mensagemErroAuth, paraAppUser } from "@/helpers/linhas";
 import { AppUser, DadosPerfil, UserRole } from "@/types/user";
-
-/**
- * Traduz os códigos de erro do Supabase Auth para mensagens em português,
- * legíveis para quem está preenchendo o formulário.
- */
-function mensagemErroAuth(error: unknown): string {
-    const codigo = error instanceof AuthError ? error.code : '';
-    switch (codigo) {
-        case "email_address_invalid":
-        case "validation_failed":
-            return "E-mail inválido";
-        case "invalid_credentials":
-            return "E-mail ou senha incorretos";
-        case "user_already_exists":
-        case "email_exists":
-            return "Já existe uma conta com este e-mail";
-        case "weak_password":
-            return "A senha precisa ter pelo menos 6 caracteres";
-        case "over_request_rate_limit":
-        case "over_email_send_rate_limit":
-            return "Muitas tentativas. Tente novamente em alguns minutos";
-        default:
-            return "Não foi possível concluir a operação. Tente novamente";
-    }
-}
-
-/** Linha da tabela `perfis` → usuário da aplicação */
-export function paraAppUser(linha: { id: string; nome: string; email: string; role: UserRole; dados_perfil: DadosPerfil | null }): AppUser {
-    return {
-        uid: linha.id,
-        nome: linha.nome,
-        email: linha.email,
-        role: linha.role,
-        dadosPerfil: linha.dados_perfil ?? {},
-    };
-}
-
-const COLUNAS_PERFIL = "id, nome, email, role, dados_perfil";
 
 /**
  * SERVICES DE GERENCIAMENTO DE USUÁRIOS (Supabase Auth + tabela `perfis`)

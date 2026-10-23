@@ -1,4 +1,4 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * CONEXÃO COM O SUPABASE (Auth, Postgres e Realtime)
@@ -18,20 +18,9 @@ const chaveAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!url || !chaveAnon)
     throw new Error("Faltam NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.local.");
 
-// O login fica guardado no navegador (como no Firebase), e a sessão é
+// O login fica guardado no navegador, e a sessão é
 // renovada sozinha enquanto o site está aberto
 export const supabase = createClient(url, chaveAnon);
 
-// Erros que as funções do banco devolvem de propósito, já com a mensagem em
-// português para o usuário (convite expirado, já usado, perfil errado...)
-const ERROS_PREVISTOS = ['42501', '22023', 'P0002', '23505'];
-
-/**
- * Mensagem para a tela: a do banco, quando é um erro previsto; senão, a
- * mensagem padrão (erros técnicos não aparecem para o usuário)
- */
-export function mensagemErro(error: PostgrestError | null, padrao: string): string {
-    if (error && ERROS_PREVISTOS.includes(error.code) && !/permission denied|violates/i.test(error.message))
-        return error.message;
-    return padrao;
-}
+// Conversão das mensagens de erro: em src/helpers/linhas.ts (web e app)
+export { mensagemErro } from "@/helpers/linhas";

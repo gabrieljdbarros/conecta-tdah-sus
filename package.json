@@ -7,17 +7,12 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/*.test.mjs\"",
-    "test:functions": "npm --prefix functions run build && firebase emulators:exec --config firebase.test.json --only auth,firestore,functions --project demo-conecta-tdah \"node --test --test-concurrency=1 tests/functions/*.test.mjs\"",
-    "emulators": "node scripts/emulators.mjs",
-    "emulators:rede": "node scripts/emulators.mjs --rede",
     "preview": "next build && next start",
     "test:unit": "node --test tests/unit/*.test.mjs",
     "test:db": "node --test --test-concurrency=1 tests/supabase/*.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
-    "firebase": "^12.19.0",
     "formik": "^2.4.6",
     "js-cookie": "^3.0.5",
     "next": "15.5.5",
@@ -27,7 +22,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/postcss": "^4",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
@@ -35,7 +29,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.5",
-    "firebase-tools": "^15.31.0",
     "supabase": "^2.122.0",
     "tailwindcss": "^4",
     "typescript": "^5"

@@ -6,7 +6,7 @@
 
 **Fluxo central:** a família cria a pasta do aluno e convida a escola e o médico → todos conversam no **chat em grupo da pasta**, sem a família precisar repetir o histórico a cada consulta.
 
-> **Mudança de escopo (20/10/2026):** a pedido da equipe da cliente, o sistema passou a ter só o chat em grupo. Os relatórios, as categorias e o canal privado mãe–médico saíram. A versão apresentada na pré-banca, com eles, está na tag [`v2.0-pre-banca`](../../tree/v2.0-pre-banca). Próximos passos: pasta só com o nome da criança, migração para o Supabase e mensagens de voz.
+> **Mudança de escopo (20/10/2026):** a pedido da equipe da cliente, o sistema passou a ter só o chat em grupo. Os relatórios, as categorias e o canal privado mãe–médico saíram. A versão apresentada na pré-banca, com eles, está na tag [`v2.0-pre-banca`](../../tree/v2.0-pre-banca). Depois disso, a pasta passou a guardar só o nome da criança e o backend migrou do Firebase para o Supabase. Próximo passo: mensagens de voz.
 
 > **Escopo acadêmico:** este é um produto acadêmico. **Não há integração real com sistemas do SUS**, e todos os dados usados em desenvolvimento e testes são **fictícios**.
 
@@ -51,12 +51,12 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
 
 - **Painel web:** [Next.js 15](https://nextjs.org/), TypeScript, Tailwind CSS, Formik e Yup
 - **App nativo:** [Expo](https://expo.dev/) (React Native) com expo-router, na pasta `mobile/`
-- **Backend:** [Supabase](https://supabase.com/) (Auth, Postgres com RLS e Realtime) no painel web. O app nativo ainda usa o Firebase (Authentication, Firestore e Cloud Functions) até o fim da migração.
-- **Testes:** Supabase local, Firebase Emulator (testes antigos, enquanto o app usa o Firebase) e o executor de testes nativo do Node.js
+- **Backend:** [Supabase](https://supabase.com/) (Auth, Postgres com RLS e Realtime), o mesmo para o painel e o app
+- **Testes:** Supabase local e o executor de testes nativo do Node.js
 
-### Por que a migração para o Supabase
+### Por que o Supabase (e não mais o Firebase)
 
-As mensagens de voz (RF16) precisam guardar arquivos de áudio, e o plano atual do Firebase não oferece isso. O Supabase reúne login, banco e arquivos no mesmo lugar. As regras de acesso viraram **políticas RLS** no Postgres, e as Cloud Functions viraram **funções no próprio banco**.
+Até outubro de 2026 o backend era o Firebase. As mensagens de voz (RF16) precisam guardar arquivos de áudio, e o plano atual do Firebase não oferece isso. O Supabase reúne login, banco e arquivos no mesmo lugar. As regras de acesso viraram **políticas RLS** no Postgres, e as Cloud Functions viraram **funções no próprio banco**.
 
 ## Como rodar
 
@@ -64,7 +64,6 @@ As mensagens de voz (RF16) precisam guardar arquivos de áudio, e o plano atual 
 
 - [Node.js](https://nodejs.org/) 22 ou superior
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/): roda o Supabase local
-- [JDK 21](https://adoptium.net/): só para os emuladores do Firebase (app nativo e testes antigos)
 
 ```bash
 git clone https://github.com/gabrieljdbarros/conecta-tdah-sus.git
@@ -107,8 +106,6 @@ As chaves que o `supabase start` mostra são as de demonstração do ambiente lo
 | `npx supabase db reset` | Recria o banco local a partir das migrações (apaga os dados) |
 | `npm run test:db` | Testes do banco: RLS, funções e tempo real (**apagam os dados do banco local**) |
 | `npm run test:unit` | Testes de lógica sem banco (ex.: escolha da voz da leitura em voz alta) |
-| `npm run emulators:rede` | Emuladores do Firebase abertos para a rede local, para o app nativo (até o fim da migração; use só em rede confiável) |
-| `npm run test:rules` / `npm run test:functions` | Testes antigos do Firebase (saem quando o app migrar) |
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
 | `npm run preview` | Build e abre a versão de produção, para testar o PWA (pare o `npm run dev` antes) |
@@ -130,24 +127,26 @@ Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview
 
 ## Aplicativo nativo (React Native)
 
-Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, as regras de acesso existem num lugar só.
+Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app usa **o mesmo Supabase, as mesmas políticas RLS e as mesmas funções do banco** da web, e importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, as regras de acesso existem num lugar só.
 
 O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, pastas, convites e vínculos, chat e leitura em voz alta.
 
-> **Migração em andamento:** o painel web já usa o Supabase, mas o app ainda usa o Firebase (emuladores). Até o app migrar, os dados do app e os da web ficam separados.
-
-> O app **não é publicado nas lojas**: ele roda pelo **Expo Go**, ligado aos emuladores do computador pela rede Wi-Fi. No convite, a escola e o médico **colam o link** recebido. Abrir o app direto pelo link (deep link) exige o site publicado e fica para depois.
+> O app **não é publicado nas lojas**: ele roda pelo **Expo Go**, ligado ao Supabase local do computador pela rede Wi-Fi. No convite, a escola e o médico **colam o link** recebido. Abrir o app direto pelo link (deep link) exige o site publicado e fica para depois.
 
 ### Como rodar no celular
 
 1. No celular (Android ou iPhone), instale o app **Expo Go** pela loja.
 2. Ligue o computador e o celular na **mesma rede Wi-Fi**. Use uma rede confiável, como a de casa: a rede pública da faculdade pode bloquear a conexão entre os aparelhos.
 3. Descubra o endereço do computador na rede. No Windows, rode `ipconfig` e procure a linha **"Endereço IPv4"** (ex.: `192.168.1.4`).
-4. Na pasta `mobile/`, copie `.env.local.example` para `.env.local` e coloque esse endereço em `EXPO_PUBLIC_EMULADOR_HOST`. O `.env.local` **não** é versionado.
-5. Na raiz do projeto, suba os emuladores abertos para a rede e deixe o terminal aberto:
+4. Na raiz do projeto, com o Docker Desktop aberto, suba o Supabase local (se ainda não estiver ligado):
    ```bash
-   npm run emulators:rede
+   npx supabase start
    ```
+5. Na pasta `mobile/`, copie `.env.local.example` para `.env.local` e preencha:
+   - `EXPO_PUBLIC_SUPABASE_URL` com `http://<endereço do passo 3>:54321` (o celular não enxerga "localhost");
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY` com a ANON_KEY de `npx supabase status`.
+
+   O `.env.local` **não** é versionado.
 6. Em outro terminal, inicie o app:
    ```bash
    cd mobile
@@ -157,8 +156,8 @@ O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, 
 7. Abra o Expo Go e leia o QR code que aparece no terminal.
 
 **Se der erro de conexão:**
-- *"Could not reach Cloud Firestore backend"* ou *"network-request-failed"*: o endereço do computador mudou, porque o roteador às vezes troca. Rode `ipconfig` de novo, corrija `EXPO_PUBLIC_EMULADOR_HOST` e reinicie com `npx expo start --clear`. Para não acontecer mais, reserve um endereço fixo para o computador no roteador ("reserva de DHCP").
-- *"failed to download remote update"* no Expo Go: no Windows, a rede precisa estar como **Privada**, e o firewall precisa liberar as portas 8081 (Expo), 9099 (Auth), 8080 (Firestore) e 5001 (Functions).
+- *"Sem conexão"* ou o login fica parado em "Entrando...": o endereço do computador mudou, porque o roteador às vezes troca. Rode `ipconfig` de novo, corrija o endereço em `EXPO_PUBLIC_SUPABASE_URL` e reinicie com `npx expo start --clear`. Para não acontecer mais, reserve um endereço fixo para o computador no roteador ("reserva de DHCP").
+- *"failed to download remote update"* no Expo Go: no Windows, a rede precisa estar como **Privada**, e o firewall precisa liberar as portas 8081 (Expo) e 54321 (Supabase). Na primeira vez, o Windows pode perguntar se libera o acesso: aceite só para redes privadas.
 
 ### Comandos do app (dentro de `mobile/`)
 
@@ -190,13 +189,10 @@ src/
   types/          Modelos de dados
 mobile/           App nativo Expo (mãe, escola e médico)
   src/app/        Telas (expo-router)
-  src/servicos/   Acesso ao Firebase e leitura em voz alta
+  src/servicos/   Acesso ao Supabase e leitura em voz alta
 supabase/         Banco: migrações (tabelas, RLS e funções) e configuração local
 tests/supabase/   Testes do banco (RLS, funções e tempo real)
-functions/        Cloud Functions do Firebase (usadas pelo app até a migração)
-tests/            Testes antigos das Security Rules e das Functions
-scripts/          Script que sobe os emuladores do Firebase
-firestore.rules   Regras do Firestore (usadas pelo app até a migração)
+tests/unit/       Testes de lógica (sem banco)
 ```
 
 ## Autoria
