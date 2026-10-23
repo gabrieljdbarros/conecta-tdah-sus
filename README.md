@@ -20,9 +20,9 @@
 | Edição do próprio perfil | ✅ Pronto |
 | Pasta do aluno, criada pela mãe/responsável (RF03) | ✅ Pronto |
 | Ajustes de privacidade do perfil (nome da criança só na pasta; admin sem troca de perfil) | ✅ Pronto |
-| Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto (no modo emulador) |
-| Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto (no modo emulador) |
-| Remover participante e sair da pasta | ✅ Pronto (no modo emulador) |
+| Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto |
+| Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto |
+| Remover participante e sair da pasta | ✅ Pronto |
 | Chat em grupo por aluno, em tempo real (RN05, RF08) | ✅ Pronto |
 | Mensagens de voz no chat (RF16) | ⏳ Depois da migração para o Supabase |
 | Aplicativo instalável no celular (PWA) | ✅ Pronto |
@@ -37,105 +37,81 @@ Cada aluno tem uma **pasta**, criada pela mãe/responsável. A escola e o médic
 
 O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD classifica como dados pessoais sensíveis. Por isso:
 
-- **As permissões ficam nas Firestore Security Rules** (`firestore.rules`), com base no perfil do usuário e no vínculo com a pasta. As checagens nas telas servem só para a experiência de uso.
-- **As regras têm testes automatizados** no Firebase Emulator, e toda mudança nelas é testada antes de ir para produção.
-- **A senha fica só no Firebase Authentication**, nunca no banco de dados.
+- **As permissões ficam no banco, em políticas RLS** (`supabase/migrations/`), com base no perfil do usuário e no vínculo com a pasta. Toda tabela tem RLS, e o banco libera para cada perfil só as colunas que ele pode gravar. As checagens nas telas servem só para a experiência de uso.
+- **As regras têm testes automatizados** no Supabase local, e toda mudança nelas é testada antes de ir para produção. O chat em tempo real também é testado: quem não é da pasta não recebe as mensagens.
+- **A senha fica só no serviço de login (Supabase Auth)**, nunca nas tabelas.
 - **Só guardamos o necessário (minimização).** A pasta guarda apenas o nome do aluno (sem série, data de nascimento ou cartão SUS), e o nome da criança não fica no perfil da família.
 - **A leitura em voz alta não envia dados de saúde para fora.** As instruções das telas podem usar qualquer voz em português. Já as mensagens só são lidas com uma voz que roda no próprio aparelho, porque algumas vozes do navegador mandam o texto para servidores externos gerarem o áudio. Se o aparelho não tiver uma voz local em português, o botão de ouvir o conteúdo não aparece.
   - **Limite (para a defesa):** quem informa se a voz roda no aparelho é o próprio navegador (`localService`), e o app não consegue conferir isso. Alguns motores de voz de fabricantes no Android podem se declarar locais e ainda usar a internet.
   - **Para ouvir as mensagens no computador,** é preciso ter uma voz em português instalada no sistema. No Windows: Configurações → Hora e idioma → Fala → Adicionar vozes → Português (Brasil), voz "Microsoft Maria". Depois, reinicie o navegador. Sem ela, o botão de ouvir o conteúdo não aparece, e as instruções continuam podendo ser ouvidas.
   - **Ditado pelo microfone do teclado:** a dica na tela sugere usar o microfone do teclado para falar em vez de digitar. Esse ditado é um recurso do teclado do celular (Google, Apple etc.), escolhido pela pessoa no aparelho dela, e pode enviar o áudio para os servidores desse teclado. O app não recebe nem guarda áudio.
-- **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma Cloud Function, numa transação, que confere se a conta é do perfil certo (escola ou médico).
+- **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma função no banco, numa transação, que confere se a conta é do perfil certo (escola ou médico).
 
 ## Tecnologias
 
 - **Painel web:** [Next.js 15](https://nextjs.org/), TypeScript, Tailwind CSS, Formik e Yup
 - **App nativo:** [Expo](https://expo.dev/) (React Native) com expo-router, na pasta `mobile/`
-- **Backend:** Firebase (Authentication, Firestore e Cloud Functions)
-- **Testes:** Firebase Emulator, `@firebase/rules-unit-testing` e o executor de testes nativo do Node.js
+- **Backend:** [Supabase](https://supabase.com/) (Auth, Postgres com RLS e Realtime) no painel web. O app nativo ainda usa o Firebase (Authentication, Firestore e Cloud Functions) até o fim da migração.
+- **Testes:** Supabase local, Firebase Emulator (testes antigos, enquanto o app usa o Firebase) e o executor de testes nativo do Node.js
+
+### Por que a migração para o Supabase
+
+As mensagens de voz (RF16) precisam guardar arquivos de áudio, e o plano atual do Firebase não oferece isso. O Supabase reúne login, banco e arquivos no mesmo lugar. As regras de acesso viraram **políticas RLS** no Postgres, e as Cloud Functions viraram **funções no próprio banco**.
 
 ## Como rodar
 
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) 22 ou superior
-- [JDK 21](https://adoptium.net/): para os emuladores do Firebase e os testes
-- Um projeto no [Firebase](https://console.firebase.google.com/) com **Authentication (e-mail/senha)** e **Firestore** ativados. Só é necessário fora do modo protótipo.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/): roda o Supabase local
+- [JDK 21](https://adoptium.net/): só para os emuladores do Firebase (app nativo e testes antigos)
 
 ```bash
 git clone https://github.com/gabrieljdbarros/conecta-tdah-sus.git
 cd conecta-tdah-sus
 npm install
-npm --prefix functions install
 ```
 
-### Modo protótipo (emuladores, recomendado)
+### Painel web (Supabase local, recomendado)
 
-Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Firebase. As Cloud Functions do convite, por enquanto, funcionam **só** nesse modo, porque publicá-las exige o plano pago Blaze.
+Tudo roda no seu computador, com dados fictícios.
 
-1. Copie `.env.local.example` para `.env.local` e coloque `NEXT_PUBLIC_USE_EMULATORS=true`.
-2. Em um terminal, suba os emuladores e deixe-os abertos:
+1. Abra o Docker Desktop e suba o Supabase local (na primeira vez, ele baixa as imagens):
    ```bash
-   npm run emulators
+   npx supabase start
    ```
-   Os dados são salvos em `.emulator-data/` quando você fecha o terminal com Ctrl+C, e são recarregados na próxima vez.
-3. Em outro terminal, inicie o site:
+2. Copie `.env.local.example` para `.env.local` e preencha `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` com os valores de `npx supabase status` (API_URL e ANON_KEY). O `.env.local` **não** é versionado.
+3. Inicie o site:
    ```bash
    npm run dev
    ```
    Acesse http://localhost:3000 e crie as contas de teste (mãe, escola e médico) pelo cadastro.
-4. A interface dos emuladores fica em http://localhost:4000. Ela mostra os dados em tempo real e permite transformar uma conta de teste em **administrador**: em *Firestore*, abra `users` → documento da conta e troque `role` para `admin`. Isso vale **só para o emulador**. A interface ignora as regras de segurança e roda apenas no seu computador (127.0.0.1).
+4. O painel do Supabase local fica em http://127.0.0.1:54323. Para transformar uma conta de teste em **administrador**: em *Table Editor*, abra a tabela `perfis`, troque o `role` da conta para `admin` e limpe o `dados_perfil` (deixe `{}`). O cadastro pela tela não permite criar administradores, e isso é proposital.
+5. Os e-mails (como o de "Esqueci minha senha") não saem do computador: aparecem no Mailpit, em http://127.0.0.1:54324.
 
-### Com um projeto Firebase real
+Os dados ficam guardados no Docker entre uma execução e outra. Para desligar, use `npx supabase stop`. Para começar do zero, use `npx supabase db reset`. Depois de mudar o `supabase/config.toml`, rode `npx supabase stop` e `npx supabase start` para a mudança valer.
 
-1. Copie `.env.local.example` para `.env.local`, preencha com as chaves do app web do seu projeto Firebase e deixe `NEXT_PUBLIC_USE_EMULATORS=false`. O `.env.local` **não** é versionado.
-2. Vincule o repositório ao seu projeto e publique as regras de segurança:
-   ```bash
-   npx firebase login
-   npx firebase use --add
-   npx firebase deploy --only firestore:rules
-   ```
-3. Inicie o servidor local:
-   ```bash
-   npm run dev
-   ```
-   Acesse http://localhost:3000.
+### Banco no Supabase
 
-> Para ter uma conta de **administrador**, cadastre-se normalmente e troque o campo `role` do seu documento para `admin` no Console do Firestore. O cadastro pela tela não permite criar administradores, e isso é proposital.
+- `supabase/migrations/`: tabelas, regras de acesso (**RLS** ativado em todas) e as funções do convite e da pasta.
+- `tests/supabase/`: os testes do banco. Cada um tenta o acesso permitido e os proibidos, com usuários fictícios, inclusive no chat em tempo real.
+
+As chaves que o `supabase start` mostra são as de demonstração do ambiente local. As chaves de um projeto real, principalmente a `service_role`, **nunca** vão para o repositório.
 
 ### Comandos
 
 | Comando | O que faz |
 |---|---|
 | `npm run dev` | Servidor local de desenvolvimento |
-| `npm run emulators` | Emuladores de Auth, Firestore e Functions para o modo protótipo |
-| `npm run emulators:rede` | Os mesmos emuladores, abertos para a rede local (para o app no celular; use só em rede confiável) |
-| `npm run test:rules` | Testes das Security Rules no Firestore Emulator |
-| `npm run test:functions` | Testes das Cloud Functions do convite nos emuladores |
-| `npm run test:unit` | Testes de lógica sem emulador (ex.: escolha da voz da leitura em voz alta) |
+| `npx supabase start` / `npx supabase stop` | Liga e desliga o Supabase local |
+| `npx supabase db reset` | Recria o banco local a partir das migrações (apaga os dados) |
+| `npm run test:db` | Testes do banco: RLS, funções e tempo real (**apagam os dados do banco local**) |
+| `npm run test:unit` | Testes de lógica sem banco (ex.: escolha da voz da leitura em voz alta) |
+| `npm run emulators:rede` | Emuladores do Firebase abertos para a rede local, para o app nativo (até o fim da migração; use só em rede confiável) |
+| `npm run test:rules` / `npm run test:functions` | Testes antigos do Firebase (saem quando o app migrar) |
 | `npm run lint` | Verificação de código |
 | `npm run build` | Build de produção |
 | `npm run preview` | Build e abre a versão de produção, para testar o PWA (pare o `npm run dev` antes) |
-
-> Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
-
-### Banco no Supabase (migração em andamento)
-
-O backend está saindo do Firebase para o **Supabase** (Auth, Postgres e Storage), porque as mensagens de voz precisam guardar arquivos de áudio. O banco novo já existe, com as mesmas regras de acesso, mas as telas ainda usam o Firebase até o fim da migração.
-
-- `supabase/migrations/`: tabelas, regras de acesso (**RLS** ativado em todas) e as funções do convite e da pasta, que substituem as Cloud Functions.
-- `tests/supabase/`: os testes do banco. Cada um tenta o acesso permitido e os proibidos, com usuários fictícios.
-
-Para rodar, é preciso ter o **Docker Desktop** aberto:
-
-```bash
-npx supabase start    # sobe o Supabase local (na primeira vez, baixa as imagens)
-npx supabase db reset # recria o banco a partir das migrações
-npm run test:db       # testes do banco (apagam os dados do banco local)
-npx supabase stop     # desliga
-```
-
-O painel do banco local fica em http://127.0.0.1:54323. As chaves que o `supabase start` mostra são as de demonstração do ambiente local. As chaves de um projeto real, principalmente a `service_role`, **nunca** vão para o repositório.
 
 ## Instalar no celular (PWA)
 
@@ -150,13 +126,15 @@ Professores e médicos não precisam instalar nada: o mesmo endereço funciona n
 
 > **Privacidade:** o aplicativo **não guarda dados no aparelho**, nem pastas, nem conversas. Ele guarda só os arquivos fixos do site, para abrir mais rápido. Sem internet, mostra a tela "Você está sem internet". Muitas famílias dividem o celular, e dados de saúde de crianças não devem ficar salvos nele.
 
-Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview` e abra http://localhost:3000. O Chrome mostra o botão de instalar na barra de endereço. A versão de produção não roda no modo emulador, então use `NEXT_PUBLIC_USE_EMULATORS=false`. No celular, a instalação exige o site publicado num endereço com HTTPS.
+Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview` e abra http://localhost:3000. O Chrome mostra o botão de instalar na barra de endereço. No celular, a instalação exige o site publicado num endereço com HTTPS.
 
 ## Aplicativo nativo (React Native)
 
-Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app usa **o mesmo Firebase, as mesmas Security Rules e as mesmas Cloud Functions** da web, e importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, as regras de acesso existem num lugar só.
+Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, as regras de acesso existem num lugar só.
 
 O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, pastas, convites e vínculos, chat e leitura em voz alta.
+
+> **Migração em andamento:** o painel web já usa o Supabase, mas o app ainda usa o Firebase (emuladores). Até o app migrar, os dados do app e os da web ficam separados.
 
 > O app **não é publicado nas lojas**: ele roda pelo **Expo Go**, ligado aos emuladores do computador pela rede Wi-Fi. No convite, a escola e o médico **colam o link** recebido. Abrir o app direto pelo link (deep link) exige o site publicado e fica para depois.
 
@@ -207,17 +185,18 @@ Os botões "Ouvir instruções" usam qualquer voz em português. Já as mensagen
 src/
   app/            Telas (login, cadastro, convite e área /admin)
   contexts/       Sessão do usuário (AuthContext)
-  services/       Acesso ao Firebase (usuários, pastas, convites)
+  services/       Acesso ao Supabase (usuários, pastas, convites, chat)
   themes/         Componentes visuais do template
   types/          Modelos de dados
 mobile/           App nativo Expo (mãe, escola e médico)
   src/app/        Telas (expo-router)
   src/servicos/   Acesso ao Firebase e leitura em voz alta
-functions/        Cloud Functions (gerar e aceitar convite)
-tests/            Testes das Security Rules
-tests/functions/  Testes das Cloud Functions
-scripts/          Script que sobe os emuladores
-firestore.rules   Regras de segurança do Firestore
+supabase/         Banco: migrações (tabelas, RLS e funções) e configuração local
+tests/supabase/   Testes do banco (RLS, funções e tempo real)
+functions/        Cloud Functions do Firebase (usadas pelo app até a migração)
+tests/            Testes antigos das Security Rules e das Functions
+scripts/          Script que sobe os emuladores do Firebase
+firestore.rules   Regras do Firestore (usadas pelo app até a migração)
 ```
 
 ## Autoria

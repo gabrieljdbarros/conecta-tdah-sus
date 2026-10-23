@@ -1,41 +1,49 @@
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendPasswordResetEmail,
-    signOut,
-} from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
-import { FirebaseError } from "firebase/app";
+import { AuthError } from "@supabase/supabase-js";
 import Cookies from "js-cookie";
-import { auth, db } from "@/services/firebase";
+import { supabase } from "@/services/supabase";
 import { AppUser, DadosPerfil, UserRole } from "@/types/user";
 
 /**
- * Traduz os códigos de erro do Firebase Auth para mensagens em português,
+ * Traduz os códigos de erro do Supabase Auth para mensagens em português,
  * legíveis para quem está preenchendo o formulário.
  */
-function mensagemErroFirebase(error: unknown): string {
-    const codigo = error instanceof FirebaseError ? error.code : '';
+function mensagemErroAuth(error: unknown): string {
+    const codigo = error instanceof AuthError ? error.code : '';
     switch (codigo) {
-        case "auth/invalid-email":
+        case "email_address_invalid":
+        case "validation_failed":
             return "E-mail inválido";
-        case "auth/user-not-found":
-        case "auth/wrong-password":
-        case "auth/invalid-credential":
+        case "invalid_credentials":
             return "E-mail ou senha incorretos";
-        case "auth/email-already-in-use":
+        case "user_already_exists":
+        case "email_exists":
             return "Já existe uma conta com este e-mail";
-        case "auth/weak-password":
+        case "weak_password":
             return "A senha precisa ter pelo menos 6 caracteres";
-        case "auth/too-many-requests":
+        case "over_request_rate_limit":
+        case "over_email_send_rate_limit":
             return "Muitas tentativas. Tente novamente em alguns minutos";
         default:
             return "Não foi possível concluir a operação. Tente novamente";
     }
 }
 
+/** Linha da tabela `perfis` → usuário da aplicação */
+export function paraAppUser(linha: { id: string; nome: string; email: string; role: UserRole; dados_perfil: DadosPerfil | null }): AppUser {
+    return {
+        uid: linha.id,
+        nome: linha.nome,
+        email: linha.email,
+        role: linha.role,
+        dadosPerfil: linha.dados_perfil ?? {},
+    };
+}
+
+const COLUNAS_PERFIL = "id, nome, email, role, dados_perfil";
+
 /**
- * SERVICES DE GERENCIAMENTO DE USUÁRIOS (Firebase Authentication + Firestore)
+ * SERVICES DE GERENCIAMENTO DE USUÁRIOS (Supabase Auth + tabela `perfis`)
+ * A senha fica só no Supabase Auth (decisão travada 3)
  */
 const UserServices = {
     /**
@@ -45,20 +53,15 @@ const UserServices = {
         email: string,
         password: string
     ): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            // O AuthContext assume a partir daqui (onAuthStateChanged carrega o
-            // perfil no Firestore e seta o cookie de sessão)
-            return { success: true };
-        } catch (error: unknown) {
-            return { success: false, message: mensagemErroFirebase(error) };
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        // Sem erro, o AuthContext assume (carrega o perfil e seta o cookie)
+        return error ? { success: false, message: mensagemErroAuth(error) } : { success: true };
     },
 
     /**
-     * Cadastro multiperfil: cria o usuário no Firebase Authentication e o
-     * documento correspondente em `users/{uid}` no Firestore, já com o
-     * `role` e os campos específicos do perfil em `dadosPerfil`.
+     * Cadastro multiperfil: cria a conta no Supabase Auth e a linha em
+     * `perfis`, já com o `role` e os campos do perfil em `dados_perfil`.
+     * As políticas do banco recusam role admin e e-mail diferente do login
      */
     cadastrar: async (dados: {
         nome: string;
@@ -67,111 +70,91 @@ const UserServices = {
         role: UserRole;
         dadosPerfil: DadosPerfil;
     }): Promise<{ success: boolean; message?: string }> => {
-        try {
-            const credential = await createUserWithEmailAndPassword(
-                auth,
-                dados.email,
-                dados.password
-            );
+        const { data, error } = await supabase.auth.signUp({ email: dados.email, password: dados.password });
+        if (error) return { success: false, message: mensagemErroAuth(error) };
+        // Com a confirmação de e-mail ligada (projeto real), não há sessão
+        // até a pessoa confirmar
+        if (!data.user || !data.session)
+            return { success: false, message: "Confirme o seu e-mail pelo link que enviamos e depois entre." };
 
-            await setDoc(doc(db, "users", credential.user.uid), {
-                nome: dados.nome,
-                email: dados.email,
-                role: dados.role,
-                dadosPerfil: dados.dadosPerfil,
-                criadoEm: Date.now(),
-            });
-
-            return { success: true };
-        } catch (error: unknown) {
-            return { success: false, message: mensagemErroFirebase(error) };
-        }
+        const { error: erroPerfil } = await supabase.from("perfis").insert({
+            id: data.user.id,
+            nome: dados.nome,
+            email: dados.email,
+            role: dados.role,
+            dados_perfil: dados.dadosPerfil,
+        });
+        // TODO: se isto falhar, a conta fica no Auth sem perfil, e tentar de
+        // novo com o mesmo e-mail dá "Já existe uma conta". Tratar no retry
+        if (erroPerfil) return { success: false, message: "Não foi possível concluir o cadastro. Tente novamente" };
+        return { success: true };
     },
 
     /**
-     * Retorna o usuário autenticado (síncrono, a partir do cookie de sessão).
-     * Para os dados completos (role, dadosPerfil) use o hook `useAuth()`.
-     */
-    getCurrentUser: () => {
-        return auth.currentUser;
-    },
-
-    /**
-     * Lista todos os usuários cadastrados (uso do painel admin).
-     * Sem paginação por ora — volume esperado é baixo neste estágio do TCC.
+     * Lista todos os usuários cadastrados (uso do painel admin; o RLS só
+     * devolve todos para o admin). Sem paginação por ora — volume esperado
+     * é baixo neste estágio do TCC.
      */
     getAll: async (): Promise<{ success: boolean; users: AppUser[] }> => {
-        const snapshot = await getDocs(query(collection(db, "users"), orderBy("nome")));
-        const users: AppUser[] = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            return {
-                uid: docSnap.id,
-                nome: data.nome,
-                email: data.email,
-                role: data.role,
-                dadosPerfil: data.dadosPerfil ?? {},
-            };
-        });
-        return { success: true, users };
+        const { data, error } = await supabase.from("perfis").select(COLUNAS_PERFIL).order("nome");
+        if (error) return { success: false, users: [] };
+        return { success: true, users: data.map(paraAppUser) };
     },
 
     /**
-     * Busca o documento completo (`role` + `dadosPerfil`) de um usuário
+     * Perfil completo (`role` + `dados_perfil`) de um usuário
      */
     getById: async (uid: string): Promise<{ success: boolean; user?: AppUser }> => {
-        const snapshot = await getDoc(doc(db, "users", uid));
-        if (!snapshot.exists()) return { success: false };
-
-        const data = snapshot.data();
-        return {
-            success: true,
-            user: {
-                uid,
-                nome: data.nome,
-                email: data.email,
-                role: data.role,
-                dadosPerfil: data.dadosPerfil ?? {},
-            },
-        };
+        const { data, error } = await supabase.from("perfis").select(COLUNAS_PERFIL).eq("id", uid).maybeSingle();
+        if (error || !data) return { success: false };
+        return { success: true, user: paraAppUser(data) };
     },
 
     /**
-     * Edição do próprio perfil: envia SOMENTE `nome` e `dadosPerfil`.
-     * `role`, `email` e `criadoEm` nunca saem daqui — e as Security Rules
-     * recusam qualquer update do próprio usuário que tente mexer neles.
+     * Edição do perfil: envia SOMENTE `nome` e `dados_perfil`. O banco só
+     * libera essas duas colunas (ninguém altera role, e-mail ou data)
      */
     atualizarPerfil: async (
         uid: string,
         dados: { nome: string; dadosPerfil: DadosPerfil }
     ): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await updateDoc(doc(db, "users", uid), {
-                nome: dados.nome,
-                dadosPerfil: dados.dadosPerfil,
-            });
-            return { success: true };
-        } catch {
+        const { data, error } = await supabase.from("perfis")
+            .update({ nome: dados.nome, dados_perfil: dados.dadosPerfil })
+            .eq("id", uid)
+            .select("id");
+        // Sem linha alterada = sem permissão (o RLS não dá erro, só não acha)
+        if (error || !data?.length)
             return { success: false, message: "Não foi possível salvar as alterações. Tente novamente" };
-        }
+        return { success: true };
     },
 
     /**
-     * Solicita ao Firebase o envio de e-mail de redefinição de senha
+     * Envia o e-mail para criar uma senha nova. O link leva para a página
+     * /nova-senha deste site
      */
     resetPassword: async (email: string): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await sendPasswordResetEmail(auth, email);
-            return { success: true };
-        } catch (error: unknown) {
-            return { success: false, message: mensagemErroFirebase(error) };
-        }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/nova-senha`,
+        });
+        return error ? { success: false, message: mensagemErroAuth(error) } : { success: true };
+    },
+
+    /**
+     * Grava a senha nova (na página aberta pelo link do e-mail)
+     */
+    definirNovaSenha: async (senha: string): Promise<{ success: boolean; message?: string }> => {
+        const { error } = await supabase.auth.updateUser({ password: senha });
+        if (error) return { success: false, message: mensagemErroAuth(error) };
+        // Senha nova: as sessões abertas em outros aparelhos são encerradas
+        await supabase.auth.signOut({ scope: 'others' });
+        return { success: true };
     },
 
     /**
      * Encerra a sessão do usuário
      */
     logout: async (): Promise<{ success: boolean }> => {
-        await signOut(auth);
+        await supabase.auth.signOut();
         Cookies.remove("session");
         return { success: true };
     },

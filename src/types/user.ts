@@ -2,11 +2,13 @@
  * MODELO DE USUÁRIO — CONECTA TDAH SUS
  *
  * Decisão travada com o time (ver documento de requisitos):
- *  - Um único documento por usuário em `users/{uid}`
+ *  - Um único registro por usuário: tabela `perfis` no Supabase (web) e
+ *    documento `users/{uid}` no Firestore (app, até a migração)
  *  - Campos específicos de cada perfil ficam agrupados em `dadosPerfil`
- *  - `role` fica no Firestore (não em custom claims do Firebase Auth),
- *    para sustentar a lógica condicional de telas e as Security Rules
- *  - Senha nunca é guardada no Firestore — fica só no Firebase Authentication
+ *    (coluna `dados_perfil` no Supabase)
+ *  - `role` fica no banco (nunca em dados que o próprio usuário edita no
+ *    login), para sustentar a lógica das telas e as regras de acesso
+ *  - Senha nunca é guardada no banco — fica só no serviço de login
  */
 
 export type UserRole = 'admin' | 'mae' | 'escola' | 'medico';
@@ -32,7 +34,7 @@ export interface DadosPerfilMedico {
 export type DadosPerfil = Partial<DadosPerfilMae & DadosPerfilEscola & DadosPerfilMedico>;
 
 /**
- * Formato salvo em `users/{uid}` no Firestore
+ * Formato salvo em `users/{uid}` no Firestore (app, até a migração)
  */
 export interface UserDocument {
     nome: string;
@@ -43,7 +45,7 @@ export interface UserDocument {
 }
 
 /**
- * Usuário autenticado disponível na aplicação (Auth + Firestore combinados)
+ * Usuário autenticado disponível na aplicação (login + perfil combinados)
  */
 export interface AppUser {
     uid: string;

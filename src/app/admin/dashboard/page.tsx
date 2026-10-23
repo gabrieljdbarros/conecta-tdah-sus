@@ -25,9 +25,9 @@ export default function InicioPage() {
     const [hoje, setHoje] = useState<string | undefined>();
     useEffect(() => setHoje(dataDeHoje()), []);
 
-    const carregar = useCallback(async (uid: string) => {
+    const carregar = useCallback(async () => {
         setCarregando(true);
-        const { success, pastas } = await PastaServices.minhas(uid);
+        const { success, pastas } = await PastaServices.minhas();
         setPastas(pastas);
         setErro(!success);
         setCarregando(false);
@@ -40,7 +40,7 @@ export default function InicioPage() {
             setCarregando(false);
             return;
         }
-        carregar(user.uid);
+        carregar();
     }, [carregandoSessao, user, carregar]);
 
     const primeiroNome = user?.nome?.trim().split(/\s+/)[0];
@@ -81,7 +81,7 @@ export default function InicioPage() {
                     {erro && (
                         <div className="flex flex-col items-start gap-3">
                             <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: não deu para carregar os alunos. Toque em &quot;Tentar de novo&quot;.</p>
-                            <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar(user.uid)} />
+                            <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar()} />
                         </div>
                     )}
 

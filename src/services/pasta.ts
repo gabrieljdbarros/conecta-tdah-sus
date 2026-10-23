@@ -1,100 +1,88 @@
-import { addDoc, collection, doc, DocumentData, getDoc, getDocs, query, where } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
-import { db, functions } from "@/services/firebase";
-import { mensagemErro } from "@/services/convite";
-import { Pasta } from "@/types/pasta";
+import { supabase, mensagemErro } from "@/services/supabase";
+import { Participante, PapelNaPasta, Pasta } from "@/types/pasta";
 import { AppUser } from "@/types/user";
 
 /**
  * SERVICES DA PASTA DO ALUNO (RF03)
  *
- * As permissões de verdade estão em firestore.rules (coleção `pastas`);
- * aqui só montamos os dados no formato que as regras aceitam.
+ * As permissões de verdade estão nas políticas RLS do banco (tabelas
+ * `pastas` e `membros_pasta`). Os dados são devolvidos no mesmo formato
+ * usado pelas telas (`membrosUids`, `participantes`).
  */
 
-function paraPasta(id: string, data: DocumentData): Pasta {
+interface LinhaPasta {
+    id: string;
+    nome_aluno: string;
+    dono_id: string;
+    criado_em: string;
+    membros_pasta: { usuario_id: string; papel: PapelNaPasta; nome: string; detalhe: string | null }[];
+}
+
+// A pasta já vem com os membros (o RLS só deixa ler as pastas de que a
+// pessoa participa, e os membros dessas pastas)
+const COLUNAS = "id, nome_aluno, dono_id, criado_em, membros_pasta (usuario_id, papel, nome, detalhe)";
+
+function paraPasta(linha: LinhaPasta): Pasta {
+    const participantes: Record<string, Participante> = {};
+    for (const m of linha.membros_pasta)
+        participantes[m.usuario_id] = { nome: m.nome, papel: m.papel, ...(m.detalhe && { detalhe: m.detalhe }) };
     return {
-        id,
-        nomeAluno: data.nomeAluno,
-        donoUid: data.donoUid,
-        membrosUids: data.membrosUids ?? [],
-        // Pastas criadas antes da lista de participantes não têm o campo
-        participantes: data.participantes ?? {},
-        criadoEm: data.criadoEm,
+        id: linha.id,
+        nomeAluno: linha.nome_aluno,
+        donoUid: linha.dono_id,
+        membrosUids: linha.membros_pasta.map((m) => m.usuario_id),
+        participantes,
+        criadoEm: new Date(linha.criado_em).getTime(),
     };
 }
 
 const PastaServices = {
     /**
-     * A mãe/responsável cria a pasta e vira a dona e única membro inicial.
-     * Escola e médico entram depois, por convite (RN01, RN02).
-     * O nome em `participantes` precisa ser igual ao do perfil (as regras
-     * conferem).
+     * A mãe/responsável cria a pasta (função `criar_pasta` do banco) e vira
+     * a dona e única membro inicial. Escola e médico entram depois, por
+     * convite (RN01, RN02).
      */
     criar: async (
-        dona: AppUser,
+        _dona: AppUser,
         dados: { nomeAluno: string }
     ): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await addDoc(collection(db, "pastas"), {
-                nomeAluno: dados.nomeAluno,
-                donoUid: dona.uid,
-                membrosUids: [dona.uid],
-                participantes: { [dona.uid]: { nome: dona.nome, papel: "mae" } },
-                criadoEm: Date.now(),
-            });
-            return { success: true };
-        } catch {
-            return { success: false, message: "Não foi possível criar a pasta. Tente novamente" };
-        }
+        const { error } = await supabase.rpc("criar_pasta", { p_nome_aluno: dados.nomeAluno });
+        if (error) return { success: false, message: mensagemErro(error, "Não foi possível criar a pasta. Tente novamente") };
+        return { success: true };
     },
 
     /**
-     * Uma pasta específica (as regras só deixam ler quem é membro)
+     * Uma pasta específica (o RLS só deixa ler quem é membro)
      */
     buscar: async (pastaId: string): Promise<{ success: boolean; pasta?: Pasta }> => {
-        try {
-            const snapshot = await getDoc(doc(db, "pastas", pastaId));
-            if (!snapshot.exists()) return { success: false };
-            return { success: true, pasta: paraPasta(snapshot.id, snapshot.data()) };
-        } catch {
-            return { success: false };
-        }
+        const { data, error } = await supabase.from("pastas").select(COLUNAS).eq("id", pastaId).maybeSingle();
+        if (error || !data) return { success: false };
+        return { success: true, pasta: paraPasta(data as LinhaPasta) };
     },
 
     /**
      * Pastas das quais o usuário participa (como dona ou vinculado).
-     * O filtro `array-contains` é obrigatório: as regras recusam listar
-     * pastas sem ele. A ordenação é feita aqui para não exigir índice
-     * composto no Firestore.
+     * O RLS já devolve só essas
      */
-    minhas: async (uid: string): Promise<{ success: boolean; pastas: Pasta[] }> => {
-        try {
-            const snapshot = await getDocs(
-                query(collection(db, "pastas"), where("membrosUids", "array-contains", uid))
-            );
-            const pastas = snapshot.docs.map((docSnap) => paraPasta(docSnap.id, docSnap.data()));
-            pastas.sort((a, b) => a.nomeAluno.localeCompare(b.nomeAluno, "pt-BR"));
-            return { success: true, pastas };
-        } catch {
-            return { success: false, pastas: [] };
-        }
+    minhas: async (): Promise<{ success: boolean; pastas: Pasta[] }> => {
+        const { data, error } = await supabase.from("pastas").select(COLUNAS);
+        if (error) return { success: false, pastas: [] };
+        const pastas = (data as LinhaPasta[]).map(paraPasta);
+        pastas.sort((a, b) => a.nomeAluno.localeCompare(b.nomeAluno, "pt-BR"));
+        return { success: true, pastas };
     },
 
     /**
-     * Tira alguém da pasta (Cloud Function `removerParticipante`):
+     * Tira alguém da pasta (função `remover_participante` do banco):
      * a dona remove outra pessoa; escola/médico passa o próprio uid para sair.
      */
     removerParticipante: async (
         pastaId: string,
         participanteUid: string
     ): Promise<{ success: boolean; message?: string }> => {
-        try {
-            await httpsCallable(functions, "removerParticipante")({ pastaId, participanteUid });
-            return { success: true };
-        } catch (error) {
-            return { success: false, message: mensagemErro(error, "Não foi possível concluir. Tente novamente") };
-        }
+        const { error } = await supabase.rpc("remover_participante", { p_pasta_id: pastaId, p_participante_id: participanteUid });
+        if (error) return { success: false, message: mensagemErro(error, "Não foi possível concluir. Tente novamente") };
+        return { success: true };
     },
 };
 

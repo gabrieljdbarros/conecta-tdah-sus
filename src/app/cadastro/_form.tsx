@@ -70,7 +70,7 @@ const validationSchema = Yup.object({
 // ===========================================================================
 export default function CadastroForm() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, recarregarUsuario } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [aguardandoSessao, setAguardandoSessao] = useState(false);
     // Convite aberto antes de criar a conta (RN01): lido depois de montar a tela
@@ -80,7 +80,7 @@ export default function CadastroForm() {
     useEffect(() => marcarIntroducaoVista(), []);
 
     // Depois do cadastro, o Firebase já autentica o usuário automaticamente.
-    // Espera o AuthContext confirmar (perfil no Firestore + cookie) antes de
+    // Espera o AuthContext confirmar (perfil no banco + cookie) antes de
     // navegar para a área restrita — ou de volta ao convite, se veio de um
     useEffect(() => {
         if (aguardandoSessao && user)
@@ -117,9 +117,12 @@ export default function CadastroForm() {
             dadosPerfil: montarDadosPerfil(values),
         });
 
-        if (success)
+        if (success) {
+            // O login acontece antes de o perfil existir: agora que existe,
+            // o AuthContext precisa ler de novo
+            await recarregarUsuario();
             setAguardandoSessao(true);
-        else
+        } else
             setError(message ?? 'Não foi possível concluir o cadastro');
     };
     // ===========================================================================
