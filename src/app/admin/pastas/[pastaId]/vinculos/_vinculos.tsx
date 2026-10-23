@@ -75,7 +75,7 @@ function Confirmacao({ pergunta, aviso, textoSim, textoNao, textoProcessando, pr
  * - a dona convida escola/médico por link (48 h, uso único — RN01, RN02),
  *   cancela convites e remove pessoas
  * - escola/médico podem sair da pasta
- * As regras do Firestore e as Cloud Functions garantem tudo isso; aqui é a tela
+ * O RLS e as funções do banco garantem tudo isso; aqui é a tela
  */
 export default function Vinculos({ pastaId }: { pastaId: string }) {
     const router = useRouter();

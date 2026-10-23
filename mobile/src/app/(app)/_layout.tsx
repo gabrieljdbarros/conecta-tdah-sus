@@ -5,7 +5,7 @@ import { cores } from "~/tema/cores";
 
 /**
  * Área logada. Sem sessão, volta para o login. Isso é experiência de uso:
- * quem protege os dados são as Security Rules (iguais às da web).
+ * quem protege os dados é o RLS do banco (o mesmo da web).
  * As abas ficam em (abas); as telas que se abrem por cima delas (pasta,
  * criar pasta...) ficam aqui, com a seta de voltar na barra do topo
  */

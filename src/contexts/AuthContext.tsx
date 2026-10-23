@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import Cookies from "js-cookie";
 import { supabase } from "@/services/supabase";
-import { paraAppUser } from "@/services/user";
+import { COLUNAS_PERFIL, paraAppUser } from "@/helpers/linhas";
 import { AppUser } from "@/types/user";
 
 interface AuthContextValue {
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextValue>({
  */
 async function buscarPerfil(uid: string): Promise<AppUser | null> {
     const { data, error } = await supabase.from("perfis")
-        .select("id, nome, email, role, dados_perfil").eq("id", uid).maybeSingle();
+        .select(COLUNAS_PERFIL).eq("id", uid).maybeSingle();
     if (error) throw error;
     return data ? paraAppUser(data) : null;
 }

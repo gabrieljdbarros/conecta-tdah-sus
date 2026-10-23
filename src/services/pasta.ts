@@ -1,5 +1,6 @@
 import { supabase, mensagemErro } from "@/services/supabase";
-import { Participante, PapelNaPasta, Pasta } from "@/types/pasta";
+import { COLUNAS_PASTA, LinhaPasta, ordenarPastas, paraPasta } from "@/helpers/linhas";
+import { Pasta } from "@/types/pasta";
 import { AppUser } from "@/types/user";
 
 /**
@@ -9,32 +10,6 @@ import { AppUser } from "@/types/user";
  * `pastas` e `membros_pasta`). Os dados são devolvidos no mesmo formato
  * usado pelas telas (`membrosUids`, `participantes`).
  */
-
-interface LinhaPasta {
-    id: string;
-    nome_aluno: string;
-    dono_id: string;
-    criado_em: string;
-    membros_pasta: { usuario_id: string; papel: PapelNaPasta; nome: string; detalhe: string | null }[];
-}
-
-// A pasta já vem com os membros (o RLS só deixa ler as pastas de que a
-// pessoa participa, e os membros dessas pastas)
-const COLUNAS = "id, nome_aluno, dono_id, criado_em, membros_pasta (usuario_id, papel, nome, detalhe)";
-
-function paraPasta(linha: LinhaPasta): Pasta {
-    const participantes: Record<string, Participante> = {};
-    for (const m of linha.membros_pasta)
-        participantes[m.usuario_id] = { nome: m.nome, papel: m.papel, ...(m.detalhe && { detalhe: m.detalhe }) };
-    return {
-        id: linha.id,
-        nomeAluno: linha.nome_aluno,
-        donoUid: linha.dono_id,
-        membrosUids: linha.membros_pasta.map((m) => m.usuario_id),
-        participantes,
-        criadoEm: new Date(linha.criado_em).getTime(),
-    };
-}
 
 const PastaServices = {
     /**
@@ -55,7 +30,7 @@ const PastaServices = {
      * Uma pasta específica (o RLS só deixa ler quem é membro)
      */
     buscar: async (pastaId: string): Promise<{ success: boolean; pasta?: Pasta }> => {
-        const { data, error } = await supabase.from("pastas").select(COLUNAS).eq("id", pastaId).maybeSingle();
+        const { data, error } = await supabase.from("pastas").select(COLUNAS_PASTA).eq("id", pastaId).maybeSingle();
         if (error || !data) return { success: false };
         return { success: true, pasta: paraPasta(data as LinhaPasta) };
     },
@@ -65,11 +40,9 @@ const PastaServices = {
      * O RLS já devolve só essas
      */
     minhas: async (): Promise<{ success: boolean; pastas: Pasta[] }> => {
-        const { data, error } = await supabase.from("pastas").select(COLUNAS);
+        const { data, error } = await supabase.from("pastas").select(COLUNAS_PASTA);
         if (error) return { success: false, pastas: [] };
-        const pastas = (data as LinhaPasta[]).map(paraPasta);
-        pastas.sort((a, b) => a.nomeAluno.localeCompare(b.nomeAluno, "pt-BR"));
-        return { success: true, pastas };
+        return { success: true, pastas: ordenarPastas((data as LinhaPasta[]).map(paraPasta)) };
     },
 
     /**

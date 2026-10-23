@@ -44,7 +44,7 @@ const initialValues: FormValues = {
     unidadeSUS: '',
 };
 
-// Limite igual ao das Security Rules (textoValido em firestore.rules)
+// Limite igual ao do banco (texto_valido, em supabase/migrations)
 const MAX = 100;
 const MSG_MAX = `Use no máximo ${MAX} caracteres`;
 
@@ -79,7 +79,7 @@ export default function CadastroForm() {
     // Quem chegou ao cadastro já passou da introdução: "voltar ao login" leva ao login
     useEffect(() => marcarIntroducaoVista(), []);
 
-    // Depois do cadastro, o Firebase já autentica o usuário automaticamente.
+    // Depois do cadastro, o usuário já entra na conta automaticamente.
     // Espera o AuthContext confirmar (perfil no banco + cookie) antes de
     // navegar para a área restrita — ou de volta ao convite, se veio de um
     useEffect(() => {

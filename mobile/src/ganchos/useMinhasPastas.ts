@@ -17,7 +17,7 @@ export function useMinhasPastas() {
 
     const carregar = useCallback(async () => {
         if (!user) return;
-        const resultado = await PastaServicos.minhas(user.uid);
+        const resultado = await PastaServicos.minhas();
         setPastas(resultado.pastas);
         setErro(!resultado.success);
         setCarregando(false);

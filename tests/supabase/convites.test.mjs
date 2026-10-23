@@ -1,7 +1,7 @@
 /**
  * CONVITES (RN01: 48 horas; RN02: uso único) e saída/remoção da pasta.
- * Equivalente de tests/convites.rules.test.mjs e dos testes das Cloud
- * Functions, agora com as funções do banco (RPC) e RLS.
+ * Portados dos antigos testes das Security Rules do Firebase (e das Cloud
+ * Functions, no caso dos convites), agora contra o RLS e as funções do banco.
  */
 import { createHash } from "node:crypto";
 import { before, beforeEach, describe, test } from "node:test";

@@ -1,9 +1,9 @@
 /**
- * TESTES DA LÓGICA DE VOZ (decisão travada 11)
+ * TESTES DA LÓGICA DE VOZ (decisão travada 9)
  *
- * O mais importante: conteúdo (relatórios, mensagens) NUNCA usa voz online,
+ * O mais importante: conteúdo (mensagens) NUNCA usa voz online,
  * que mandaria o texto — dado de saúde — para servidores externos.
- * Roda direto no Node (sem emulador). Executar: npm run test:unit
+ * Roda direto no Node (sem banco). Executar: npm run test:unit
  */
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";

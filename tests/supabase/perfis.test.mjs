@@ -1,6 +1,7 @@
 /**
  * PERFIS (decisões travadas 1 a 4): cadastro, leitura e edição.
- * Equivalente de tests/firestore.rules.test.mjs, agora com RLS.
+ * Portados dos antigos testes das Security Rules do Firebase (e das Cloud
+ * Functions, no caso dos convites), agora contra o RLS e as funções do banco.
  */
 import { before, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";

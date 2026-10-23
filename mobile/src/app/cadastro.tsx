@@ -19,7 +19,7 @@ interface Valores {
     crm: string; especialidade: string; unidadeSUS: string;
 }
 
-// Limite igual ao das Security Rules (textoValido em firestore.rules)
+// Limite igual ao do banco (texto_valido, em supabase/migrations)
 const MAX = 100;
 const MSG_MAX = `Use no máximo ${MAX} caracteres`;
 const obrigatorioSe = (perfil: Perfil) => Yup.string().trim().max(MAX, MSG_MAX)
@@ -90,7 +90,7 @@ export default function Cadastro() {
                         nome: v.nome.trim(), email: v.email, senha: v.senha,
                         role: v.role as Perfil, dadosPerfil: montarDadosPerfil(v),
                     });
-                    // O Firebase entra na conta ANTES do perfil ser gravado, e o
+                    // O login acontece ANTES de o perfil ser gravado, e o
                     // AuthContext não o encontra: recarrega agora que ele existe
                     if (success) await recarregarUsuario();
                     else setErro(message ?? 'Não foi possível criar a conta');

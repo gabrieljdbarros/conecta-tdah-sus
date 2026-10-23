@@ -16,7 +16,7 @@ export interface ItemNavegacao {
  * Opções do menu de cada perfil. Uma lista só, usada pelo menu lateral
  * (computador) e pela barra inferior (celular), para os dois nunca
  * ficarem diferentes. Esconder uma opção é só conforto: quem protege os
- * dados são as regras do Firestore
+ * dados é o RLS do banco
  */
 export function itensDoMenu(user: AppUser | null): ItemNavegacao[] {
     if (!user) return [];

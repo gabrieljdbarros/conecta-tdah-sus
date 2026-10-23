@@ -5,7 +5,7 @@
  * ícones), para abrir mais rápido e gastar menos dados.
  *
  * NUNCA guarda dados das pastas, relatórios, conversas ou contas:
- *  - pedidos para outros endereços (Firebase) passam direto, sem cache;
+ *  - pedidos para outros endereços (o Supabase) passam direto, sem cache;
  *  - as páginas sempre vêm da internet (sem internet: tela "offline").
  * Motivo (LGPD, segurança por padrão): são dados de saúde de crianças, e
  * muitas famílias dividem o celular. Nada fica salvo para quem pegar o
@@ -50,7 +50,7 @@ self.addEventListener("fetch", (evento) => {
     if (pedido.method !== "GET") return;
 
     const url = new URL(pedido.url);
-    // Firebase e qualquer outro endereço: não interfere
+    // Supabase e qualquer outro endereço: não interfere
     if (url.origin !== self.location.origin) return;
 
     // Páginas: sempre da internet; sem conexão, a tela "você está sem internet"

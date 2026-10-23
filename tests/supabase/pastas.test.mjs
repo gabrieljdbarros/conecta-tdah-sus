@@ -1,6 +1,7 @@
 /**
  * PASTA DO ALUNO (RF03, decisão travada 6) e membros da pasta.
- * Equivalente de tests/pastas.rules.test.mjs, agora com RLS.
+ * Portados dos antigos testes das Security Rules do Firebase (e das Cloud
+ * Functions, no caso dos convites), agora contra o RLS e as funções do banco.
  */
 import { before, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";

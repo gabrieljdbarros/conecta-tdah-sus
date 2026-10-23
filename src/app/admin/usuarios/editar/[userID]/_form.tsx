@@ -38,7 +38,7 @@ const ROTULOS: Record<keyof FormValues, string> = {
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
 
-// Limite igual ao das Security Rules (textoValido em firestore.rules)
+// Limite igual ao do banco (texto_valido, em supabase/migrations)
 const MAX = 100;
 const MSG_MAX = `Use no máximo ${MAX} caracteres`;
 
@@ -113,7 +113,7 @@ export default function EditarPerfilForm({ userID }: { userID: string }) {
     const [sucesso, setSucesso] = useState<string | null>(null);
 
     // Esta tela é só para o próprio perfil. A checagem aqui é UX — quem
-    // impede de verdade a edição de outro usuário são as Security Rules.
+    // impede de verdade a edição de outro usuário é o RLS do banco.
     const ehProprioPerfil = !!user && user.uid === userID;
 
     // ===========================================================================

@@ -24,7 +24,7 @@ function formatarValidade(ms: number): string {
  * - a dona convida escola/médico por link (48 h, uso único), cancela
  *   convites e remove pessoas; convite vencido tem "Gerar novo convite"
  * - escola/médico podem sair da pasta
- * As Cloud Functions e as regras garantem tudo isso; aqui é a tela.
+ * As funções do banco e o RLS garantem tudo isso; aqui é a tela.
  * As confirmações usam a janela do próprio sistema (o TalkBack lê a pergunta
  * e os botões e leva o foco até ela)
  */
@@ -46,7 +46,7 @@ export default function Vinculos() {
 
     const carregarConvites = useCallback(async () => {
         if (!user || !ehDona) return;
-        const { success, convites } = await ConviteServicos.pendentes(user.uid, id);
+        const { success, convites } = await ConviteServicos.pendentes(id);
         setConvites(convites);
         setErroConvites(!success);
         setAgora(Date.now());
