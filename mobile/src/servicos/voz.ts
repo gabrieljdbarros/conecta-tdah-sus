@@ -3,14 +3,14 @@ import * as Speech from "expo-speech";
 import { dividirEmTrechos, escolherVoz, VozDisponivel } from "@/helpers/voz";
 
 /**
- * LEITURA EM VOZ ALTA (TTS), decisão travada 11, igual à da web
+ * LEITURA EM VOZ ALTA (TTS), decisão travada 9, igual à da web
  * (src/helpers/voz.ts), mas com a voz do celular (expo-speech: o app não
  * tem a voz do navegador).
  *
  * LGPD: algumas vozes do Android NÃO rodam no aparelho: mandam o texto para
  * os servidores do Google gerarem o áudio. Por isso:
  *  - instruções da tela (sem dado pessoal): qualquer voz em português;
- *  - conteúdo (relatórios, mensagens): SÓ voz que roda no próprio celular.
+ *  - conteúdo (mensagens do chat): SÓ voz que roda no próprio celular.
  *    Sem ela, o conteúdo não é lido (o botão nem aparece).
  * A escolha da voz é a MESMA função da web (escolherVoz), sem duplicar a regra
  */

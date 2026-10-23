@@ -27,7 +27,6 @@ export function itensDoMenu(user: AppUser | null): ItemNavegacao[] {
         return [
             { title: 'Início', icon: 'home', url: '/admin/dashboard' },
             { title: 'Usuários', icon: 'ios-people', url: '/admin/usuarios', exato: true },
-            { title: 'Categorias', icon: 'pricetags', url: '/admin/categorias' },
             perfil,
         ];
 

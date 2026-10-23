@@ -1,15 +1,14 @@
 "use client";
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PastaServices from "@/services/pasta";
 import MensagemServices from "@/services/mensagem";
-import { papelNaPasta } from "@/services/relatorio";
+import { papelNaPasta } from "@/helpers/pasta";
 import { AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
 import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
-import { PapelNaPasta } from "@/types/relatorio";
-import { CANAL_GRUPO, canalPrivado, LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
+import { CANAL_GRUPO, LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
@@ -17,38 +16,8 @@ const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
 const CLASSE_LINK_VOLTAR = "self-start min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
-interface Aba {
-    canal: string;
-    titulo: string;
-    quemVe: string;
-}
-
-/**
- * Abas por papel (decisão travada 10):
- *  - mãe: conversa de todos + uma conversa só com cada médico da pasta
- *  - médico: conversa de todos + conversa só com a família
- *  - escola: só a conversa de todos
- */
-function montarAbas(pasta: Pasta, papel: PapelNaPasta, uid: string): Aba[] {
-    const todos: Aba = { canal: CANAL_GRUPO, titulo: 'Conversa de todos', quemVe: 'Família, escola e médicos veem esta conversa.' };
-    if (papel === 'medico')
-        return [todos, { canal: canalPrivado(uid), titulo: 'Só com a família', quemVe: 'Só você e a família veem esta conversa. A escola não vê.' }];
-    if (papel === 'mae') {
-        // TODO: mostrar também o histórico privado de médicos que saíram da pasta
-        const medicos = Object.entries(pasta.participantes).filter(([, p]) => p.papel === 'medico');
-        return [todos, ...medicos.map(([medicoUid, p]) => {
-            const nome = p.nome || 'médico(a)';
-            // Com dois médicos de mesmo nome, a unidade diferencia as abas
-            const repetido = medicos.filter(([, outro]) => outro.nome === p.nome).length > 1;
-            return {
-                canal: canalPrivado(medicoUid),
-                titulo: `Só com ${nome}${repetido && p.detalhe ? ` (${p.detalhe})` : ''}`,
-                quemVe: `Só você e ${nome} veem esta conversa. A escola não vê.`,
-            };
-        })];
-    }
-    return [todos];
-}
+// Um único chat em grupo por pasta (RN05, decisão travada 7)
+const CANAL = CANAL_GRUPO;
 
 function formatarHora(ms: number): string {
     return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -68,7 +37,6 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     const { user, loading: carregandoSessao } = useAuth();
     const [pasta, setPasta] = useState<Pasta | null>(null);
     const [carregandoPasta, setCarregandoPasta] = useState(true);
-    const [abaAtiva, setAbaAtiva] = useState(0);
     const [mensagens, setMensagens] = useState<Mensagem[] | null>(null);
     const [erroCanal, setErroCanal] = useState(false);
     const [tentativa, setTentativa] = useState(0); // "Tentar de novo" reabre o canal
@@ -78,9 +46,8 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     const [enviada, setEnviada] = useState(false);
     const listaRef = useRef<HTMLOListElement>(null);
     const textoRef = useRef<HTMLTextAreaElement>(null);
-    const abasRef = useRef<(HTMLButtonElement | null)[]>([]);
     const rolarParaOFim = useRef(true); // na abertura e depois de enviar
-    // Mensagens são conteúdo: só voz que roda no aparelho (decisão travada 11)
+    // Mensagens são conteúdo: só voz que roda no aparelho (decisão travada 9)
     const vozLocal = useVozDisponivel(true);
 
     // ======================================================================
@@ -94,22 +61,19 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     }, [carregandoSessao, user, pastaId]);
 
     const papel = user && pasta ? papelNaPasta(user, pasta.donoUid) : null;
-    const abas = user && pasta && papel ? montarAbas(pasta, papel, user.uid) : [];
-    // Se a aba atual sumir (ex.: o médico saiu da pasta), volta para a primeira
-    const aba = abas[abaAtiva] ?? abas[0];
-    const canal = aba?.canal;
+    const podeAbrir = !!pasta && !!papel;
 
-    // Acompanha o canal da aba em tempo real; para de ouvir ao trocar de aba
-    // ou sair da tela (economiza dados e bateria). Se o acesso for perdido
-    // (ex.: a pessoa foi removida), o Firestore encerra e cai em aoFalhar
+    // Acompanha a conversa em tempo real; para de ouvir ao sair da tela
+    // (economiza dados e bateria). Se o acesso for perdido (ex.: a pessoa
+    // foi removida), o Firestore encerra e cai em aoFalhar
     useEffect(() => {
-        if (!canal) return;
+        if (!podeAbrir) return;
         setMensagens(null);
         setErroCanal(false);
         rolarParaOFim.current = true;
         // No erro (ex.: acesso perdido), as mensagens somem da tela
-        return MensagemServices.ouvir(pastaId, canal, setMensagens, () => { setMensagens(null); setErroCanal(true); });
-    }, [pastaId, canal, tentativa]);
+        return MensagemServices.ouvir(pastaId, CANAL, setMensagens, () => { setMensagens(null); setErroCanal(true); });
+    }, [pastaId, podeAbrir, tentativa]);
 
     // Rola até a mensagem mais nova só na abertura, depois de enviar ou se a
     // pessoa já estava perto do fim — quem lê mensagens antigas não perde o lugar
@@ -125,11 +89,11 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     // Shift, e uma mensagem enviada pela metade não pode ser apagada
     const enviar = async (e: FormEvent) => {
         e.preventDefault();
-        if (!user || !papel || !canal || enviando || !texto.trim()) return;
+        if (!user || !papel || enviando || !texto.trim()) return;
         setEnviando(true);
         setErroEnvio(false);
         setEnviada(false);
-        const { success } = await MensagemServices.enviar(pastaId, canal, user, papel, texto.trim());
+        const { success } = await MensagemServices.enviar(pastaId, CANAL, user, papel, texto.trim());
         setEnviando(false);
         if (success) {
             setTexto('');
@@ -140,19 +104,6 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
             setErroEnvio(true);
     };
 
-    // Setas trocam de aba; Home/End vão para a primeira/última (padrão de abas)
-    const aoTeclarAba = (e: KeyboardEvent<HTMLButtonElement>, indice: number) => {
-        const destinos: Record<string, number> = {
-            ArrowRight: (indice + 1) % abas.length,
-            ArrowLeft: (indice - 1 + abas.length) % abas.length,
-            Home: 0,
-            End: abas.length - 1,
-        };
-        if (!(e.key in destinos)) return;
-        e.preventDefault();
-        setAbaAtiva(destinos[e.key]);
-        abasRef.current[destinos[e.key]]?.focus();
-    };
     // ======================================================================
     if (carregandoSessao || carregandoPasta)
         return (
@@ -162,7 +113,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
             </div>
         );
 
-    if (!pasta || !papel || !aba)
+    if (!pasta || !papel)
         return (
             <div className="flex flex-col gap-4">
                 <p role="alert" className="ff-default text-[16px]">Não foi possível abrir as conversas desta pasta. Ela pode não existir, ou você não faz parte dela.</p>
@@ -174,7 +125,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         <div className="flex flex-col gap-4 max-w-[720px]">
             <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Conversas sobre {pasta.nomeAluno}</h2>
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
-                texto={`Aqui você conversa sobre o aluno. No alto, toque no nome da conversa para escolher com quem falar. A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
+                texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado.`} />
             {vozLocal === false && (
                 <p className="ff-default text-[16px] text-(--cor-texto-suave)">
                     {vozSuportada()
@@ -183,32 +134,10 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                 </p>
             )}
 
-            {papel === 'mae' && abas.length === 1 && (
-                <p className="ff-default text-[16px]">
-                    Ainda não há médico na pasta. A conversa só com o médico aparece quando ele entrar.
-                </p>
-            )}
-
-            {/* ABAS */}
-            {abas.length > 1 && (
-                <div role="tablist" aria-label="Conversas" className="flex flex-wrap gap-2">
-                    {abas.map((a, i) => (
-                        <button key={a.canal} ref={(el) => { abasRef.current[i] = el; }}
-                            id={`aba-${a.canal}`} type="button" role="tab"
-                            aria-selected={i === abaAtiva} aria-controls="painel-conversa" tabIndex={i === abaAtiva ? 0 : -1}
-                            onClick={() => setAbaAtiva(i)} onKeyDown={(e) => aoTeclarAba(e, i)}
-                            className={`min-h-[48px] px-4 rounded-full border-2 ff-default text-[16px] cursor-pointer ${i === abaAtiva ? 'bg-(--cor-link) border-(--cor-link) text-white' : 'border-(--cor-link) text-(--cor-link) bg-white'}`}>
-                            {a.titulo}
-                        </button>
-                    ))}
-                </div>
-            )}
-
-            <div id="painel-conversa" role={abas.length > 1 ? 'tabpanel' : undefined}
-                aria-labelledby={abas.length > 1 ? `aba-${aba.canal}` : undefined} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
                 {/* QUEM VÊ esta conversa */}
                 <p className="ff-default text-[16px] text-(--cor-texto) p-3 rounded-xl bg-[#EEF2FF] flex items-center gap-2">
-                    <i className="ion-eye text-(--cor-secundaria)" aria-hidden="true" />{aba.quemVe}
+                    <i className="ion-eye text-(--cor-secundaria)" aria-hidden="true" />Família, escola e médicos da pasta veem esta conversa.
                 </p>
 
                 {/* ESTADOS fora do log, para não serem lidos como mensagens */}
@@ -225,14 +154,14 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                 {mensagens?.length === 0 && <p className="ff-default text-[16px]">Ainda não há mensagens. Escreva a primeira!</p>}
 
                 {/* MENSAGENS — role="log" (já é aria-live="polite"). Só aparece
-                    depois de carregar e é recriado a cada aba (key), então o
-                    leitor de tela anuncia só as mensagens NOVAS, não as 100 de uma vez.
+                    depois de carregar, então o leitor de tela anuncia só as
+                    mensagens NOVAS, não as 100 de uma vez.
                     tabIndex permite rolar a lista pelo teclado */}
                 {mensagens && mensagens.length > 0 && <>
                     {mensagens.length >= LIMITE_MENSAGENS && (
                         <p className="ff-default text-[16px] text-gray-700">Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</p>
                     )}
-                    <ol key={canal} ref={listaRef} role="log" tabIndex={0} aria-label={`Mensagens: ${aba.titulo}`}
+                    <ol ref={listaRef} role="log" tabIndex={0} aria-label="Mensagens"
                         className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-300">
                         {mensagens.map((m, i) => {
                             const minha = m.autorUid === user?.uid;

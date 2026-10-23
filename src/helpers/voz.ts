@@ -1,5 +1,5 @@
 /**
- * LEITURA EM VOZ ALTA (TTS) — decisão travada 11
+ * LEITURA EM VOZ ALTA (TTS) — decisão travada 9
  *
  * Usa a Web Speech API (a voz que já vem no navegador/celular): sem
  * dependência nova nem serviço pago.
@@ -7,7 +7,7 @@
  * LGPD: algumas vozes NÃO rodam no aparelho — mandam o texto para
  * servidores externos (Google, Microsoft) gerarem o áudio. Por isso:
  *  - instruções da tela (sem dado pessoal): qualquer voz em português;
- *  - conteúdo (relatórios, mensagens): SÓ voz que roda no próprio
+ *  - conteúdo (mensagens do chat): SÓ voz que roda no próprio
  *    aparelho (`localService`). Sem ela, o conteúdo não é lido.
  *
  * Só usa sintaxe de TypeScript que o Node consegue rodar direto (para os

@@ -1,13 +1,13 @@
 /**
- * CHAT DA PASTA — CONECTA TDAH SUS (RN05, decisão travada 10)
+ * CHAT DA PASTA — CONECTA TDAH SUS (RN05, RN08, decisão travada 7)
  *
- *   pastas/{id}/canais/grupo/mensagens/{msg}            → todos os membros
- *   pastas/{id}/canais/privado-{medicoUid}/mensagens/{msg} → só a mãe e aquele médico
+ *   pastas/{id}/canais/grupo/mensagens/{msg} → todos os membros
+ * Um único chat em grupo por pasta (sem canal privado).
  *
  * Mensagens não são editadas nem apagadas. As permissões estão em
  * firestore.rules; aqui ficam só os formatos e nomes usados nas telas.
  */
-import { PapelNaPasta } from "@/types/relatorio";
+import { PapelNaPasta } from "@/types/pasta";
 
 /** Limite igual ao das Security Rules */
 export const MAX_TEXTO_MENSAGEM = 2000;
@@ -16,7 +16,6 @@ export const MAX_TEXTO_MENSAGEM = 2000;
 export const LIMITE_MENSAGENS = 100;
 
 export const CANAL_GRUPO = 'grupo';
-export const canalPrivado = (medicoUid: string) => `privado-${medicoUid}`;
 
 /**
  * No Firestore, `criadoEm` é um Timestamp gravado pelo servidor

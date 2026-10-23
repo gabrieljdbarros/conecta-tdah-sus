@@ -1,10 +1,9 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import PastaServicos from "~/servicos/pasta";
-import { papelNaPasta } from "~/servicos/relatorio";
+import { papelNaPasta } from "@/helpers/pasta";
 import { useAuth } from "~/contexto/AuthContext";
-import { Pasta } from "@/types/pasta";
-import { PapelNaPasta } from "@/types/relatorio";
+import { PapelNaPasta, Pasta } from "@/types/pasta";
 
 /**
  * Uma pasta e o PAPEL da pessoa nela (mãe = dona; escola/médico = membros).

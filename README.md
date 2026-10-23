@@ -2,9 +2,11 @@
 
 > 🚧 **Projeto em desenvolvimento.** Trabalho de Conclusão de Curso (TCC) em andamento. Funcionalidades, modelo de dados e telas ainda podem mudar.
 
-Plataforma que organiza a comunicação estruturada entre **escola**, **família** (mães/responsáveis) e **profissionais de psiquiatria do SUS** no acompanhamento de estudantes com TDAH.
+**Ponte de comunicação** entre **família** (mães/responsáveis), **escola** e **profissionais de psiquiatria do SUS** no acompanhamento de estudantes com TDAH.
 
-**Fluxo central:** a escola avalia o aluno → o médico envia orientações práticas → a família acompanha tudo de forma integrada, sem reenviar o histórico a cada consulta.
+**Fluxo central:** a família cria a pasta do aluno e convida a escola e o médico → todos conversam no **chat em grupo da pasta**, sem a família precisar repetir o histórico a cada consulta.
+
+> **Mudança de escopo (20/10/2026):** a pedido da equipe da cliente, o sistema passou a ter só o chat em grupo. Os relatórios, as categorias e o canal privado mãe–médico saíram. A versão apresentada na pré-banca, com eles, está na tag [`v2.0-pre-banca`](../../tree/v2.0-pre-banca). Próximos passos: pasta só com o nome da criança, migração para o Supabase e mensagens de voz.
 
 > **Escopo acadêmico:** este é um produto acadêmico. **Não há integração real com sistemas do SUS**, e todos os dados usados em desenvolvimento e testes são **fictícios**.
 
@@ -21,25 +23,15 @@ Plataforma que organiza a comunicação estruturada entre **escola**, **família
 | Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto (no modo emulador) |
 | Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto (no modo emulador) |
 | Remover participante e sair da pasta | ✅ Pronto (no modo emulador) |
-| Categorias de acompanhamento gerenciadas pelo admin (RF14) | ✅ Pronto |
-| Relatórios dentro da pasta do aluno, com acesso por tipo (RN06) | ✅ Pronto |
-| Chat por aluno (RN05): grupo com todos e canal privado mãe–médico | ✅ Pronto |
+| Chat em grupo por aluno, em tempo real (RN05, RF08) | ✅ Pronto |
+| Mensagens de voz no chat (RF16) | ⏳ Depois da migração para o Supabase |
 | Aplicativo instalável no celular (PWA) | ✅ Pronto |
-| Leitura em voz alta: instruções das telas, relatórios e mensagens | ✅ Pronto |
+| Leitura em voz alta: instruções das telas e mensagens | ✅ Pronto |
 | App nativo em React Native (Expo) para mãe, escola e médico | ✅ Pronto (testado no Android, sem publicação nas lojas) |
 
-## Perfis e acesso aos relatórios
+## Perfis e acesso
 
-Cada aluno tem uma **pasta**. Só quem foi vinculado à pasta consegue ver o conteúdo, e cada perfil vê apenas o que precisa:
-
-| Tipo de relatório | Quem escreve | Mãe/responsável | Escola | Médico |
-|---|---|:-:|:-:|:-:|
-| Orientação médica | médico | ✅ | ✅ | ✅ |
-| Laudo diagnóstico | médico | ✅ | ❌ | ✅ |
-| Avaliação escolar | escola | ✅ | ✅ | ✅ |
-| Relato da família | mãe/responsável | ✅ | ❌ | ✅ |
-
-A escola vê o que é pedagógico. O que é clínico ou íntimo da família fica só entre a família e o médico. O **administrador** gerencia o sistema, mas **não acessa as pastas dos alunos**.
+Cada aluno tem uma **pasta**, criada pela mãe/responsável. A escola e o médico entram por convite. Cada pasta tem **um chat em grupo**: todos os membros da pasta leem e escrevem, e as mensagens não podem ser editadas nem apagadas. O **administrador** gerencia os usuários, mas **não acessa as pastas nem as conversas**.
 
 ## Segurança e LGPD
 
@@ -49,9 +41,9 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
 - **As regras têm testes automatizados** no Firebase Emulator, e toda mudança nelas é testada antes de ir para produção.
 - **A senha fica só no Firebase Authentication**, nunca no banco de dados.
 - **Só guardamos o necessário (minimização).** A pasta guarda apenas o nome e a série do aluno, e o nome da criança não fica no perfil da família.
-- **A leitura em voz alta não envia dados de saúde para fora.** As instruções das telas podem usar qualquer voz em português. Já os relatórios e as mensagens só são lidos com uma voz que roda no próprio aparelho, porque algumas vozes do navegador mandam o texto para servidores externos gerarem o áudio. Se o aparelho não tiver uma voz local em português, o botão de ouvir o conteúdo não aparece.
+- **A leitura em voz alta não envia dados de saúde para fora.** As instruções das telas podem usar qualquer voz em português. Já as mensagens só são lidas com uma voz que roda no próprio aparelho, porque algumas vozes do navegador mandam o texto para servidores externos gerarem o áudio. Se o aparelho não tiver uma voz local em português, o botão de ouvir o conteúdo não aparece.
   - **Limite (para a defesa):** quem informa se a voz roda no aparelho é o próprio navegador (`localService`), e o app não consegue conferir isso. Alguns motores de voz de fabricantes no Android podem se declarar locais e ainda usar a internet.
-  - **Para ouvir relatórios e mensagens no computador,** é preciso ter uma voz em português instalada no sistema. No Windows: Configurações → Hora e idioma → Fala → Adicionar vozes → Português (Brasil), voz "Microsoft Maria". Depois, reinicie o navegador. Sem ela, o botão de ouvir o conteúdo não aparece, e as instruções continuam podendo ser ouvidas.
+  - **Para ouvir as mensagens no computador,** é preciso ter uma voz em português instalada no sistema. No Windows: Configurações → Hora e idioma → Fala → Adicionar vozes → Português (Brasil), voz "Microsoft Maria". Depois, reinicie o navegador. Sem ela, o botão de ouvir o conteúdo não aparece, e as instruções continuam podendo ser ouvidas.
   - **Ditado pelo microfone do teclado:** a dica na tela sugere usar o microfone do teclado para falar em vez de digitar. Esse ditado é um recurso do teclado do celular (Google, Apple etc.), escolhido pela pessoa no aparelho dela, e pode enviar o áudio para os servidores desse teclado. O app não recebe nem guarda áudio.
 - **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma Cloud Function, numa transação, que confere se a conta é do perfil certo (escola ou médico).
 
@@ -138,15 +130,15 @@ O painel pode ser instalado como um aplicativo, com ícone na tela inicial, sem 
 
 Professores e médicos não precisam instalar nada: o mesmo endereço funciona no navegador.
 
-> **Privacidade:** o aplicativo **não guarda dados no aparelho**, nem pastas, nem relatórios, nem conversas. Ele guarda só os arquivos fixos do site, para abrir mais rápido. Sem internet, mostra a tela "Você está sem internet". Muitas famílias dividem o celular, e dados de saúde de crianças não devem ficar salvos nele.
+> **Privacidade:** o aplicativo **não guarda dados no aparelho**, nem pastas, nem conversas. Ele guarda só os arquivos fixos do site, para abrir mais rápido. Sem internet, mostra a tela "Você está sem internet". Muitas famílias dividem o celular, e dados de saúde de crianças não devem ficar salvos nele.
 
 Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview` e abra http://localhost:3000. O Chrome mostra o botão de instalar na barra de endereço. A versão de produção não roda no modo emulador, então use `NEXT_PUBLIC_USE_EMULATORS=false`. No celular, a instalação exige o site publicado num endereço com HTTPS.
 
 ## Aplicativo nativo (React Native)
 
-Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app usa **o mesmo Firebase, as mesmas Security Rules e as mesmas Cloud Functions** da web, e importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, a regra de quem vê cada relatório existe num lugar só.
+Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app usa **o mesmo Firebase, as mesmas Security Rules e as mesmas Cloud Functions** da web, e importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, as regras de acesso existem num lugar só.
 
-O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, pastas, relatórios, convites e vínculos, chat e leitura em voz alta.
+O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, pastas, convites e vínculos, chat e leitura em voz alta.
 
 > O app **não é publicado nas lojas**: ele roda pelo **Expo Go**, ligado aos emuladores do computador pela rede Wi-Fi. No convite, a escola e o médico **colam o link** recebido. Abrir o app direto pelo link (deep link) exige o site publicado e fica para depois.
 
@@ -183,7 +175,7 @@ O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, 
 
 ### Leitura em voz alta no app
 
-Os botões "Ouvir instruções" usam qualquer voz em português. Já relatórios e mensagens só são lidos com uma voz que **comprovadamente roda no aparelho**, para que dado de saúde não vá a servidores externos. No Android, isso é a voz do Google marcada como do aparelho. Na dúvida, o app não lê. Se o botão "Ouvir relatório" não aparecer:
+Os botões "Ouvir instruções" usam qualquer voz em português. Já as mensagens só são lidas com uma voz que **comprovadamente roda no aparelho**, para que dado de saúde não vá a servidores externos. No Android, isso é a voz do Google marcada como do aparelho. Na dúvida, o app não lê. Se o botão "Ouvir" das mensagens não aparecer:
 
 1. Abra Configurações do celular → **Saída de texto para voz** (em Acessibilidade ou em Gerenciamento geral).
 2. Escolha **"Serviços de fala do Google"** como mecanismo preferido.

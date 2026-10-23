@@ -1,14 +1,13 @@
 import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
+import { Aviso, Carregando, Tela } from "~/componentes/basicos";
 import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos } from "~/componentes/cartoes";
 import { usePasta } from "~/ganchos/usePasta";
 import { useAuth } from "~/contexto/AuthContext";
 import { cores, medidas } from "~/tema/cores";
 import { SERIE_LABELS } from "@/types/pasta";
-import { TEXTO_ESCREVER, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -28,8 +27,8 @@ function Atalho({ nome, icone, aoTocar }: { nome: string; icone: NomeIcone; aoTo
 }
 
 /**
- * Pasta do aluno (design): cabeçalho, atalhos para cada parte e o atalho
- * para escrever. Mesma estrutura da web
+ * Pasta do aluno (design): cabeçalho e atalhos para cada parte.
+ * Mesma estrutura da web
  */
 export default function PastaDoAluno() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,7 +38,6 @@ export default function PastaDoAluno() {
     if (carregando) return <Tela><Carregando texto="Abrindo a pasta..." /></Tela>;
     if (!pasta || !papel) return <Tela><Aviso tipo="erro" texto="não foi possível abrir esta pasta. Ela pode não existir, ou você não faz parte dela." /></Tela>;
 
-    const podeEscrever = TIPOS_QUE_ESCREVE[papel].length > 0;
     const ir = (caminho: string) => router.push(caminho as never);
 
     return (
@@ -52,26 +50,15 @@ export default function PastaDoAluno() {
                 <Text style={estilos.suave}>{SERIE_LABELS[pasta.serie] ?? ''}</Text>
             </View>
             <BotaoOuvir rotulo="Ouvir instruções" texto={pasta.donoUid === user?.uid
-                ? 'Esta é a pasta do aluno. Os botões levam às partes da pasta. Em Relatórios, você lê todos os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar. Para escrever um relatório, toque em Escrever relatório.'
-                : `Esta é a pasta do aluno. Os botões levam às partes da pasta. Em Relatórios, você lê os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta.${podeEscrever ? ' Para escrever um relatório, toque em Escrever relatório.' : ''}`} />
+                ? 'Esta é a pasta do aluno. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar.'
+                : 'Esta é a pasta do aluno. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta.'} />
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: medidas.espaco - 4 }}>
-                <Atalho nome="Relatórios" icone="clipboard" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios`)} />
-                <Atalho nome="Orientações" icone="medkit" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios?tipo=orientacao_medica`)} />
                 <Atalho nome="Conversas" icone="chatbubbles" aoTocar={() => ir(`/pasta/${pasta.id}/conversas`)} />
                 <Atalho nome="Vínculos" icone="people" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos`)} />
                 {/* "Cód. de convite" do design: aqui o convite é um link seguro, em Vínculos */}
                 {pasta.donoUid === user?.uid && <Atalho nome="Convidar" icone="person-add" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos?convidar=1`)} />}
             </View>
-
-            {/* "Relatório comportamental" (design), com palavras mais simples */}
-            {podeEscrever && (
-                <View style={[estilos.cartao, { gap: 8 }]}>
-                    <Text accessibilityRole="header" style={estilos.nome}>Contar como o aluno está</Text>
-                    <Text style={estilos.texto}>{TEXTO_ESCREVER[papel]}</Text>
-                    <Botao titulo="Escrever relatório" icone="create-outline" aoTocar={() => ir(`/pasta/${pasta.id}/relatorios/novo`)} />
-                </View>
-            )}
         </Tela>
     );
 }

@@ -9,9 +9,9 @@ rules_version = '2';
  * permitem, então qualquer checagem feita na tela é apenas UX.
  *
  * Coleções cobertas: `users` (cadastro/perfil), `pastas` (pasta do aluno,
- * RF03) com os relatórios (RN06), `convites` (RN01, RN02) e `categorias`
- * (RF14), e o chat da pasta (RN05). Qualquer coleção não listada aqui é
- * negada pelo bloqueio geral no fim do arquivo.
+ * RF03) com o chat em grupo (RN05) e `convites` (RN01, RN02). Qualquer
+ * coleção não listada aqui é negada pelo bloqueio geral no fim do arquivo
+ * (inclusive `categorias` e os antigos relatórios, que saíram do escopo).
  */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -100,8 +100,7 @@ service cloud.firestore {
       // Edição: o próprio usuário ou o admin, e SÓ `nome` e `dadosPerfil`,
       // com o conteúdo validado conforme o perfil salvo.
       // Ninguém altera `role`, `email` ou `criadoEm` pelo app — nem o admin:
-      // trocar uma escola para médico daria acesso a laudos (matriz de
-      // visibilidade dos relatórios, RN06).
+      // o papel na pasta (e o que aparece como autor no chat) vem do `role`.
       // Mudança de perfil, se precisar, é feita no Console do Firebase.
       allow update: if estaLogado()
                     && (meuUid() == userId || souAdmin())
@@ -112,7 +111,7 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // PASTA DO ALUNO (RF03) — decisões travadas 6 e 8
+    // PASTA DO ALUNO (RF03) — decisão travada 6
     // ---------------------------------------------------------------------
     function serieValida(serie) {
       return serie in ['infantil', 'ef1', 'ef2', 'ef3', 'ef4', 'ef5', 'ef6',
@@ -120,7 +119,7 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // RELATÓRIOS (decisão travada 9 / RN06) — funções de apoio
+    // Funções de apoio do chat
     // ---------------------------------------------------------------------
     function dadosDaPasta(pastaId) {
       return get(/databases/$(database)/documents/pastas/$(pastaId)).data;
@@ -135,24 +134,9 @@ service cloud.firestore {
            : 'nenhum';
     }
 
-    // Matriz de leitura: a escola vê só o pedagógico; laudo e relato da
-    // família ficam entre a mãe e o médico
-    function tiposQueLe(papel) {
-      return papel == 'escola' ? ['orientacao_medica', 'avaliacao_escolar']
-           : papel in ['mae', 'medico'] ? ['orientacao_medica', 'laudo', 'avaliacao_escolar', 'relato_familia']
-           : [];
-    }
-
-    function tiposQueEscreve(papel) {
-      return papel == 'mae' ? ['relato_familia']
-           : papel == 'medico' ? ['orientacao_medica', 'laudo']
-           : papel == 'escola' ? ['avaliacao_escolar']
-           : [];
-    }
-
     match /pastas/{pastaId} {
-      // Só quem é membro da pasta lê. O admin NÃO lê: a pasta vai guardar
-      // laudos e relatos de crianças, e o admin não participa do
+      // Só quem é membro da pasta lê. O admin NÃO lê: a pasta tem o nome da
+      // criança e as conversas sobre ela, e o admin não participa do
       // acompanhamento (LGPD — acesso só por necessidade).
       // Consultas de lista precisam filtrar por `membrosUids array-contains`
       allow read: if estaLogado() && meuUid() in resource.data.membrosUids;
@@ -190,86 +174,25 @@ service cloud.firestore {
                     && serieValida(request.resource.data.serie);
 
       // TODO: exclusão da pasta a pedido da família (direito do titular na
-      // LGPD) — definir fluxo, inclusive o que acontece com os relatórios
+      // LGPD) — definir fluxo, inclusive o que acontece com as mensagens
       allow delete: if false;
 
       // -------------------------------------------------------------------
-      // RELATÓRIOS da pasta: `pastas/{pastaId}/relatorios/{id}`
-      // Quem lê é decidido SÓ pelo `tipo` (nunca pela categoria, que é
-      // editável pelo admin e só classifica o conteúdo).
-      // -------------------------------------------------------------------
-      match /relatorios/{relatorioId} {
-        // Consultas de lista precisam filtrar `tipo in [tipos que o papel lê]`
-        allow read: if estaLogado()
-                    && resource.data.tipo in tiposQueLe(papelNaPasta(dadosDaPasta(pastaId)));
-
-        // O autor é quem está logado, com o nome igual ao do perfil e o
-        // papel que tem na pasta; a categoria precisa existir e estar ativa
-        allow create: if estaLogado()
-                      && request.resource.data.keys().hasOnly(['tipo', 'categoriaId', 'texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
-                      && request.resource.data.keys().hasAll(['tipo', 'categoriaId', 'texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
-                      && request.resource.data.tipo in tiposQueEscreve(papelNaPasta(dadosDaPasta(pastaId)))
-                      && request.resource.data.autorPapel == papelNaPasta(dadosDaPasta(pastaId))
-                      && request.resource.data.autorUid == meuUid()
-                      && request.resource.data.autorNome == get(/databases/$(database)/documents/users/$(meuUid())).data.nome
-                      && request.resource.data.texto is string
-                      && request.resource.data.texto.trim().size() > 0
-                      && request.resource.data.texto.size() <= 5000
-                      && request.resource.data.criadoEm is int
-                      && request.resource.data.categoriaId is string
-                      && get(/databases/$(database)/documents/categorias/$(request.resource.data.categoriaId)).data.ativa == true;
-
-        // Registro imutável: ninguém edita nem apaga. Correção = novo
-        // relatório complementar. Relatórios de quem saiu da pasta ficam
-        // (o nome do autor está guardado no próprio relatório)
-        allow update, delete: if false;
-      }
-
-      // -------------------------------------------------------------------
-      // CHAT (RN05, decisão travada 10)
-      //   canais/grupo/...            → todos os membros da pasta
-      //   canais/privado-{uid}/...    → só a mãe (dona) e aquele médico
-      // O canal está no CAMINHO: todas as mensagens de um canal têm a mesma
-      // permissão, e a consulta não precisa de filtro nem índice composto.
+      // CHAT (RN05, decisão travada 7): um único chat em grupo por pasta,
+      // `canais/grupo/mensagens`, para todos os membros. Não há canal
+      // privado: qualquer outro canal é negado (o caminho com `canalId` foi
+      // mantido para não mudar onde as mensagens já ficam)
       // -------------------------------------------------------------------
       match /canais/{canalId}/mensagens/{mensagemId} {
-        // uid do médico dono do canal privado ("privado-<uid>")
-        function medicoDoCanal() {
-          return canalId.split('-')[1];
+        function podeUsarCanal() {
+          return canalId == 'grupo' && papelNaPasta(dadosDaPasta(pastaId)) != 'nenhum';
         }
 
-        // Privado: só a dona e o médico do canal (a escola e os outros
-        // médicos, não). A mãe continua LENDO o histórico mesmo se o médico
-        // sair da pasta, como acontece com os relatórios
-        function podeLerPrivado(papel) {
-          return canalId.matches('privado-[A-Za-z0-9]+')
-              && (papel == 'mae' || (papel == 'medico' && meuUid() == medicoDoCanal()));
-        }
-
-        // Para ESCREVER no privado, o médico do canal precisa ainda estar na
-        // pasta e ter o perfil de médico
-        function podeEscreverPrivado(pasta, papel) {
-          return podeLerPrivado(papel)
-              && medicoDoCanal() in pasta.membrosUids
-              && get(/databases/$(database)/documents/users/$(medicoDoCanal())).data.role == 'medico';
-        }
-
-        function podeLerCanal() {
-          let papel = papelNaPasta(dadosDaPasta(pastaId));
-          return papel != 'nenhum' && (canalId == 'grupo' || podeLerPrivado(papel));
-        }
-
-        function podeEscreverCanal() {
-          let pasta = dadosDaPasta(pastaId);
-          let papel = papelNaPasta(pasta);
-          return papel != 'nenhum' && (canalId == 'grupo' || podeEscreverPrivado(pasta, papel));
-        }
-
-        allow read: if estaLogado() && podeLerCanal();
+        allow read: if estaLogado() && podeUsarCanal();
 
         // O autor é quem está logado, com o nome do perfil e o papel na pasta
         allow create: if estaLogado()
-                      && podeEscreverCanal()
+                      && podeUsarCanal()
                       && request.resource.data.keys().hasOnly(['texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
                       && request.resource.data.keys().hasAll(['texto', 'autorUid', 'autorNome', 'autorPapel', 'criadoEm'])
                       && request.resource.data.autorUid == meuUid()
@@ -282,7 +205,7 @@ service cloud.firestore {
                       // celular não define a ordem de uma conversa imutável
                       && request.resource.data.criadoEm == request.time;
 
-        // Decisão travada 10: mensagens não são editadas nem apagadas
+        // Decisão travada 7 (RN08): mensagens não são editadas nem apagadas
         allow update, delete: if false;
       }
     }
@@ -300,37 +223,6 @@ service cloud.firestore {
       allow read: if estaLogado() && resource.data.criadoPor == meuUid();
       allow delete: if estaLogado() && resource.data.criadoPor == meuUid() && resource.data.usadoEm == null;
       allow create, update: if false;
-    }
-
-    // ---------------------------------------------------------------------
-    // CATEGORIAS DE ACOMPANHAMENTO (RF14, CSU15, RN10)
-    // Só classificam o conteúdo dos relatórios: NUNCA controlam quem lê
-    // (quem lê é definido pelo tipo do relatório — RN06).
-    // ---------------------------------------------------------------------
-    function nomeCategoriaValido(nome) {
-      return nome is string && nome.trim().size() > 0 && nome.size() <= 60;
-    }
-
-    match /categorias/{categoriaId} {
-      // Qualquer pessoa logada lê: mãe, escola e médico escolhem a
-      // categoria ao escrever um relatório. Não são dados sensíveis
-      allow read: if estaLogado();
-
-      // Só o admin cria e edita
-      allow create: if souAdmin()
-                    && request.resource.data.keys().hasOnly(['nome', 'ativa', 'criadoEm'])
-                    && request.resource.data.keys().hasAll(['nome', 'ativa', 'criadoEm'])
-                    && nomeCategoriaValido(request.resource.data.nome)
-                    && request.resource.data.ativa is bool
-                    && request.resource.data.criadoEm is int;
-      allow update: if souAdmin()
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'ativa'])
-                    && nomeCategoriaValido(request.resource.data.nome)
-                    && request.resource.data.ativa is bool;
-
-      // Ninguém apaga: relatórios antigos continuam apontando para a
-      // categoria. Em vez de apagar, o admin desativa (ativa = false)
-      allow delete: if false;
     }
 
     // Bloqueia qualquer coleção ainda não modelada explicitamente

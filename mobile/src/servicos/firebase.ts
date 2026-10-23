@@ -14,7 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * no projeto fictício `demo-conecta-tdah`, igual ao modo protótipo da web.
  *
  * O que fica guardado no celular: só o LOGIN (AsyncStorage), como em qualquer
- * app. Relatórios e mensagens não: no React Native o Firestore guarda o cache
+ * app. Pastas e mensagens não: no React Native o Firestore guarda o cache
  * só na memória, e ele some ao fechar o app (celular compartilhado)
  */
 const usarEmuladores = process.env.EXPO_PUBLIC_USE_EMULATORS === "true";

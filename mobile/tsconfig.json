@@ -9,11 +9,11 @@
       "@/types/*": [
         "../src/types/*"
       ],
-      "@/helpers/semana": [
-        "../src/helpers/semana"
-      ],
       "@/helpers/voz": [
         "../src/helpers/voz"
+      ],
+      "@/helpers/pasta": [
+        "../src/helpers/pasta"
       ]
     }
   },

@@ -29,11 +29,11 @@ export interface AppOuvirProps {
     texto: string;
     /** Texto do botão (ex.: "Ouvir instruções", "Ouvir") */
     rotulo?: string;
-    /** Complemento só para o leitor de tela (ex.: "relatório de 30 de setembro") */
+    /** Complemento só para o leitor de tela (ex.: "mensagem de Ana") */
     descricao?: string;
     /**
-     * Conteúdo com dado pessoal/de saúde (relatório, mensagem): só lê com voz
-     * que roda no aparelho (decisão travada 11). Sem ela, o botão não aparece
+     * Conteúdo com dado pessoal/de saúde (mensagem do chat): só lê com voz
+     * que roda no aparelho (decisão travada 9). Sem ela, o botão não aparece
      */
     conteudo?: boolean;
     /**
