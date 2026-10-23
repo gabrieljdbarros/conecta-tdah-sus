@@ -119,6 +119,24 @@ Tudo roda no seu computador, com dados fictícios, sem precisar de um projeto Fi
 
 > Os testes usam emuladores próprios, em outras portas (`firebase.test.json`). Por isso, rodam mesmo com os emuladores do modo protótipo abertos, sem misturar os dados.
 
+### Banco no Supabase (migração em andamento)
+
+O backend está saindo do Firebase para o **Supabase** (Auth, Postgres e Storage), porque as mensagens de voz precisam guardar arquivos de áudio. O banco novo já existe, com as mesmas regras de acesso, mas as telas ainda usam o Firebase até o fim da migração.
+
+- `supabase/migrations/`: tabelas, regras de acesso (**RLS** ativado em todas) e as funções do convite e da pasta, que substituem as Cloud Functions.
+- `tests/supabase/`: os testes do banco. Cada um tenta o acesso permitido e os proibidos, com usuários fictícios.
+
+Para rodar, é preciso ter o **Docker Desktop** aberto:
+
+```bash
+npx supabase start    # sobe o Supabase local (na primeira vez, baixa as imagens)
+npx supabase db reset # recria o banco a partir das migrações
+npm run test:db       # testes do banco (apagam os dados do banco local)
+npx supabase stop     # desliga
+```
+
+O painel do banco local fica em http://127.0.0.1:54323. As chaves que o `supabase start` mostra são as de demonstração do ambiente local. As chaves de um projeto real, principalmente a `service_role`, **nunca** vão para o repositório.
+
 ## Instalar no celular (PWA)
 
 O painel pode ser instalado como um aplicativo, com ícone na tela inicial, sem loja de aplicativos:

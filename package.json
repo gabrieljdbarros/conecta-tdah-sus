@@ -12,9 +12,11 @@
     "emulators": "node scripts/emulators.mjs",
     "emulators:rede": "node scripts/emulators.mjs --rede",
     "preview": "next build && next start",
-    "test:unit": "node --test tests/unit/*.test.mjs"
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:db": "node --test --test-concurrency=1 tests/supabase/*.test.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "firebase": "^12.19.0",
     "formik": "^2.4.6",
     "js-cookie": "^3.0.5",
@@ -34,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.5",
     "firebase-tools": "^15.31.0",
+    "supabase": "^2.122.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
