@@ -22,8 +22,8 @@ export function useVozDisponivel(somenteLocal: boolean): boolean | null {
 /**
  * Botão de leitura em voz alta (igual ao AppOuvir da web). Toque para ouvir;
  * toque de novo para parar. Só uma leitura por vez no app.
- *  - `conteudo`: relatório ou mensagem (dado de saúde): só lê com voz que roda
- *    no aparelho (decisão travada 11). Sem ela, o botão não aparece
+ *  - `conteudo`: mensagem do chat (dado de saúde): só lê com voz que roda
+ *    no aparelho (decisão travada 9). Sem ela, o botão não aparece
  *  - `disponivel`: já verificado pela tela (ex.: uma lista de mensagens), para
  *    não verificar de novo em cada botão
  *  - `descricao`: complemento só para o leitor de tela (ex.: "mensagem de Ana")
@@ -77,7 +77,7 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
  * Explica por que não há "Ouvir" no conteúdo e como resolver. No Android só
  * a voz do Google comprova que roda no aparelho (ver servicos/voz.ts)
  */
-export function SemVozLocal({ oQue }: { oQue: 'relatórios' | 'mensagens' }) {
+export function SemVozLocal({ oQue }: { oQue: 'mensagens' }) {
     return (
         <Text style={{ fontSize: 16, lineHeight: 22, color: cores.textoSuave }}>
             Este celular não lê {oQue} em voz alta. Isso protege os dados da criança. Para ouvir, escolha a voz do Google em português nas configurações do celular (leitura de texto em voz).

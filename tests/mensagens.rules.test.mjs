@@ -1,9 +1,9 @@
 /**
- * TESTES DAS SECURITY RULES — chat da pasta (RN05, decisão travada 10)
+ * TESTES DAS SECURITY RULES — chat da pasta (RN05, RN08, decisão travada 7)
  *
- *   pastas/{id}/canais/grupo/mensagens            → todos os membros
- *   pastas/{id}/canais/privado-{medico}/mensagens → só a mãe (dona) e aquele médico
- * Mensagens imutáveis. Todos os dados abaixo são fictícios.
+ *   pastas/{id}/canais/grupo/mensagens → todos os membros
+ * Não há canal privado: qualquer outro canal é negado. Mensagens imutáveis.
+ * Todos os dados abaixo são fictícios.
  *
  * Executar: npm run test:rules
  */
@@ -71,8 +71,8 @@ beforeEach(async () => {
             await setDoc(doc(db, `users/${uid}`), { email: `${uid}@exemplo.com`, dadosPerfil: {}, criadoEm: 1, ...dados });
         await setDoc(doc(db, "pastas/pasta1"), PASTA);
         await setDoc(doc(db, caminho("grupo")), gravada("escola1", "escola"));
+        // Mensagem antiga de um canal privado (que saiu do escopo)
         await setDoc(doc(db, caminho("privado-medico1")), gravada("medico1", "medico"));
-        await setDoc(doc(db, caminho("privado-exMedico")), gravada("exMedico", "medico"));
         // Estado anômalo: conta de mãe como membro que NÃO é a dona
         await setDoc(doc(db, "pastas/pasta2"), { ...PASTA, membrosUids: ["mae1", "mae2"] });
         await setDoc(doc(db, caminho("grupo", "m1", "pasta2")), gravada("mae1", "mae"));
@@ -117,36 +117,20 @@ describe("chat em grupo", () => {
 });
 
 // =============================================================================
-describe("canal privado mãe–médico", () => {
-    test("a mãe e o médico do canal leem", async () => {
-        await assertSucceeds(ler("mae1", "privado-medico1"));
-        await assertSucceeds(ler("medico1", "privado-medico1"));
+describe("sem canal privado (só existe o grupo)", () => {
+    for (const uid of ["mae1", "medico1", "escola1", "admin1"])
+        test(`NÃO: ${uid} lê um canal privado antigo`, async () => {
+            await assertFails(ler(uid, "privado-medico1"));
+        });
+
+    test("NÃO: listar as mensagens de um canal privado antigo (como a tela fazia)", async () => {
+        const q = query(collection(como("mae1"), "pastas/pasta1/canais/privado-medico1/mensagens"), orderBy("criadoEm"), limitToLast(100));
+        await assertFails(getDocs(q));
     });
 
-    test("NÃO: a escola lê o privado", async () => {
-        await assertFails(ler("escola1", "privado-medico1"));
-    });
-
-    test("NÃO: outro médico da pasta lê o privado", async () => {
-        await assertFails(ler("medico2", "privado-medico1"));
-    });
-
-    test("NÃO: admin lê o privado", async () => {
-        await assertFails(ler("admin1", "privado-medico1"));
-    });
-
-    test("a mãe continua lendo o histórico se o médico saiu", async () => {
-        await assertSucceeds(ler("mae1", "privado-exMedico"));
-    });
-
-    test("NÃO: o médico que saiu lê o privado", async () => {
-        await assertFails(ler("exMedico", "privado-exMedico"));
-    });
-
-    test("NÃO: canal com nome inventado ou malformado", async () => {
+    test("NÃO: canal com nome inventado", async () => {
         await assertFails(ler("mae1", "secreto"));
-        await assertFails(ler("mae1", "privado-medico1-extra"));
-        await assertFails(ler("mae1", "privado-"));
+        await assertFails(ler("mae1", "grupo-extra"));
     });
 
     test("NÃO: buscar mensagens de todas as pastas de uma vez (collectionGroup)", async () => {
@@ -164,25 +148,9 @@ describe("enviar mensagens", () => {
         await assertSucceeds(setDoc(doc(como("medico1"), caminho("grupo", "nova3")), mensagem("medico1", "medico")));
     });
 
-    test("a mãe e o médico escrevem no privado deles", async () => {
-        await assertSucceeds(enviar("mae1", "privado-medico1", mensagem("mae1", "mae")));
-        await assertSucceeds(setDoc(doc(como("medico1"), caminho("privado-medico1", "nova2")), mensagem("medico1", "medico")));
-    });
-
-    test("NÃO: a escola escreve no privado", async () => {
-        await assertFails(enviar("escola1", "privado-medico1", mensagem("escola1", "escola")));
-    });
-
-    test("NÃO: outro médico escreve no privado", async () => {
-        await assertFails(enviar("medico2", "privado-medico1", mensagem("medico2", "medico")));
-    });
-
-    test("NÃO: a mãe escreve no privado de quem saiu da pasta", async () => {
-        await assertFails(enviar("mae1", "privado-exMedico", mensagem("mae1", "mae")));
-    });
-
-    test("NÃO: a mãe abre um 'privado' com a escola (só existe com médico)", async () => {
-        await assertFails(enviar("mae1", "privado-escola1", mensagem("mae1", "mae")));
+    test("NÃO: a mãe ou o médico escrevem num canal privado", async () => {
+        await assertFails(enviar("mae1", "privado-medico1", mensagem("mae1", "mae")));
+        await assertFails(enviar("medico1", "privado-medico1", mensagem("medico1", "medico")));
     });
 
     test("NÃO: canal inventado", async () => {
@@ -236,7 +204,7 @@ describe("mensagens imutáveis", () => {
         await assertFails(deleteDoc(doc(como("escola1"), caminho("grupo"))));
     });
 
-    test("NÃO: a mãe apaga mensagem do privado", async () => {
-        await assertFails(deleteDoc(doc(como("mae1"), caminho("privado-medico1"))));
+    test("NÃO: a mãe (dona da pasta) apaga mensagem de outra pessoa", async () => {
+        await assertFails(deleteDoc(doc(como("mae1"), caminho("grupo"))));
     });
 });

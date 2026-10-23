@@ -2,21 +2,19 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PastaServices from "@/services/pasta";
-import { papelNaPasta } from "@/services/relatorio";
 import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData } from "@/helpers/router";
 import { Pasta, SERIE_LABELS } from "@/types/pasta";
-import { TEXTO_ESCREVER, TIPOS_QUE_ESCREVE } from "@/types/relatorio";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_SUCESSO = 'text-[#166534]';
 const CLASSE_LINK_VOLTAR = "self-start mt-4 min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
 
 /**
- * Pasta do aluno (design): cabeçalho, atalhos para cada parte e o atalho
- * para escrever. Cada parte tem a sua tela: Relatórios, Orientações,
- * Conversas (RN05) e Vínculos (quem acompanha e convites — RN01, RN02)
+ * Pasta do aluno (design): cabeçalho e atalhos para cada parte, cada uma
+ * com a sua tela: Conversas (RN05) e Vínculos (quem acompanha e convites —
+ * RN01, RN02)
  */
 export default function DetalhePasta({ pastaId }: { pastaId: string }) {
     const { user, loading: carregandoSessao } = useAuth();
@@ -60,8 +58,6 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
         );
 
     const ehDona = !!user && pasta.donoUid === user.uid;
-    const papel = user ? papelNaPasta(user, pasta.donoUid) : null;
-    const podeEscrever = !!papel && TIPOS_QUE_ESCREVE[papel].length > 0;
     const base = `/admin/pastas/${pasta.id}`;
 
     return (
@@ -85,8 +81,6 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
             <nav aria-label="Atalhos da pasta">
                 <ul className="grid grid-cols-2 gap-3">
                     {[
-                        { href: `${base}/relatorios`, icone: 'ion-clipboard', nome: 'Relatórios' },
-                        { href: `${base}/relatorios?tipo=orientacao_medica`, icone: 'ion-medkit', nome: 'Orientações' },
                         { href: `${base}/conversas`, icone: 'ion-chatbubbles', nome: 'Conversas' },
                         { href: `${base}/vinculos`, icone: 'ion-ios-people', nome: 'Vínculos' },
                     ].map((a) => (
@@ -101,20 +95,11 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
                 </ul>
             </nav>
 
-            {/* "Relatório comportamental" (design), com palavras mais simples: escrever direto da pasta */}
-            {podeEscrever && papel && (
-                <div className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-300">
-                    <p className="ff-default text-[18px] font-bold text-(--cor-texto)">Contar como o aluno está</p>
-                    <p className="ff-default text-[16px] text-(--cor-texto)">{TEXTO_ESCREVER[papel]}</p>
-                    <AppButton title="Escrever relatório" icon="compose" href={`${base}/relatorios/novo`} className="self-start" />
-                </div>
-            )}
-
             {/* Instruções genéricas (sem o nome do aluno): podem usar qualquer voz */}
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
                 texto={ehDona
-                    ? 'Esta é a pasta do aluno. Os botões levam às partes da pasta. Em Relatórios, você lê todos os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar. Para contar como a criança está em casa, toque em Escrever relatório.'
-                    : 'Esta é a pasta do aluno. Os botões levam às partes da pasta. Em Relatórios, você lê os relatórios. Em Orientações, você lê as orientações do médico. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta. Para escrever um relatório, toque em Escrever relatório.'} />
+                    ? 'Esta é a pasta do aluno. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar.'
+                    : 'Esta é a pasta do aluno. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta.'} />
         </div>
     );
 }

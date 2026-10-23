@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Keyboard, Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { FlatList, Keyboard, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,37 +10,11 @@ import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
 import MensagemServicos from "~/servicos/mensagem";
 import { cores, medidas } from "~/tema/cores";
-import { CANAL_GRUPO, canalPrivado, LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
-import { Pasta } from "@/types/pasta";
-import { PapelNaPasta } from "@/types/relatorio";
+import { CANAL_GRUPO, LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
 
-interface Aba { canal: string; titulo: string; quemVe: string }
-
-/**
- * Canais por papel (decisão travada 10), iguais aos da web:
- *  - mãe: conversa de todos + uma só com cada médico da pasta
- *  - médico: conversa de todos + só com a família
- *  - escola: só a conversa de todos
- */
-function montarAbas(pasta: Pasta, papel: PapelNaPasta, uid: string): Aba[] {
-    const todos: Aba = { canal: CANAL_GRUPO, titulo: 'Conversa de todos', quemVe: 'Família, escola e médicos veem esta conversa.' };
-    if (papel === 'medico')
-        return [todos, { canal: canalPrivado(uid), titulo: 'Só com a família', quemVe: 'Só você e a família veem esta conversa. A escola não vê.' }];
-    if (papel === 'mae') {
-        const medicos = Object.entries(pasta.participantes).filter(([, p]) => p.papel === 'medico');
-        return [todos, ...medicos.map(([medicoUid, p]) => {
-            const nome = p.nome || 'médico(a)';
-            const repetido = medicos.filter(([, outro]) => outro.nome === p.nome).length > 1;
-            return {
-                canal: canalPrivado(medicoUid),
-                titulo: `Só com ${nome}${repetido && p.detalhe ? ` (${p.detalhe})` : ''}`,
-                quemVe: `Só você e ${nome} veem esta conversa. A escola não vê.`,
-            };
-        })];
-    }
-    return [todos];
-}
+// Um único chat em grupo por pasta (RN05, decisão travada 7), igual à web
+const CANAL = CANAL_GRUPO;
 
 const hora = (ms: number) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const dia = (ms: number) => new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -52,7 +26,7 @@ const iniciais = (nome: string) => {
 /**
  * CONVERSAS DA PASTA (RN05), em tempo real, como na web e no design:
  * balões (os dos outros em verde-claro com as iniciais; os meus em lilás),
- * a data como separador e "quem vê" sempre visível. Mensagens não são
+ * a data como separador e "quem vê" sempre visível. Um só chat por pasta. Mensagens não são
  * editadas nem apagadas
  */
 export default function Conversas() {
@@ -60,15 +34,9 @@ export default function Conversas() {
     const { user } = useAuth();
     const { pasta, papel, carregando } = usePasta(id);
     const { fontScale } = useWindowDimensions();
-    // A conversa aberta é guardada pelo CANAL, não pela posição: se um médico
-    // entrar ou sair, a mãe continua escrevendo para quem escolheu
-    const [canalAtivo, setCanalAtivo] = useState(CANAL_GRUPO);
-    // Guardadas junto com o canal: ao trocar de canal, as antigas somem na hora
-    const [recebidas, setRecebidas] = useState<{ canal: string; lista: Mensagem[] } | null>(null);
-    const [canalComErro, setCanalComErro] = useState<string | null>(null);
-    // Um rascunho por conversa: o que foi escrito para o médico não "vaza"
-    // para a conversa de todos ao trocar de aba
-    const [rascunhos, setRascunhos] = useState<Record<string, string>>({});
+    const [mensagens, setMensagens] = useState<Mensagem[] | null>(null);
+    const [erroCanal, setErroCanal] = useState(false);
+    const [texto, setTexto] = useState('');
     const [enviando, setEnviando] = useState(false);
     const [erroEnvio, setErroEnvio] = useState<string | null>(null);
     const lista = useRef<FlatList<Mensagem>>(null);
@@ -90,21 +58,16 @@ export default function Conversas() {
         return () => { abriu.remove(); fechou.remove(); };
     }, []);
 
-    const abas = pasta && papel && user ? montarAbas(pasta, papel, user.uid) : [];
-    const aba = abas.find((a) => a.canal === canalAtivo) ?? abas[0];
-    const canal = aba?.canal;
-    const pastaId = pasta?.id;
-    const mensagens = recebidas && recebidas.canal === canal ? recebidas.lista : null;
-    const erroCanal = !!canal && canalComErro === canal;
-    const texto = canal ? rascunhos[canal] ?? '' : '';
+    // Só abre a conversa de quem tem papel na pasta
+    const pastaId = pasta && papel ? pasta.id : undefined;
 
-    // Acompanha o canal aberto; para de acompanhar ao trocar de canal ou sair.
+    // Acompanha a conversa; para de acompanhar ao sair da tela.
     // Depende só do ID da pasta: a pasta é recarregada ao voltar à tela
     useEffect(() => {
-        if (!canal || !pastaId) return;
+        if (!pastaId) return;
         conhecidas.current = null;
         pertoDoFim.current = true;
-        return MensagemServicos.ouvir(pastaId, canal, (novas) => {
+        return MensagemServicos.ouvir(pastaId, CANAL, (novas) => {
             // Mensagens novas dos OUTROS (depois da primeira carga) são anunciadas,
             // só com o nome de quem mandou (o texto não é falado sem pedir)
             if (conhecidas.current) {
@@ -113,26 +76,25 @@ export default function Conversas() {
                 else if (chegaram.length > 1) anunciar(`${chegaram.length} mensagens novas.`);
             }
             conhecidas.current = new Set(novas.map((m) => m.id));
-            setRecebidas({ canal, lista: novas });
-            setCanalComErro((c) => (c === canal ? null : c));
-        }, () => setCanalComErro(canal));
-    }, [canal, pastaId, user?.uid]);
+            setMensagens(novas);
+            setErroCanal(false);
+        }, () => setErroCanal(true));
+    }, [pastaId, user?.uid]);
 
     if (carregando) return <Tela><Stack.Screen options={{ title: 'Conversas' }} /><Carregando texto="Abrindo as conversas..." /></Tela>;
-    if (!pasta || !papel || !user || !aba) return <Tela><Stack.Screen options={{ title: 'Conversas' }} /><Aviso tipo="erro" texto="não foi possível abrir as conversas desta pasta." /></Tela>;
+    if (!pasta || !papel || !user) return <Tela><Stack.Screen options={{ title: 'Conversas' }} /><Aviso tipo="erro" texto="não foi possível abrir as conversas desta pasta." /></Tela>;
 
-    const escrever = (t: string) => { setRascunhos((r) => ({ ...r, [aba.canal]: t })); setErroEnvio(null); };
+    const escrever = (t: string) => { setTexto(t); setErroEnvio(null); };
 
     const enviar = async () => {
         const limpo = texto.trim();
         if (!limpo || enviando) return;
-        const destino = aba.canal;
         setEnviando(true);
         setErroEnvio(null);
-        const { success, semConexao } = await MensagemServicos.enviar(pasta.id, destino, user, papel, limpo);
+        const { success, semConexao } = await MensagemServicos.enviar(pasta.id, CANAL, user, papel, limpo);
         setEnviando(false);
         if (success) {
-            setRascunhos((r) => ({ ...r, [destino]: '' }));
+            setTexto('');
             pertoDoFim.current = true;
             anunciar('Mensagem enviada.');
         } else setErroEnvio(semConexao
@@ -155,37 +117,13 @@ export default function Conversas() {
                     {!tecladoAberto && <>
                         <Text accessibilityRole="header" style={estilos.tituloSecao}>Conversas sobre {pasta.nomeAluno}</Text>
                         <BotaoOuvir rotulo="Ouvir instruções"
-                            texto={`Aqui você conversa sobre o aluno. ${abas.length > 1 ? 'No alto, toque no nome da conversa para escolher com quem falar. ' : ''}A tela diz quem vê cada conversa.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Depois de enviada, a mensagem não pode ser apagada.`} />
+                            texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Depois de enviada, a mensagem não pode ser apagada.`} />
                     </>}
-
-                    {/* CANAIS: um por vez, lado a lado (um embaixo do outro com fonte grande) */}
-                    {abas.length > 1 && (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="Escolha a conversa">
-                            {abas.map((a) => {
-                                const ativa = a.canal === aba.canal;
-                                return (
-                                    <Pressable key={a.canal} onPress={() => { setCanalAtivo(a.canal); setErroEnvio(null); anunciar(`${a.titulo}. ${a.quemVe}`); }}
-                                        accessibilityRole="radio" accessibilityState={{ checked: ativa }} accessibilityLabel={`Conversa: ${a.titulo}`}
-                                        style={{
-                                            minHeight: 48, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 24, borderWidth: 2, borderColor: cores.link,
-                                            backgroundColor: ativa ? cores.link : '#FFFFFF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
-                                            flexGrow: 1, flexBasis: fonteGrande ? '100%' : abas.length === 2 ? '40%' : 'auto',
-                                        }}>
-                                        {ativa && <Ionicons name="checkmark" size={20} color="#FFFFFF" importantForAccessibility="no" />}
-                                        <Text style={{ fontSize: 16, fontWeight: ativa ? '700' : '500', color: ativa ? '#FFFFFF' : cores.link, flexShrink: 1 }}>{a.titulo}</Text>
-                                    </Pressable>
-                                );
-                            })}
-                        </View>
-                    )}
-                    {papel === 'mae' && abas.length === 1 && (
-                        <Text style={estilos.suave}>Ainda não há médico na pasta. A conversa só com o médico aparece quando ele entrar.</Text>
-                    )}
 
                     {/* QUEM VÊ esta conversa (privacidade: sempre visível) */}
                     <View accessible style={{ flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: cores.fundoInfo, borderRadius: medidas.raio, paddingHorizontal: 10, paddingVertical: 8 }}>
                         <Ionicons name="eye" size={20} color={cores.secundaria} importantForAccessibility="no" />
-                        <Text style={[estilos.texto, { flexShrink: 1, fontSize: 16 }]}>{aba.quemVe}</Text>
+                        <Text style={[estilos.texto, { flexShrink: 1, fontSize: 16 }]}>Família, escola e médicos da pasta veem esta conversa.</Text>
                     </View>
                 </View>
 
@@ -252,9 +190,9 @@ export default function Conversas() {
                     {/* Aparece antes de tocar no campo; com o teclado aberto sai para dar espaço */}
                     {!tecladoAberto && <Text style={estilos.suave}>Depois de enviada, a mensagem não pode ser apagada.</Text>}
                     <View style={{ flexDirection: fonteGrande ? 'column' : 'row', gap: 8, alignItems: fonteGrande ? 'stretch' : 'flex-end' }}>
-                        {/* Corretor desligado como no relatório: o teclado não aprende termos de saúde */}
+                        {/* Corretor desligado: o teclado não aprende termos de saúde */}
                         <TextInput value={texto} onChangeText={escrever} multiline maxLength={MAX_TEXTO_MENSAGEM}
-                            accessibilityLabel={`Mensagem para: ${aba.titulo}`} placeholder={`Escrever em: ${aba.titulo}`} placeholderTextColor={cores.borda}
+                            accessibilityLabel="Escreva sua mensagem" placeholder="Escreva sua mensagem" placeholderTextColor={cores.borda}
                             autoCorrect={false} spellCheck={false} autoComplete="off" importantForAutofill="no"
                             style={{
                                 flex: fonteGrande ? undefined : 1, minHeight: medidas.toque, maxHeight: 140, borderWidth: 1, borderColor: cores.borda, borderRadius: 24,

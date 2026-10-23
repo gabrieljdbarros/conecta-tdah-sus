@@ -255,3 +255,28 @@ describe("apagar pasta", () => {
         await assertFails(deleteDoc(doc(como("admin1"), "pastas/pasta1")));
     });
 });
+
+// =============================================================================
+// Relatórios e categorias saíram do escopo (20/10/2026): o bloqueio geral
+// nega qualquer acesso, inclusive a dados antigos que tenham ficado no banco
+describe("relatórios e categorias (fora do escopo)", () => {
+    beforeEach(async () => {
+        await testEnv.withSecurityRulesDisabled(async (ctx) => {
+            const db = ctx.firestore();
+            await setDoc(doc(db, "pastas/pasta1/relatorios/r1"), { tipo: "laudo", texto: "Relatório fictício." });
+            await setDoc(doc(db, "categorias/c1"), { nome: "Categoria fictícia", ativa: true, criadoEm: 1 });
+        });
+    });
+
+    for (const uid of ["mae1", "escola1", "admin1"])
+        test(`NÃO: ${uid} lê ou escreve relatório`, async () => {
+            await assertFails(getDoc(doc(como(uid), "pastas/pasta1/relatorios/r1")));
+            await assertFails(setDoc(doc(como(uid), "pastas/pasta1/relatorios/r2"), { tipo: "relato_familia", texto: "Fictício." }));
+        });
+
+    for (const uid of ["mae1", "admin1"])
+        test(`NÃO: ${uid} lê ou escreve categoria`, async () => {
+            await assertFails(getDoc(doc(como(uid), "categorias/c1")));
+            await assertFails(setDoc(doc(como(uid), "categorias/c2"), { nome: "Nova", ativa: true, criadoEm: 1 }));
+        });
+});

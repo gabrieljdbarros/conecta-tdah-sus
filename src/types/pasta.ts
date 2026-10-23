@@ -34,6 +34,9 @@ export const SERIE_LABELS: Record<Serie, string> = {
     em3: '3ª série (Ensino Médio)',
 };
 
+/** Papel de cada pessoa NA PASTA (a mãe é a dona; escola e médico entram por convite) */
+export type PapelNaPasta = 'mae' | 'escola' | 'medico';
+
 /**
  * Resumo público de quem está na pasta, visível a todos os membros.
  * Minimização: só nome, papel e instituição (nome da escola ou unidade SUS).
@@ -42,7 +45,7 @@ export const SERIE_LABELS: Record<Serie, string> = {
  */
 export interface Participante {
     nome: string;
-    papel: 'mae' | 'escola' | 'medico';
+    papel: PapelNaPasta;
     detalhe?: string;
 }
 

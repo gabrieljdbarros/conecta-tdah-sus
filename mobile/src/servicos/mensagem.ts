@@ -1,13 +1,13 @@
 import { addDoc, collection, doc, getDoc, limitToLast, onSnapshot, orderBy, query, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "~/servicos/firebase";
 import { AppUser } from "@/types/user";
-import { PapelNaPasta } from "@/types/relatorio";
+import { PapelNaPasta } from "@/types/pasta";
 import { LIMITE_MENSAGENS, Mensagem } from "@/types/mensagem";
 
 /**
- * CHAT DA PASTA (RN05, decisão travada 10), igual a src/services/mensagem.ts
- * da web. Canais: `grupo` (todos) e `privado-{uidDoMedico}` (só a mãe e
- * aquele médico). As permissões estão em firestore.rules
+ * CHAT DA PASTA (RN05, decisão travada 7), igual a src/services/mensagem.ts
+ * da web. Um único canal, `grupo`, com todos os membros da pasta. As
+ * permissões estão em firestore.rules
  */
 
 const colecao = (pastaId: string, canal: string) => collection(db, "pastas", pastaId, "canais", canal, "mensagens");

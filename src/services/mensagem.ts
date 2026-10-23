@@ -1,11 +1,11 @@
 import { addDoc, collection, limitToLast, onSnapshot, orderBy, query, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { AppUser } from "@/types/user";
-import { PapelNaPasta } from "@/types/relatorio";
+import { PapelNaPasta } from "@/types/pasta";
 import { LIMITE_MENSAGENS, Mensagem } from "@/types/mensagem";
 
 /**
- * SERVICES DO CHAT DA PASTA (RN05, decisão travada 10)
+ * SERVICES DO CHAT DA PASTA (RN05, decisão travada 7)
  * As permissões estão em firestore.rules (`pastas/{id}/canais/...`).
  */
 
