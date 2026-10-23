@@ -1,5 +1,5 @@
 "use client";
-import { AppButton, AppInput, AppLoader, AppOuvir, AppSelect } from "@/themes/components";
+import { AppButton, AppInput, AppLoader, AppOuvir } from "@/themes/components";
 import { Formik } from "formik";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,17 +8,14 @@ import * as Yup from 'yup';
 import PastaServices from "@/services/pasta";
 import { useAuth } from "@/contexts/AuthContext";
 import { setFlashData } from "@/helpers/router";
-import { Serie, SERIE_LABELS } from "@/types/pasta";
 
 interface FormValues {
     nomeAluno: string;
-    serie: Serie | '';
 }
 
 // Rótulos dos campos — usados nos inputs e no resumo de erros
 const ROTULOS: Record<keyof FormValues, string> = {
     nomeAluno: 'Nome do aluno',
-    serie: 'Série',
 };
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
@@ -32,7 +29,6 @@ const MAX = 100;
 
 const validationSchema = Yup.object({
     nomeAluno: Yup.string().trim().max(MAX, `Use no máximo ${MAX} caracteres`).required('Campo obrigatório'),
-    serie: Yup.string().oneOf(Object.keys(SERIE_LABELS), 'Escolha a série').required('Escolha a série'),
 });
 
 // Resumo dos campos com erro. Recebe o foco a cada tentativa de envio, para
@@ -67,7 +63,6 @@ export default function NovaPastaForm() {
 
         const { success, message } = await PastaServices.criar(user, {
             nomeAluno: values.nomeAluno.trim(),
-            serie: values.serie as Serie,
         });
 
         if (success) {
@@ -85,7 +80,7 @@ export default function NovaPastaForm() {
             </div>
         );
 
-    // Só a mãe/responsável cria pasta (decisão travada 8). Checagem de UX —
+    // Só a mãe/responsável cria pasta (decisão travada 6). Checagem de UX —
     // as Security Rules também recusam
     if (user?.role !== 'mae')
         return (
@@ -97,7 +92,7 @@ export default function NovaPastaForm() {
 
     return (
         <Formik
-            initialValues={{ nomeAluno: '', serie: '' } as FormValues}
+            initialValues={{ nomeAluno: '' } as FormValues}
             validationSchema={validationSchema}
             onSubmit={handleOnSubmit}
         >
@@ -105,19 +100,12 @@ export default function NovaPastaForm() {
                 <form onSubmit={handleSubmit} className="w-full max-w-[480px] flex flex-col">
                     <h2 className="ff-default text-[26px] font-extrabold leading-tight text-(--cor-texto)">Cadastre o aluno</h2>
                     <p className="ff-default text-[16px] text-(--cor-texto) mt-1 mb-3">
-                        Com estas informações você já pode começar a conectar a escola e os médicos. Sem burocracia.
+                        Só com o nome você já pode começar a conectar a escola e os médicos. Sem burocracia.
                     </p>
                     <AppOuvir rotulo="Ouvir instruções" className="self-start mb-3"
-                        texto="Para criar a pasta, escreva o nome completo do aluno, escolha a série em que ele estuda e toque em Criar pasta. Depois você poderá convidar a escola e o médico." />
+                        texto="Para criar a pasta, escreva o nome completo do aluno e toque em Criar pasta. Depois você poderá convidar a escola e o médico." />
 
                     <AppInput label={ROTULOS.nomeAluno} placeholder="Nome completo da criança ou jovem" name="nomeAluno" value={values.nomeAluno} onChange={handleChange} error={errors.nomeAluno} mostrarErro={submitCount > 0} className="mb-2" />
-
-                    <AppSelect label={ROTULOS.serie} name="serie" value={values.serie} onChange={handleChange} error={errors.serie} mostrarErro={submitCount > 0}>
-                        <option value="">Escolha a série...</option>
-                        {(Object.entries(SERIE_LABELS) as [Serie, string][]).map(([codigo, rotulo]) => (
-                            <option key={codigo} value={codigo}>{rotulo}</option>
-                        ))}
-                    </AppSelect>
 
                     <ResumoErros
                         campos={(Object.keys(errors) as (keyof FormValues)[]).map(campo => ROTULOS[campo])}
@@ -136,7 +124,7 @@ export default function NovaPastaForm() {
                         </h3>
                         <p className="ff-default text-[16px] text-(--cor-texto)">
                             Só você decide. A escola e o médico só veem a pasta se você enviar um convite: um link
-                            que vale 48 horas e só funciona para uma pessoa. A escola não vê os laudos nem o que você conta sobre a casa.
+                            que vale 48 horas e só funciona para uma pessoa. Quem entra na pasta vê todas as mensagens da conversa.
                         </p>
                         <ul className="flex flex-wrap gap-2 mt-1">
                             <li className="ff-default text-[16px] font-bold text-(--cor-texto) bg-white rounded-lg px-3 py-2 flex items-center gap-2">

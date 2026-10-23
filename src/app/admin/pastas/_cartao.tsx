@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pasta, SERIE_LABELS } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
 
 /**
  * Cartão de uma pasta (aluno), no estilo do design. O cartão inteiro é o
@@ -12,10 +12,7 @@ export function CartaoPasta({ pasta }: { pasta: Pasta }) {
             <span aria-hidden="true" className="flex items-center justify-center w-[48px] h-[48px] shrink-0 rounded-full bg-(--background-secondary) text-(--cor-link) text-[24px]">
                 <i className="ion-folder" />
             </span>
-            <span className="flex flex-col flex-1 min-w-0">
-                <span className="text-[18px] font-bold text-(--cor-texto) break-words">{pasta.nomeAluno}</span>
-                <span className="text-[16px] text-(--cor-texto-suave)">{SERIE_LABELS[pasta.serie] ?? ''}</span>
-            </span>
+            <span className="flex-1 min-w-0 text-[18px] font-bold text-(--cor-texto) break-words">{pasta.nomeAluno}</span>
             <i className="ion-chevron-right text-[20px] text-(--cor-texto-suave)" aria-hidden="true" />
         </Link>
     );

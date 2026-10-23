@@ -40,7 +40,7 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
 - **As permissões ficam nas Firestore Security Rules** (`firestore.rules`), com base no perfil do usuário e no vínculo com a pasta. As checagens nas telas servem só para a experiência de uso.
 - **As regras têm testes automatizados** no Firebase Emulator, e toda mudança nelas é testada antes de ir para produção.
 - **A senha fica só no Firebase Authentication**, nunca no banco de dados.
-- **Só guardamos o necessário (minimização).** A pasta guarda apenas o nome e a série do aluno, e o nome da criança não fica no perfil da família.
+- **Só guardamos o necessário (minimização).** A pasta guarda apenas o nome do aluno (sem série, data de nascimento ou cartão SUS), e o nome da criança não fica no perfil da família.
 - **A leitura em voz alta não envia dados de saúde para fora.** As instruções das telas podem usar qualquer voz em português. Já as mensagens só são lidas com uma voz que roda no próprio aparelho, porque algumas vozes do navegador mandam o texto para servidores externos gerarem o áudio. Se o aparelho não tiver uma voz local em português, o botão de ouvir o conteúdo não aparece.
   - **Limite (para a defesa):** quem informa se a voz roda no aparelho é o próprio navegador (`localService`), e o app não consegue conferir isso. Alguns motores de voz de fabricantes no Android podem se declarar locais e ainda usar a internet.
   - **Para ouvir as mensagens no computador,** é preciso ter uma voz em português instalada no sistema. No Windows: Configurações → Hora e idioma → Fala → Adicionar vozes → Português (Brasil), voz "Microsoft Maria". Depois, reinicie o navegador. Sem ela, o botão de ouvir o conteúdo não aparece, e as instruções continuam podendo ser ouvidas.

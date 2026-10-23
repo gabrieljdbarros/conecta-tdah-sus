@@ -75,7 +75,6 @@ export const novoMedico = () => novoUsuario("medico", { crm: "00000", especialid
 export async function novaPasta(mae) {
     const ref = await addDoc(collection(mae.db, "pastas"), {
         nomeAluno: "Aluno Fictício",
-        serie: "ef3",
         donoUid: mae.uid,
         membrosUids: [mae.uid],
         participantes: { [mae.uid]: { nome: mae.nome, papel: "mae" } },

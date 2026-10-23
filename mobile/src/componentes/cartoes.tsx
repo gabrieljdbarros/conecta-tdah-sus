@@ -4,19 +4,18 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Botao } from "~/componentes/basicos";
 import { cores, medidas } from "~/tema/cores";
-import { Pasta, SERIE_LABELS } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
 
 /**
  * Cartões no estilo do design (iguais aos da web, em src/app/admin/pastas/_cartao.tsx)
  */
 
-/** Cartão de um aluno: o cartão inteiro é tocável e o nome lido é "aluno, série" */
+/** Cartão de um aluno: o cartão inteiro é tocável e o nome lido é o do aluno */
 /** `conversas`: o cartão abre o chat do aluno em vez da pasta (aba Conversas) */
 export function CartaoPasta({ pasta, conversas }: { pasta: Pasta; conversas?: boolean }) {
-    const serie = SERIE_LABELS[pasta.serie] ?? '';
     return (
         <Pressable onPress={() => router.push({ pathname: conversas ? '/pasta/[id]/conversas' : '/pasta/[id]', params: { id: pasta.id } })}
-            accessibilityRole="button" accessibilityLabel={[pasta.nomeAluno, serie].filter(Boolean).join(', ')}
+            accessibilityRole="button" accessibilityLabel={pasta.nomeAluno}
             accessibilityHint={conversas ? 'Abre as conversas sobre o aluno' : 'Abre a pasta do aluno'}
             android_ripple={{ color: '#E5E7EB' }}
             style={({ pressed }) => [estilos.cartao, estilos.linha, pressed && { opacity: 0.85 }]}>
@@ -25,7 +24,6 @@ export function CartaoPasta({ pasta, conversas }: { pasta: Pasta; conversas?: bo
             </View>
             <View style={{ flex: 1 }}>
                 <Text style={estilos.nome}>{pasta.nomeAluno}</Text>
-                <Text style={estilos.suave}>{serie}</Text>
             </View>
             <Ionicons name="chevron-forward" size={22} color={cores.textoSuave} importantForAccessibility="no" />
         </Pressable>

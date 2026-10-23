@@ -111,14 +111,6 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // PASTA DO ALUNO (RF03) — decisão travada 6
-    // ---------------------------------------------------------------------
-    function serieValida(serie) {
-      return serie in ['infantil', 'ef1', 'ef2', 'ef3', 'ef4', 'ef5', 'ef6',
-                       'ef7', 'ef8', 'ef9', 'em1', 'em2', 'em3'];
-    }
-
-    // ---------------------------------------------------------------------
     // Funções de apoio do chat
     // ---------------------------------------------------------------------
     function dadosDaPasta(pastaId) {
@@ -134,6 +126,11 @@ service cloud.firestore {
            : 'nenhum';
     }
 
+    // ---------------------------------------------------------------------
+    // PASTA DO ALUNO (RF03) — decisão travada 6
+    // Só o nome da criança (minimização, a pedido da cliente): qualquer
+    // campo a mais, como série ou data de nascimento, é recusado
+    // ---------------------------------------------------------------------
     match /pastas/{pastaId} {
       // Só quem é membro da pasta lê. O admin NÃO lê: a pasta tem o nome da
       // criança e as conversas sobre ela, e o admin não participa do
@@ -148,8 +145,8 @@ service cloud.firestore {
       // adicionados pela Cloud Function do convite
       allow create: if estaLogado()
                     && papelDoUsuario(meuUid()) == 'mae'
-                    && request.resource.data.keys().hasOnly(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'participantes', 'criadoEm'])
-                    && request.resource.data.keys().hasAll(['nomeAluno', 'serie', 'donoUid', 'membrosUids', 'participantes', 'criadoEm'])
+                    && request.resource.data.keys().hasOnly(['nomeAluno', 'donoUid', 'membrosUids', 'participantes', 'criadoEm'])
+                    && request.resource.data.keys().hasAll(['nomeAluno', 'donoUid', 'membrosUids', 'participantes', 'criadoEm'])
                     && request.resource.data.donoUid == meuUid()
                     && request.resource.data.membrosUids == [meuUid()]
                     && request.resource.data.participantes.keys().hasOnly([meuUid()])
@@ -158,10 +155,9 @@ service cloud.firestore {
                          'papel': 'mae'
                        }
                     && textoValido(request.resource.data.nomeAluno)
-                    && serieValida(request.resource.data.serie)
                     && request.resource.data.criadoEm is int;
 
-      // A dona só altera nome e série (a série muda todo ano).
+      // A dona só altera o nome da criança.
       // `membrosUids` e `participantes` nunca mudam pelo navegador: quem adiciona escola/médico
       // é a Cloud Function do convite (RN01, RN02), que usa o Admin SDK
       // A dona também precisa continuar membro: se um dia for removida de
@@ -169,9 +165,8 @@ service cloud.firestore {
       allow update: if estaLogado()
                     && resource.data.donoUid == meuUid()
                     && meuUid() in resource.data.membrosUids
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nomeAluno', 'serie'])
-                    && textoValido(request.resource.data.nomeAluno)
-                    && serieValida(request.resource.data.serie);
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nomeAluno'])
+                    && textoValido(request.resource.data.nomeAluno);
 
       // TODO: exclusão da pasta a pedido da família (direito do titular na
       // LGPD) — definir fluxo, inclusive o que acontece com as mensagens

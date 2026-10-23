@@ -7,7 +7,6 @@ import { estilos } from "~/componentes/cartoes";
 import { usePasta } from "~/ganchos/usePasta";
 import { useAuth } from "~/contexto/AuthContext";
 import { cores, medidas } from "~/tema/cores";
-import { SERIE_LABELS } from "@/types/pasta";
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -42,12 +41,11 @@ export default function PastaDoAluno() {
 
     return (
         <Tela>
-            {/* Cabeçalho lido de uma vez: "Pasta do aluno: Pedro, 4º ano" */}
-            <View accessible accessibilityRole="header" accessibilityLabel={`Pasta do aluno: ${[pasta.nomeAluno, SERIE_LABELS[pasta.serie]].filter(Boolean).join(', ')}`}
+            {/* Cabeçalho lido de uma vez: "Pasta do aluno: Pedro" */}
+            <View accessible accessibilityRole="header" accessibilityLabel={`Pasta do aluno: ${pasta.nomeAluno}`}
                 style={{ borderBottomWidth: 2, borderBottomColor: cores.destaque, paddingBottom: 12, gap: 2 }}>
                 <Text style={estilos.rotulo}>PASTA DO ALUNO</Text>
                 <Text style={[estilos.tituloCartao, { fontSize: 28 }]}>{pasta.nomeAluno}</Text>
-                <Text style={estilos.suave}>{SERIE_LABELS[pasta.serie] ?? ''}</Text>
             </View>
             <BotaoOuvir rotulo="Ouvir instruções" texto={pasta.donoUid === user?.uid
                 ? 'Esta é a pasta do aluno. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar.'

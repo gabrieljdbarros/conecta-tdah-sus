@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, DocumentData, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "~/servicos/firebase";
-import { Pasta, Serie } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
 import { AppUser } from "@/types/user";
 
 /**
@@ -12,7 +12,6 @@ function paraPasta(id: string, data: DocumentData): Pasta {
     return {
         id,
         nomeAluno: data.nomeAluno,
-        serie: data.serie,
         donoUid: data.donoUid,
         membrosUids: data.membrosUids ?? [],
         participantes: data.participantes ?? {},
@@ -21,12 +20,11 @@ function paraPasta(id: string, data: DocumentData): Pasta {
 }
 
 const PastaServicos = {
-    /** A mãe cria a pasta e vira a dona (decisão travada 8) */
-    criar: async (dona: AppUser, dados: { nomeAluno: string; serie: Serie }): Promise<{ success: boolean; message?: string }> => {
+    /** A mãe cria a pasta, só com o nome da criança, e vira a dona (decisão travada 6) */
+    criar: async (dona: AppUser, dados: { nomeAluno: string }): Promise<{ success: boolean; message?: string }> => {
         try {
             await addDoc(collection(db, "pastas"), {
                 nomeAluno: dados.nomeAluno,
-                serie: dados.serie,
                 donoUid: dona.uid,
                 membrosUids: [dona.uid],
                 participantes: { [dona.uid]: { nome: dona.nome, papel: "mae" } },

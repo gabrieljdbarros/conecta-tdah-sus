@@ -4,7 +4,7 @@ import Link from "next/link";
 import PastaServices from "@/services/pasta";
 import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
-import { Pasta, SERIE_LABELS } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
 
 // Cor com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -80,10 +80,7 @@ export default function ConversasList() {
                                 <span aria-hidden="true" className="flex items-center justify-center w-[48px] h-[48px] shrink-0 rounded-full bg-white border border-gray-300 text-(--cor-link) text-[24px]">
                                     <i className="ion-chatbubbles" />
                                 </span>
-                                <span className="flex flex-col">
-                                    <span className="text-[18px] font-bold text-(--cor-texto)">Conversa de {pasta.nomeAluno}</span>
-                                    <span className="text-[16px] text-(--cor-texto-suave)">{SERIE_LABELS[pasta.serie] ?? ''}</span>
-                                </span>
+                                <span className="text-[18px] font-bold text-(--cor-texto)">Conversa de {pasta.nomeAluno}</span>
                                 <i className="ion-chevron-right ml-auto text-[20px] text-(--cor-texto-suave)" aria-hidden="true" />
                             </Link>
                         </li>

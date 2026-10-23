@@ -34,7 +34,7 @@ const USUARIOS = {
 
 // Pasta da mae1 com escola1, medico1 e medico2. O exMedico saiu da pasta
 const PASTA = {
-    nomeAluno: "Aluno Fictício", serie: "ef3", donoUid: "mae1",
+    nomeAluno: "Aluno Fictício", donoUid: "mae1",
     membrosUids: ["mae1", "escola1", "medico1", "medico2"], participantes: {}, criadoEm: 1,
 };
 

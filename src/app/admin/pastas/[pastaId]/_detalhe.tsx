@@ -5,7 +5,7 @@ import PastaServices from "@/services/pasta";
 import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData } from "@/helpers/router";
-import { Pasta, SERIE_LABELS } from "@/types/pasta";
+import { Pasta } from "@/types/pasta";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_SUCESSO = 'text-[#166534]';
@@ -62,12 +62,11 @@ export default function DetalhePasta({ pastaId }: { pastaId: string }) {
 
     return (
         <div className="flex flex-col gap-6 max-w-[640px]">
-            {/* CABEÇALHO (design: "PASTA DO ESTUDANTE", nome e série) — o resto do sistema diz "aluno" */}
+            {/* CABEÇALHO (design: "PASTA DO ESTUDANTE" e o nome) — o resto do sistema diz "aluno" */}
             <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-(--cor-destaque) pb-3">
                 <div>
                     <p className="ff-default text-[16px] font-bold tracking-wide uppercase text-(--cor-secundaria)">Pasta do aluno</p>
                     <h2 className="ff-default text-[28px] font-extrabold leading-tight text-(--cor-texto) break-words">{pasta.nomeAluno}</h2>
-                    <p className="ff-default text-[16px] text-(--cor-texto-suave)">{SERIE_LABELS[pasta.serie] ?? '-'}</p>
                 </div>
                 {/* "Cód. de convite" do design: aqui o convite é um link seguro, na tela de Vínculos */}
                 {ehDona && <AppButton title="Convidar" icon="person-add" type="outline" href={`${base}/vinculos#convidar`} />}
