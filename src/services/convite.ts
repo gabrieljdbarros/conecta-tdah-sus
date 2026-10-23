@@ -1,14 +1,11 @@
-import { FirebaseError } from "firebase/app";
-import { collection, deleteDoc, doc, getDocs, query, where } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
-import { db, functions } from "@/services/firebase";
+import { supabase, mensagemErro } from "@/services/supabase";
 
 /**
  * SERVICES DO CONVITE (RN01, RN02)
  *
- * Gerar e aceitar passam pelas Cloud Functions (functions/src/index.ts).
- * Ver e cancelar os próprios convites é feito direto no Firestore, liberado
- * pelas regras só para quem criou o convite.
+ * Gerar e aceitar passam pelas funções do banco (`gerar_convite` e
+ * `aceitar_convite`, em supabase/migrations). Ver e cancelar os próprios
+ * convites é feito direto na tabela, liberado pelo RLS só para quem criou.
  */
 
 export type PapelConvidado = 'escola' | 'medico';
@@ -19,79 +16,48 @@ export interface ConvitePendente {
     expiraEm: number;
 }
 
-/**
- * As Functions já devolvem mensagens em português para os casos previstos
- * (expirado, já usado, perfil errado...). Erros inesperados viram uma
- * mensagem genérica.
- */
-export function mensagemErro(error: unknown, padrao: string): string {
-    if (error instanceof FirebaseError && error.code !== "functions/internal" && error.message)
-        return error.message;
-    return padrao;
-}
-
 const ConviteServices = {
     /** A dona da pasta gera o link de convite (vale 48 horas, uso único) */
     gerar: async (
         pastaId: string,
         papel: PapelConvidado
     ): Promise<{ success: boolean; token?: string; expiraEm?: number; message?: string }> => {
-        try {
-            const resultado = await httpsCallable<
-                { pastaId: string; papel: PapelConvidado },
-                { token: string; expiraEm: number }
-            >(functions, "gerarConvite")({ pastaId, papel });
-            return { success: true, ...resultado.data };
-        } catch (error) {
-            return { success: false, message: mensagemErro(error, "Não foi possível gerar o convite. Tente novamente") };
-        }
+        const { data, error } = await supabase.rpc("gerar_convite", { p_pasta_id: pastaId, p_papel: papel }).single<{ token: string; expira_em: string }>();
+        if (error || !data) return { success: false, message: mensagemErro(error, "Não foi possível gerar o convite. Tente novamente") };
+        return { success: true, token: data.token, expiraEm: new Date(data.expira_em).getTime() };
     },
 
     /** Escola ou médico aceita o convite e entra na pasta */
     aceitar: async (
         token: string
     ): Promise<{ success: boolean; pastaId?: string; nomeAluno?: string; message?: string }> => {
-        try {
-            const resultado = await httpsCallable<
-                { token: string },
-                { pastaId: string; nomeAluno: string }
-            >(functions, "aceitarConvite")({ token });
-            return { success: true, ...resultado.data };
-        } catch (error) {
-            return { success: false, message: mensagemErro(error, "Não foi possível aceitar o convite. Tente novamente") };
-        }
+        const { data, error } = await supabase.rpc("aceitar_convite", { p_token: token }).single<{ pasta_id: string; nome_aluno: string }>();
+        if (error || !data) return { success: false, message: mensagemErro(error, "Não foi possível aceitar o convite. Tente novamente") };
+        return { success: true, pastaId: data.pasta_id, nomeAluno: data.nome_aluno };
     },
 
     /**
      * Convites da pasta que ainda não foram usados (válidos e vencidos: a
-     * tela mostra os vencidos para gerar um novo).
-     * O filtro `criadoPor` é obrigatório: as regras só liberam os próprios.
+     * tela mostra os vencidos para gerar um novo). O RLS só devolve os
+     * convites criados pela própria pessoa
      */
-    pendentes: async (uid: string, pastaId: string): Promise<{ success: boolean; convites: ConvitePendente[] }> => {
-        try {
-            const snapshot = await getDocs(query(
-                collection(db, "convites"),
-                where("criadoPor", "==", uid),
-                where("pastaId", "==", pastaId),
-                where("usadoEm", "==", null),
-            ));
-            const convites = snapshot.docs
-                .map((d) => ({ id: d.id, papel: d.data().papel, expiraEm: d.data().expiraEm }))
-                .sort((a, b) => a.expiraEm - b.expiraEm);
-            return { success: true, convites };
-        } catch {
-            return { success: false, convites: [] };
-        }
+    pendentes: async (_uid: string, pastaId: string): Promise<{ success: boolean; convites: ConvitePendente[] }> => {
+        const { data, error } = await supabase.from("convites")
+            .select("id, papel, expira_em")
+            .eq("pasta_id", pastaId)
+            .is("usado_em", null)
+            .order("expira_em");
+        if (error) return { success: false, convites: [] };
+        return {
+            success: true,
+            convites: data.map((c) => ({ id: c.id, papel: c.papel as PapelConvidado, expiraEm: new Date(c.expira_em).getTime() })),
+        };
     },
 
     /** Cancela um convite: o link para de funcionar na hora */
     cancelar: async (conviteId: string): Promise<{ success: boolean }> => {
-        try {
-            await deleteDoc(doc(db, "convites", conviteId));
-            return { success: true };
-        } catch {
-            return { success: false };
-        }
+        const { data, error } = await supabase.from("convites").delete().eq("id", conviteId).select("id");
+        return { success: !error && !!data?.length };
     },
 };
 

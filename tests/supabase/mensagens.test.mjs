@@ -132,6 +132,36 @@ describe("enviar mensagens", () => {
 });
 
 // =============================================================================
+describe("tempo real (Realtime respeita o RLS)", () => {
+    const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+    const assinar = (quem, recebidas) => new Promise((ok) => {
+        u[quem].db.channel(`mensagens:${pasta}`)
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensagens", filter: `pasta_id=eq.${pasta}` },
+                (e) => recebidas.push(e.new.texto))
+            .subscribe((status) => { if (status === "SUBSCRIBED") ok(); });
+    });
+
+    test("o membro recebe a mensagem nova; quem está fora da pasta não recebe", async () => {
+        const daEscola = [];
+        const doMedicoDeFora = [];
+        const doAdmin = [];
+        try {
+            await Promise.all([assinar("escola1", daEscola), assinar("medico2", doMedicoDeFora), assinar("admin1", doAdmin)]);
+            await esperar(1500); // o servidor termina de preparar a assinatura
+            permitido(await enviar("mae1", valida("mae1", { texto: "Mensagem em tempo real" })));
+            await esperar(3000);
+            // A escola pode receber também a mensagem gravada antes do teste
+            // (o Realtime lê as mudanças com um pequeno atraso): ela é membro
+            assert.ok(daEscola.includes("Mensagem em tempo real"), JSON.stringify(daEscola));
+            assert.deepEqual(doMedicoDeFora, []);
+            assert.deepEqual(doAdmin, []);
+        } finally {
+            for (const quem of ["escola1", "medico2", "admin1"]) await u[quem].db.removeAllChannels();
+        }
+    });
+});
+
+// =============================================================================
 describe("mensagens imutáveis (RN08)", () => {
     test("NÃO: o autor edita", async () => {
         negado(await u.escola1.db.from("mensagens").update({ texto: "Editada" }).eq("id", mensagem).select());

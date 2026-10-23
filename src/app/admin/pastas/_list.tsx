@@ -27,9 +27,9 @@ export default function PastaList() {
         if (flash) setSucesso(flash);
     }, []);
 
-    const carregar = useCallback(async (uid: string) => {
+    const carregar = useCallback(async () => {
         setCarregando(true);
-        const { success, pastas } = await PastaServices.minhas(uid);
+        const { success, pastas } = await PastaServices.minhas();
         setPastas(pastas);
         setErro(!success);
         setCarregando(false);
@@ -42,7 +42,7 @@ export default function PastaList() {
             setCarregando(false);
             return;
         }
-        carregar(user.uid);
+        carregar();
     }, [carregandoSessao, user, carregar]);
 
     // A mensagem de sucesso chega junto com a página inteira, e muitos
@@ -93,7 +93,7 @@ export default function PastaList() {
             {erro && (
                 <div className="flex flex-col items-start gap-3 mb-3">
                     <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: não deu para carregar as pastas. Toque em &quot;Tentar de novo&quot;.</p>
-                    {user && <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar(user.uid)} form="round" />}
+                    {user && <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar()} form="round" />}
                 </div>
             )}
 

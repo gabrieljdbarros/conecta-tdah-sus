@@ -21,9 +21,9 @@ export default function ConversasList() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState(false);
 
-    const carregar = useCallback(async (uid: string) => {
+    const carregar = useCallback(async () => {
         setCarregando(true);
-        const { success, pastas } = await PastaServices.minhas(uid);
+        const { success, pastas } = await PastaServices.minhas();
         setPastas(pastas);
         setErro(!success);
         setCarregando(false);
@@ -36,7 +36,7 @@ export default function ConversasList() {
             setCarregando(false);
             return;
         }
-        carregar(user.uid);
+        carregar();
     }, [carregandoSessao, user, carregar]);
     // ======================================================================
     if (carregandoSessao || carregando)
@@ -59,7 +59,7 @@ export default function ConversasList() {
             {erro && (
                 <div className="flex flex-col items-start gap-3 mb-3">
                     <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: não deu para carregar as conversas. Toque em &quot;Tentar de novo&quot;.</p>
-                    {user && <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar(user.uid)} />}
+                    {user && <AppButton title="Tentar de novo" icon="refresh" onClick={() => carregar()} />}
                 </div>
             )}
 

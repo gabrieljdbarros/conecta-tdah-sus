@@ -8,16 +8,13 @@ import { AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
 import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
-import { CANAL_GRUPO, LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
+import { LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
 const COR_SUCESSO = 'text-[#166534]';
 const CLASSE_LINK_VOLTAR = "self-start min-h-[48px] px-6 flex items-center rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]";
-
-// Um único chat em grupo por pasta (RN05, decisão travada 7)
-const CANAL = CANAL_GRUPO;
 
 function formatarHora(ms: number): string {
     return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -65,14 +62,14 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
 
     // Acompanha a conversa em tempo real; para de ouvir ao sair da tela
     // (economiza dados e bateria). Se o acesso for perdido (ex.: a pessoa
-    // foi removida), o Firestore encerra e cai em aoFalhar
+    // foi removida), as mensagens novas param de chegar
     useEffect(() => {
         if (!podeAbrir) return;
         setMensagens(null);
         setErroCanal(false);
         rolarParaOFim.current = true;
         // No erro (ex.: acesso perdido), as mensagens somem da tela
-        return MensagemServices.ouvir(pastaId, CANAL, setMensagens, () => { setMensagens(null); setErroCanal(true); });
+        return MensagemServices.ouvir(pastaId, setMensagens, () => { setMensagens(null); setErroCanal(true); });
     }, [pastaId, podeAbrir, tentativa]);
 
     // Rola até a mensagem mais nova só na abertura, depois de enviar ou se a
@@ -93,7 +90,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         setEnviando(true);
         setErroEnvio(false);
         setEnviada(false);
-        const { success } = await MensagemServices.enviar(pastaId, CANAL, user, papel, texto.trim());
+        const { success } = await MensagemServices.enviar(pastaId, user, papel, texto.trim());
         setEnviando(false);
         if (success) {
             setTexto('');

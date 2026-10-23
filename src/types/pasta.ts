@@ -1,11 +1,13 @@
 /**
  * MODELO DA PASTA DO ALUNO — CONECTA TDAH SUS (RF03)
  *
- * Cada aluno é uma "pasta" em `pastas/{pastaId}` (decisões travadas 6 e 8):
+ * Cada aluno é uma "pasta" (decisões travadas 6 e 8). No Supabase, tabelas
+ * `pastas` e `membros_pasta`; no Firestore (app, até a migração),
+ * `pastas/{pastaId}`. As telas usam o formato abaixo nos dois casos:
  *  - Criada pela mãe/responsável, que vira dona (`donoUid`)
  *  - `membrosUids` lista quem participa (mãe, e depois escola e médico
  *    vinculados por convite — RN01, RN02). É um array para permitir a
- *    consulta `array-contains` ("minhas pastas") validada pelas Rules
+ *    consulta `array-contains` ("minhas pastas") do Firestore
  *  - As permissões usam o `role` em `users`; `participantes` serve só para
  *    exibir quem está na pasta
  *  - Minimização (LGPD): só o nome da criança, a pedido da cliente; nada de
@@ -28,7 +30,7 @@ export interface Participante {
 }
 
 /**
- * Formato salvo em `pastas/{pastaId}` no Firestore
+ * Formato da pasta nas telas (e o documento `pastas/{pastaId}` no Firestore)
  */
 export interface PastaDocument {
     nomeAluno: string;

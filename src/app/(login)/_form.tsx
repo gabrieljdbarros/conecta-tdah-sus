@@ -28,7 +28,7 @@ export default function LoginForm({ focarTitulo = false }: { focarTitulo?: boole
     useEffect(() => setConvite(conviteDaUrl()), []);
 
     // Só redireciona depois que o AuthContext confirmar a sessão (perfil
-    // carregado do Firestore + cookie setado) — evita o middleware barrar
+    // carregado do banco + cookie setado) — evita o middleware barrar
     // a navegação por falta do cookie ainda não gravado.
     // Se veio de um link de convite, volta para ele
     useEffect(() => {
