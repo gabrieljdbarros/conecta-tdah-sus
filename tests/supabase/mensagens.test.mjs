@@ -150,7 +150,11 @@ describe("tempo real (Realtime respeita o RLS)", () => {
             await Promise.all([assinar("escola1", daEscola), assinar("medico2", doMedicoDeFora), assinar("admin1", doAdmin)]);
             await esperar(1500); // o servidor termina de preparar a assinatura
             permitido(await enviar("mae1", valida("mae1", { texto: "Mensagem em tempo real" })));
-            await esperar(3000);
+            // Espera a mensagem chegar ao membro (até 10 s: o Realtime às vezes
+            // demora mais logo depois de o banco ser recriado) e mais um pouco,
+            // para ter certeza de que quem está fora não recebe
+            for (let i = 0; i < 40 && !daEscola.includes("Mensagem em tempo real"); i++) await esperar(250);
+            await esperar(1500);
             // A escola pode receber também a mensagem gravada antes do teste
             // (o Realtime lê as mudanças com um pequeno atraso): ela é membro
             assert.ok(daEscola.includes("Mensagem em tempo real"), JSON.stringify(daEscola));

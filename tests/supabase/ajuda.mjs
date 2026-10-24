@@ -49,8 +49,20 @@ export const PERFIS = {
 
 export const emailDe = (apelido) => `${apelido}@example.com`;
 
-/** Apaga todos os dados das tabelas (os usuários do Auth ficam) */
+/** Apaga todos os arquivos do bucket de áudios (pelo Storage, como deve ser) */
+async function limparAudios() {
+    const bucket = servico.storage.from("audios");
+    const { data: pastas, error } = await bucket.list("", { limit: 1000 });
+    if (error) throw error;
+    for (const pasta of pastas) {
+        const { data: arquivos } = await bucket.list(pasta.name, { limit: 1000 });
+        if (arquivos?.length) await bucket.remove(arquivos.map((a) => `${pasta.name}/${a.name}`));
+    }
+}
+
+/** Apaga todos os dados das tabelas e os áudios (os usuários do Auth ficam) */
 export async function limparDados() {
+    await limparAudios();
     // Apagar a pasta leva junto membros, convites e mensagens (cascade)
     for (const tabela of ["pastas", "perfis"]) {
         const { error } = await servico.from(tabela).delete().not("id", "is", null);
