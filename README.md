@@ -24,7 +24,7 @@
 | Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto |
 | Remover participante e sair da pasta | ✅ Pronto |
 | Chat em grupo por aluno, em tempo real (RN05, RF08) | ✅ Pronto |
-| Mensagens de voz no chat (RF16) | ⏳ Depois da migração para o Supabase |
+| Mensagens de voz no chat (RF16) | 🚧 Banco e arquivos prontos; telas em andamento |
 | Aplicativo instalável no celular (PWA) | ✅ Pronto |
 | Leitura em voz alta: instruções das telas e mensagens | ✅ Pronto |
 | App nativo em React Native (Expo) para mãe, escola e médico | ✅ Pronto (testado no Android, sem publicação nas lojas) |
@@ -45,6 +45,7 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
   - **Limite (para a defesa):** quem informa se a voz roda no aparelho é o próprio navegador (`localService`), e o app não consegue conferir isso. Alguns motores de voz de fabricantes no Android podem se declarar locais e ainda usar a internet.
   - **Para ouvir as mensagens no computador,** é preciso ter uma voz em português instalada no sistema. No Windows: Configurações → Hora e idioma → Fala → Adicionar vozes → Português (Brasil), voz "Microsoft Maria". Depois, reinicie o navegador. Sem ela, o botão de ouvir o conteúdo não aparece, e as instruções continuam podendo ser ouvidas.
   - **Ditado pelo microfone do teclado:** a dica na tela sugere usar o microfone do teclado para falar em vez de digitar. Esse ditado é um recurso do teclado do celular (Google, Apple etc.), escolhido pela pessoa no aparelho dela, e pode enviar o áudio para os servidores desse teclado. O app não recebe nem guarda áudio.
+- **As mensagens de voz são tratadas como dado de saúde.** Ficam num armazenamento de arquivos **privado**, com no máximo 2 minutos e 1 MB cada. Só os membros da pasta enviam e ouvem, e o nome do arquivo não tem o nome da criança. Para ouvir, o sistema primeiro **registra no log quem ouviu e quando** (RN09) e só então libera um link que vale 5 minutos. O log também registra quem enviou cada áudio. Ninguém troca nem apaga um áudio. O prazo de guarda é de **90 dias**; a exclusão automática ainda está em desenvolvimento.
 - **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma função no banco, numa transação, que confere se a conta é do perfil certo (escola ou médico).
 
 ## Tecnologias
@@ -92,8 +93,8 @@ Os dados ficam guardados no Docker entre uma execução e outra. Para desligar, 
 
 ### Banco no Supabase
 
-- `supabase/migrations/`: tabelas, regras de acesso (**RLS** ativado em todas) e as funções do convite e da pasta.
-- `tests/supabase/`: os testes do banco. Cada um tenta o acesso permitido e os proibidos, com usuários fictícios, inclusive no chat em tempo real.
+- `supabase/migrations/`: tabelas, regras de acesso (**RLS** ativado em todas), as funções do convite e da pasta, e o armazenamento dos áudios com as suas políticas.
+- `tests/supabase/`: os testes do banco. Cada um tenta o acesso permitido e os proibidos, com usuários fictícios, inclusive no chat em tempo real e nos áudios.
 
 As chaves que o `supabase start` mostra são as de demonstração do ambiente local. As chaves de um projeto real, principalmente a `service_role`, **nunca** vão para o repositório.
 
