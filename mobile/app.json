@@ -23,7 +23,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "O Conecta TDAH SUS usa o microfone só quando você toca em Gravar áudio, para mandar mensagens de voz na conversa da pasta.",
+          "enableBackgroundRecording": false
+        }
+      ],
+      "expo-asset"
     ],
     "scheme": "conectatdah"
   }

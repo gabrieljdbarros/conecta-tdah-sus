@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
 import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
+import { GravadorDeVoz, Gravacao, OuvirMensagemDeVoz } from "~/componentes/audio";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
 import MensagemServicos from "~/servicos/mensagem";
@@ -24,7 +25,7 @@ const iniciais = (nome: string) => {
  * CONVERSAS DA PASTA (RN05), em tempo real, como na web e no design:
  * balões (os dos outros em verde-claro com as iniciais; os meus em lilás),
  * a data como separador e "quem vê" sempre visível. Um só chat por pasta. Mensagens não são
- * editadas nem apagadas
+ * editadas nem apagadas. Mensagens de texto e de voz (RF16)
  */
 export default function Conversas() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,6 +37,7 @@ export default function Conversas() {
     const [texto, setTexto] = useState('');
     const [enviando, setEnviando] = useState(false);
     const [erroEnvio, setErroEnvio] = useState<string | null>(null);
+    const [gravando, setGravando] = useState(false);
     const lista = useRef<FlatList<Mensagem>>(null);
     const conhecidas = useRef<Set<string> | null>(null);
     const pertoDoFim = useRef(true);
@@ -69,7 +71,7 @@ export default function Conversas() {
             // só com o nome de quem mandou (o texto não é falado sem pedir)
             if (conhecidas.current) {
                 const chegaram = novas.filter((m) => !conhecidas.current!.has(m.id) && m.autorUid !== user?.uid);
-                if (chegaram.length === 1) anunciar(`Nova mensagem de ${chegaram[0].autorNome}.`);
+                if (chegaram.length === 1) anunciar(`Nova mensagem${chegaram[0].tipo === 'audio' ? ' de voz' : ''} de ${chegaram[0].autorNome}.`);
                 else if (chegaram.length > 1) anunciar(`${chegaram.length} mensagens novas.`);
             }
             conhecidas.current = new Set(novas.map((m) => m.id));
@@ -99,6 +101,20 @@ export default function Conversas() {
             : 'a mensagem não foi enviada. Tente de novo.');
     };
 
+    /** Devolve o erro para o painel de gravação mostrar (ou null se enviou) */
+    const enviarAudio = async (gravacao: Gravacao): Promise<string | null> => {
+        const { success, semConexao } = await MensagemServicos.enviarAudio(pasta.id, user, papel, gravacao);
+        if (!success) return semConexao
+            ? 'sem resposta da internet. Se o áudio não aparecer na conversa, envie de novo.'
+            : 'o áudio não foi enviado. Tente de novo.';
+        pertoDoFim.current = true;
+        anunciar('Áudio enviado.');
+        return null;
+    };
+
+    const abrirGravador = () => { setErroEnvio(null); setGravando(true); };
+    const fecharGravador = (aviso?: string) => { setGravando(false); setErroEnvio(aviso ?? null); };
+
     const fonteGrande = fontScale > 1.3;
 
     return (
@@ -114,7 +130,7 @@ export default function Conversas() {
                     {!tecladoAberto && <>
                         <Text accessibilityRole="header" style={estilos.tituloSecao}>Conversas sobre {pasta.nomeAluno}</Text>
                         <BotaoOuvir rotulo="Ouvir instruções"
-                            texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Depois de enviada, a mensagem não pode ser apagada.`} />
+                            texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada.`} />
                     </>}
 
                     {/* QUEM VÊ esta conversa (privacidade: sempre visível) */}
@@ -147,6 +163,7 @@ export default function Conversas() {
                             const minha = m.autorUid === user.uid;
                             const novoDia = index === 0 || dia(mensagens[index - 1].criadoEm) !== dia(m.criadoEm);
                             const autor = minha ? 'Você' : `${m.autorNome} (${ROLE_LABELS[m.autorPapel]})`;
+                            const voz = m.tipo === 'audio';
                             return (
                                 <View style={{ gap: 10 }}>
                                     {novoDia && <Text accessibilityRole="header" style={[estilos.suave, { textAlign: 'center' }]}>{dia(m.criadoEm)}</Text>}
@@ -162,15 +179,16 @@ export default function Conversas() {
                                             backgroundColor: minha ? '#EEF0FF' : '#E3F5F2', borderColor: minha ? '#C7CCF5' : '#B8E2DC',
                                         }}>
                                             {/* Lida de uma vez: "Fulano (Médico), 10:30: texto" */}
-                                            <View accessible accessibilityLabel={`${autor}, ${hora(m.criadoEm)}: ${m.texto}`}>
+                                            <View accessible accessibilityLabel={`${autor}, ${hora(m.criadoEm)}: ${voz ? (m.audioApagado ? 'mensagem de voz apagada' : 'mensagem de voz') : m.texto}`}>
                                                 <Text style={{ fontSize: 16, fontWeight: '700', color: cores.texto }}>
                                                     {autor}<Text style={{ fontWeight: '400', color: cores.textoSuave }}> · {hora(m.criadoEm)}</Text>
                                                 </Text>
-                                                <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>
+                                                {!voz && <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>}
                                             </View>
+                                            {voz && <OuvirMensagemDeVoz mensagem={m} descricao={minha ? 'você' : m.autorNome} />}
                                             {/* Conteúdo: só com voz do aparelho. Nas próprias mensagens
                                                 não aparece (a pessoa acabou de escrever) */}
-                                            {!minha && (
+                                            {!minha && !voz && (
                                                 <BotaoOuvir conteudo disponivel={vozLocal} pequeno
                                                     texto={`${m.autorNome} escreveu: ${m.texto}`} descricao={`mensagem de ${m.autorNome}`} />
                                             )}
@@ -184,21 +202,25 @@ export default function Conversas() {
                 {/* ENVIAR */}
                 <View style={{ padding: medidas.espaco, paddingTop: 8, gap: 8, borderTopWidth: 1, borderTopColor: cores.bordaCartao, backgroundColor: '#FFFFFF' }}>
                     {erroEnvio && <Aviso tipo="erro" texto={erroEnvio} />}
-                    {/* Aparece antes de tocar no campo; com o teclado aberto sai para dar espaço */}
-                    {!tecladoAberto && <Text style={estilos.suave}>Depois de enviada, a mensagem não pode ser apagada.</Text>}
-                    <View style={{ flexDirection: fonteGrande ? 'column' : 'row', gap: 8, alignItems: fonteGrande ? 'stretch' : 'flex-end' }}>
-                        {/* Corretor desligado: o teclado não aprende termos de saúde */}
-                        <TextInput value={texto} onChangeText={escrever} multiline maxLength={MAX_TEXTO_MENSAGEM}
-                            accessibilityLabel="Escreva sua mensagem" placeholder="Escreva sua mensagem" placeholderTextColor={cores.borda}
-                            autoCorrect={false} spellCheck={false} autoComplete="off" importantForAutofill="no"
-                            style={{
-                                flex: fonteGrande ? undefined : 1, minHeight: medidas.toque, maxHeight: 140, borderWidth: 1, borderColor: cores.borda, borderRadius: 24,
-                                paddingHorizontal: 16, paddingVertical: 12, fontSize: medidas.texto, color: cores.texto, backgroundColor: '#FFFFFF',
-                            }} />
-                        <View style={fonteGrande ? undefined : { minWidth: 120 }}>
-                            <Botao titulo={enviando ? 'Enviando' : 'Enviar'} icone="paper-plane" carregando={enviando} desabilitado={!texto.trim()} aoTocar={enviar} />
+                    {gravando ? <GravadorDeVoz aoEnviar={enviarAudio} aoFechar={fecharGravador} /> : <>
+                        {/* Aparece antes de tocar no campo; com o teclado aberto sai para dar espaço */}
+                        {!tecladoAberto && <Text style={estilos.suave}>Depois de enviada, a mensagem não pode ser apagada.</Text>}
+                        <View style={{ flexDirection: fonteGrande ? 'column' : 'row', gap: 8, alignItems: fonteGrande ? 'stretch' : 'flex-end' }}>
+                            {/* Corretor desligado: o teclado não aprende termos de saúde */}
+                            <TextInput value={texto} onChangeText={escrever} multiline maxLength={MAX_TEXTO_MENSAGEM}
+                                accessibilityLabel="Escreva sua mensagem" placeholder="Escreva sua mensagem" placeholderTextColor={cores.borda}
+                                autoCorrect={false} spellCheck={false} autoComplete="off" importantForAutofill="no"
+                                style={{
+                                    flex: fonteGrande ? undefined : 1, minHeight: medidas.toque, maxHeight: 140, borderWidth: 1, borderColor: cores.borda, borderRadius: 24,
+                                    paddingHorizontal: 16, paddingVertical: 12, fontSize: medidas.texto, color: cores.texto, backgroundColor: '#FFFFFF',
+                                }} />
+                            <View style={fonteGrande ? undefined : { minWidth: 120 }}>
+                                <Botao titulo={enviando ? 'Enviando' : 'Enviar'} icone="paper-plane" carregando={enviando} desabilitado={!texto.trim()} aoTocar={enviar} />
+                            </View>
                         </View>
-                    </View>
+                        {/* Quem está escrevendo (teclado aberto) não precisa do botão de gravar */}
+                        {!tecladoAberto && <Botao titulo="Gravar áudio" tipo="contorno" icone="mic" desabilitado={enviando} aoTocar={abrirGravador} />}
+                    </>}
                 </View>
             </View>
         </View>

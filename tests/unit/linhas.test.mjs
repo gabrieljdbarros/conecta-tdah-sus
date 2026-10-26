@@ -2,13 +2,14 @@
  * TESTES DA LÓGICA PURA COMPARTILHADA PELA WEB E PELO APP
  * - código do convite colado no app (RN01, RN02)
  * - conversão das linhas do banco para o formato das telas
+ * - duração das mensagens de voz (RF16)
  * - mensagens de erro (nenhum texto técnico chega ao usuário)
  * Roda direto no Node (sem banco). Executar: npm run test:unit
  */
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { codigoDoTexto } from "../../src/helpers/convite.ts";
-import { juntarMensagens, mensagemErro, mensagemErroAuth, paraMensagem, paraPasta } from "../../src/helpers/linhas.ts";
+import { duracaoPorExtenso, formatarDuracao, juntarMensagens, mensagemErro, mensagemErroAuth, paraMensagem, paraPasta } from "../../src/helpers/linhas.ts";
 
 const CODIGO = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJ0123-_A"; // 43 caracteres
 
@@ -32,6 +33,11 @@ describe("codigoDoTexto (convite colado no app)", () => {
     });
 });
 
+const linhaTexto = {
+    id: "x", tipo: "texto", texto: "Oi", audio_caminho: null, audio_duracao_s: null, audio_apagado_em: null,
+    autor_id: "m1", autor_nome: "Médico Fictício", autor_papel: "medico", criado_em: "2026-10-23T12:00:00Z",
+};
+
 describe("conversão das linhas do banco", () => {
     test("pasta: membros viram membrosUids e participantes (sem detalhe vazio)", () => {
         const pasta = paraPasta({
@@ -53,15 +59,48 @@ describe("conversão das linhas do banco", () => {
     });
 
     test("mensagem de autor que teve o perfil apagado continua aparecendo", () => {
-        const m = paraMensagem({ id: "x", texto: "Oi", autor_id: null, autor_nome: "Médico Fictício", autor_papel: "medico", criado_em: "2026-10-23T12:00:00Z" });
+        const m = paraMensagem({ ...linhaTexto, autor_id: null });
         assert.equal(m.autorUid, "");
         assert.equal(m.autorNome, "Médico Fictício");
+        assert.equal(m.tipo, "texto");
+    });
+
+    test("mensagem de voz: caminho e duração, sem texto", () => {
+        const m = paraMensagem({ ...linhaTexto, tipo: "audio", texto: null, audio_caminho: "p1/a1.m4a", audio_duracao_s: 95 });
+        assert.equal(m.texto, null);
+        assert.equal(m.audioCaminho, "p1/a1.m4a");
+        assert.equal(m.audioDuracaoS, 95);
+        assert.equal(m.audioApagado, false);
+    });
+
+    test("mensagem de voz depois dos 90 dias: continua, marcada como apagada", () => {
+        const m = paraMensagem({ ...linhaTexto, tipo: "audio", texto: null, audio_duracao_s: 30, audio_apagado_em: "2027-01-21T12:00:00Z" });
+        assert.equal(m.audioCaminho, null);
+        assert.equal(m.audioApagado, true);
     });
 
     test("juntarMensagens: sem repetir, em ordem, só as mais recentes", () => {
         const msg = (id, ms) => ({ id, texto: id, autorUid: "u", autorNome: "N", autorPapel: "mae", criadoEm: ms });
         const lista = juntarMensagens([msg("b", 2), msg("a", 1)], [msg("c", 3), msg("b", 2)], 2);
         assert.deepEqual(lista.map((m) => m.id), ["b", "c"]);
+    });
+});
+
+describe("duração das mensagens de voz", () => {
+    test("formatarDuracao: minutos e segundos com dois dígitos", () => {
+        assert.equal(formatarDuracao(0), "0:00");
+        assert.equal(formatarDuracao(5), "0:05");
+        assert.equal(formatarDuracao(95), "1:35");
+        assert.equal(formatarDuracao(120), "2:00");
+        assert.equal(formatarDuracao(59.6), "1:00");
+    });
+
+    test("duracaoPorExtenso: para o leitor de tela, no singular e no plural", () => {
+        assert.equal(duracaoPorExtenso(1), "1 segundo");
+        assert.equal(duracaoPorExtenso(45), "45 segundos");
+        assert.equal(duracaoPorExtenso(60), "1 minuto");
+        assert.equal(duracaoPorExtenso(95), "1 minuto e 35 segundos");
+        assert.equal(duracaoPorExtenso(120), "2 minutos");
     });
 });
 
