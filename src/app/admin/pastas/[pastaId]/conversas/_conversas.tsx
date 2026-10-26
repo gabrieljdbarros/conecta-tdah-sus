@@ -4,13 +4,12 @@ import Link from "next/link";
 import PastaServices from "@/services/pasta";
 import MensagemServices from "@/services/mensagem";
 import { papelNaPasta } from "@/helpers/pasta";
-import { AppLoader, AppOuvir, useVozDisponivel } from "@/themes/components";
+import { AppLoader, AppOuvir, AppOuvirAudio, useVozDisponivel } from "@/themes/components";
 import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
 import { LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
-import { duracaoPorExtenso } from "@/helpers/linhas";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -123,7 +122,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         <div className="flex flex-col gap-4 max-w-[720px]">
             <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Conversas sobre {pasta.nomeAluno}</h2>
             <AppOuvir rotulo="Ouvir instruções" className="self-start"
-                texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado. As mensagens de voz, por enquanto, só podem ser ouvidas pelo app.`} />
+                texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, embaixo dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para falar em vez de digitar, toque no microfone do teclado. Para ouvir uma mensagem de voz, toque em Ouvir áudio. As mensagens de voz são gravadas pelo app do celular.`} />
             {vozLocal === false && (
                 <p className="ff-default text-[16px] text-(--cor-texto-suave)">
                     {vozSuportada()
@@ -181,13 +180,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                                                 <span className="font-normal text-(--cor-texto-suave)"> · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span>
                                             </p>
                                             {m.tipo === 'audio' ? (
-                                                // TODO (etapa 4c): ouvir o áudio na web. Por enquanto, só pelo app
-                                                <p className="ff-default text-[16px] leading-relaxed">
-                                                    <i className="ion-mic-a mr-1" aria-hidden="true" />
-                                                    {m.audioApagado
-                                                        ? 'Mensagem de voz apagada depois de 90 dias (prazo de guarda).'
-                                                        : `Mensagem de voz de ${duracaoPorExtenso(m.audioDuracaoS ?? 0)}. Por enquanto, ouça pelo app.`}
-                                                </p>
+                                                <AppOuvirAudio mensagem={m} descricao={minha ? 'sua mensagem' : `mensagem de ${m.autorNome}`} className="mt-2" />
                                             ) : (
                                                 <p className="ff-default text-[16px] leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
                                             )}
