@@ -9,7 +9,7 @@
 // `import type`: some ao rodar, então os testes de lógica rodam direto no Node
 import type { AppUser, DadosPerfil, UserRole } from "@/types/user";
 import type { Participante, PapelNaPasta, Pasta } from "@/types/pasta";
-import type { Mensagem } from "@/types/mensagem";
+import type { Mensagem, TipoMensagem } from "@/types/mensagem";
 
 // ---------------------------------------------------------------------------
 // PERFIL (tabela `perfis`)
@@ -69,11 +69,15 @@ export const ordenarPastas = (pastas: Pasta[]) => pastas.sort((a, b) => a.nomeAl
 // ---------------------------------------------------------------------------
 // MENSAGEM (tabela `mensagens`)
 // ---------------------------------------------------------------------------
-export const COLUNAS_MENSAGEM = "id, texto, autor_id, autor_nome, autor_papel, criado_em";
+export const COLUNAS_MENSAGEM = "id, tipo, texto, audio_caminho, audio_duracao_s, audio_apagado_em, autor_id, autor_nome, autor_papel, criado_em";
 
 export interface LinhaMensagem {
     id: string;
-    texto: string;
+    tipo: TipoMensagem;
+    texto: string | null;
+    audio_caminho: string | null;
+    audio_duracao_s: number | null;
+    audio_apagado_em: string | null;
     autor_id: string | null;
     autor_nome: string;
     autor_papel: PapelNaPasta;
@@ -83,12 +87,33 @@ export interface LinhaMensagem {
 export function paraMensagem(linha: LinhaMensagem): Mensagem {
     return {
         id: linha.id,
+        tipo: linha.tipo,
         texto: linha.texto,
+        audioCaminho: linha.audio_caminho,
+        audioDuracaoS: linha.audio_duracao_s,
+        audioApagado: linha.audio_apagado_em !== null,
         autorUid: linha.autor_id ?? '',
         autorNome: linha.autor_nome,
         autorPapel: linha.autor_papel,
         criadoEm: new Date(linha.criado_em).getTime(),
     };
+}
+
+/** Duração de um áudio para mostrar e ler em voz alta: 95 → "1:35" */
+export function formatarDuracao(segundos: number): string {
+    const s = Math.max(0, Math.round(segundos));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/** Duração por extenso, para o leitor de tela: 95 → "1 minuto e 35 segundos" */
+export function duracaoPorExtenso(segundos: number): string {
+    const s = Math.max(0, Math.round(segundos));
+    const min = Math.floor(s / 60);
+    const seg = s % 60;
+    const partes = [];
+    if (min > 0) partes.push(`${min} ${min === 1 ? 'minuto' : 'minutos'}`);
+    if (seg > 0 || min === 0) partes.push(`${seg} ${seg === 1 ? 'segundo' : 'segundos'}`);
+    return partes.join(' e ');
 }
 
 /**
