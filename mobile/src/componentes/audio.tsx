@@ -145,7 +145,7 @@ export function OuvirMensagemDeVoz({ mensagem, descricao }: { mensagem: Mensagem
         <View style={{ gap: 8 }}>
             <Pressable onPress={alternar} disabled={abrindo}
                 accessibilityRole="button" accessibilityState={{ busy: abrindo }}
-                accessibilityLabel={tocandoEsta ? `Parar o áudio de ${descricao}` : `Ouvir áudio de ${descricao}, ${duracaoPorExtenso(duracao)}`}
+                accessibilityLabel={tocandoEsta ? `Parar o áudio, ${descricao}` : `Ouvir áudio, ${descricao}, ${duracaoPorExtenso(duracao)}`}
                 android_ripple={{ color: '#FFFFFF55' }}
                 style={({ pressed }) => ({
                     minHeight: medidas.toque, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 10,

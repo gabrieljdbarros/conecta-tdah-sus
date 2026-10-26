@@ -185,7 +185,7 @@ export default function Conversas() {
                                                 </Text>
                                                 {!voz && <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>}
                                             </View>
-                                            {voz && <OuvirMensagemDeVoz mensagem={m} descricao={minha ? 'você' : m.autorNome} />}
+                                            {voz && <OuvirMensagemDeVoz mensagem={m} descricao={minha ? 'sua mensagem' : `mensagem de ${m.autorNome}`} />}
                                             {/* Conteúdo: só com voz do aparelho. Nas próprias mensagens
                                                 não aparece (a pessoa acabou de escrever) */}
                                             {!minha && !voz && (
