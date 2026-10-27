@@ -20,6 +20,8 @@ const eslintConfig = [
       "next-env.d.ts",
       // App nativo (Expo): tem o próprio lint e as próprias dependências
       "mobile/**",
+      // Edge Functions (Deno): rodam no servidor do Supabase, com outro ambiente
+      "supabase/functions/**",
     ],
   },
 ];
