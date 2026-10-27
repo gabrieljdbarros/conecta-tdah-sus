@@ -30,6 +30,8 @@ const env = carregarAmbiente();
 const OPCOES = { auth: { persistSession: false, autoRefreshToken: false } };
 
 export const servico = createClient(env.API_URL, env.SERVICE_ROLE_KEY, OPCOES);
+/** Endereço do Supabase local (para chamar as Edge Functions) */
+export const API_URL = env.API_URL;
 /** Cliente sem login */
 export const anonimo = () => createClient(env.API_URL, env.ANON_KEY, OPCOES);
 

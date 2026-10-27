@@ -7,7 +7,7 @@ import {
     requestRecordingPermissionsAsync, setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus,
     useAudioRecorder, useAudioRecorderState,
 } from "expo-audio";
-import { File } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import { anunciar, Aviso, Botao } from "~/componentes/basicos";
 import MensagemServicos from "~/servicos/mensagem";
 import { pararDeFalar } from "~/servicos/voz";
@@ -46,6 +46,23 @@ function apagarArquivoLocal(uri: string | null) {
         if (arquivo.exists) arquivo.delete();
     } catch {
         // O sistema também limpa o cache sozinho
+    }
+}
+
+/**
+ * Apaga gravações que sobraram no cache (ex.: o app foi fechado à força no
+ * meio de uma gravação). Chamada ao abrir o app, quando nada está gravando.
+ * Só mexe nos .m4a: o Android guarda em <cache>/Audio e o iPhone no próprio cache
+ */
+export function limparGravacoesEsquecidas() {
+    for (const pasta of [new Directory(Paths.cache, 'Audio'), Paths.cache]) {
+        try {
+            if (!pasta.exists) continue;
+            for (const item of pasta.list())
+                if (item instanceof File && item.name.endsWith('.m4a')) item.delete();
+        } catch {
+            // O sistema também limpa o cache sozinho
+        }
     }
 }
 

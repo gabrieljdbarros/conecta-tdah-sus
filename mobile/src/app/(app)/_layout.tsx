@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Redirect, Stack } from "expo-router";
+import { limparGravacoesEsquecidas } from "~/componentes/audio";
 import { Carregando, Tela } from "~/componentes/basicos";
 import { useAuth } from "~/contexto/AuthContext";
 import { cores } from "~/tema/cores";
@@ -11,6 +13,8 @@ import { cores } from "~/tema/cores";
  */
 export default function LayoutLogado() {
     const { user, carregando } = useAuth();
+    // Celular compartilhado: não deixa gravação de voz esquecida no aparelho
+    useEffect(() => { limparGravacoesEsquecidas(); }, []);
     if (carregando) return <Tela centralizar semCabecalho><Carregando /></Tela>;
     if (!user) return <Redirect href="/entrar" />;
 
