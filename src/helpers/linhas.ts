@@ -10,6 +10,7 @@
 import type { AppUser, DadosPerfil, UserRole } from "@/types/user";
 import type { Participante, PapelNaPasta, Pasta } from "@/types/pasta";
 import type { Mensagem, TipoMensagem } from "@/types/mensagem";
+import type { NotaItem, Questionario, VersaoQuestionario } from "@/types/questionario";
 
 // ---------------------------------------------------------------------------
 // PERFIL (tabela `perfis`)
@@ -124,6 +125,31 @@ export function juntarMensagens(lista: Mensagem[], novas: Mensagem[], limite: nu
     const porId = new Map(lista.map((m) => [m.id, m]));
     for (const m of novas) porId.set(m.id, m);
     return [...porId.values()].sort((a, b) => a.criadoEm - b.criadoEm).slice(-limite);
+}
+
+// ---------------------------------------------------------------------------
+// QUESTIONÁRIO SNAP-IV (tabela `questionarios`)
+// ---------------------------------------------------------------------------
+export const COLUNAS_QUESTIONARIO = "id, pasta_id, versao, respostas, respondido_por, criado_em";
+
+export interface LinhaQuestionario {
+    id: string;
+    pasta_id: string;
+    versao: VersaoQuestionario;
+    respostas: NotaItem[];
+    respondido_por: string | null;
+    criado_em: string;
+}
+
+export function paraQuestionario(linha: LinhaQuestionario): Questionario {
+    return {
+        id: linha.id,
+        pastaId: linha.pasta_id,
+        versao: linha.versao,
+        respostas: linha.respostas,
+        respondidoPorUid: linha.respondido_por ?? '',
+        criadoEm: new Date(linha.criado_em).getTime(),
+    };
 }
 
 // ---------------------------------------------------------------------------
