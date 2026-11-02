@@ -48,11 +48,12 @@ export default function PastaDoAluno() {
                 <Text style={[estilos.tituloCartao, { fontSize: 28 }]}>{pasta.nomeAluno}</Text>
             </View>
             <BotaoOuvir rotulo="Ouvir instruções" texto={pasta.donoUid === user?.uid
-                ? 'Esta é a pasta do aluno. Em Conversas, você conversa com a escola e com o médico. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar.'
-                : 'Esta é a pasta do aluno. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta.'} />
+                ? 'Esta é a pasta do aluno. Em Conversas, você conversa com a escola e com o médico. Em Questionário, você responde as perguntas sobre o aluno e vê o resultado. Em Vínculos, você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar.'
+                : 'Esta é a pasta do aluno. Em Conversas, você conversa com a família e com quem acompanha o aluno. Em Questionário, você vê as respostas da família. Em Vínculos, você vê quem acompanha o aluno e pode sair da pasta.'} />
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: medidas.espaco - 4 }}>
                 <Atalho nome="Conversas" icone="chatbubbles" aoTocar={() => ir(`/pasta/${pasta.id}/conversas`)} />
+                <Atalho nome="Questionário" icone="clipboard" aoTocar={() => ir(`/pasta/${pasta.id}/questionario`)} />
                 <Atalho nome="Vínculos" icone="people" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos`)} />
                 {/* "Cód. de convite" do design: aqui o convite é um link seguro, em Vínculos */}
                 {pasta.donoUid === user?.uid && <Atalho nome="Convidar" icone="person-add" aoTocar={() => ir(`/pasta/${pasta.id}/vinculos?convidar=1`)} />}
