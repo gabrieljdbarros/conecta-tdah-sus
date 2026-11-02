@@ -20,6 +20,9 @@
       ],
       "@/helpers/convite": [
         "../src/helpers/convite"
+      ],
+      "@/helpers/questionario": [
+        "../src/helpers/questionario"
       ]
     }
   },

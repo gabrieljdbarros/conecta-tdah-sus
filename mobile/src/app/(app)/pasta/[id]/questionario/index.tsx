@@ -1,0 +1,82 @@
+import { useCallback, useState } from "react";
+import { Text } from "react-native";
+import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Aviso, Botao, Carregando, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { estilos } from "~/componentes/cartoes";
+import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
+import { BarrasSintomas, resultadoPorExtenso } from "~/componentes/questionario";
+import { usePasta } from "~/ganchos/usePasta";
+import QuestionarioServicos from "~/servicos/questionario";
+import { FONTE_QUESTIONARIO } from "@/helpers/questionario";
+import { Questionario } from "@/types/questionario";
+
+const TRIAGEM = 'Isto não é um diagnóstico. Só o médico interpreta o resultado.';
+
+/**
+ * RESULTADO DO QUESTIONÁRIO SNAP-IV (decisão travada 11), para todos os
+ * membros da pasta: uma resposta por data, com as barras de sintomas de
+ * cada grupo. Só as barras: sem interpretação nem linha de corte.
+ * Só a mãe dona vê o botão de responder (o banco também só deixa ela)
+ */
+export default function ResultadoQuestionario() {
+    const { id } = useLocalSearchParams<{ id: string }>();
+    const { pasta, papel, carregando } = usePasta(id);
+    const [questionarios, setQuestionarios] = useState<Questionario[] | null>(null);
+    const [erro, setErro] = useState(false);
+    const vozLocal = useVozDisponivel(true);
+
+    // Recarrega ao voltar da tela de responder
+    useFocusEffect(useCallback(() => {
+        let ativo = true;
+        QuestionarioServicos.listar(id).then((r) => {
+            if (!ativo) return;
+            setErro(!r.success);
+            setQuestionarios(r.questionarios);
+        });
+        return () => { ativo = false; };
+    }, [id]));
+
+    const titulo = <Stack.Screen options={{ title: 'Questionário' }} />;
+    if (carregando || (questionarios === null && !erro)) return <Tela>{titulo}<Carregando texto="Abrindo o questionário..." /></Tela>;
+    if (!pasta || !papel) return <Tela>{titulo}<Aviso tipo="erro" texto="não foi possível abrir o questionário desta pasta." /></Tela>;
+
+    const ehMae = papel === 'mae';
+    const lista = questionarios ?? [];
+
+    return (
+        <Tela>
+            {titulo}
+            <Titulo>Questionário SNAP-IV</Titulo>
+            <BotaoOuvir rotulo="Ouvir instruções" texto={
+                'São 18 perguntas sobre atenção, agitação e impulsividade do aluno, respondidas pela família. '
+                + 'Para cada data, o gráfico mostra quantas perguntas foram marcadas como Muito ou Demais, em dois grupos: '
+                + 'desatenção, e hiperatividade e impulsividade. ' + TRIAGEM
+                + (ehMae ? ' Para responder, toque em Responder o questionário.' : '')} />
+            <Paragrafo>
+                18 perguntas sobre atenção, agitação e impulsividade do aluno, respondidas pela família.
+                O gráfico mostra quantas foram marcadas como “Muito” ou “Demais”.
+            </Paragrafo>
+            <Aviso tipo="info" texto={TRIAGEM} silencioso />
+
+            {ehMae && <Botao titulo="Responder o questionário" icone="create" aoTocar={() => router.push(`/pasta/${pasta.id}/questionario/responder` as never)} />}
+
+            {erro && <Aviso tipo="erro" texto="não foi possível carregar as respostas. Confira a internet e tente de novo." />}
+            {!erro && lista.length === 0 && (
+                <Aviso tipo="info" texto={ehMae ? 'Ainda não há respostas. Quando você responder, o resultado aparece aqui.'
+                    : 'Ainda não há respostas. Quando a família responder, o resultado aparece aqui.'} />
+            )}
+
+            {lista.length > 0 && (
+                <>
+                    <Titulo nivel={2}>Respostas</Titulo>
+                    {/* O resultado é dado de saúde: só com voz que roda no aparelho (decisão 9) */}
+                    <BotaoOuvir rotulo="Ouvir resultado" conteudo disponivel={vozLocal} texto={lista.map(resultadoPorExtenso).join(' ')} />
+                    {vozLocal === false && <SemVozLocal oQue="o resultado" />}
+                    {lista.map((q) => <BarrasSintomas key={q.id} questionario={q} />)}
+                </>
+            )}
+
+            <Text style={[estilos.suave, { marginTop: 8 }]}>Fonte: {FONTE_QUESTIONARIO}.</Text>
+        </Tela>
+    );
+}

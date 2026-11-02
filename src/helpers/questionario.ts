@@ -16,8 +16,18 @@ import type { ContagemSintomas, GrupoSintomas, NotaItem, PerguntaQuestionario, V
 
 export const VERSAO_ATUAL: VersaoQuestionario = 'snap-iv-18-v1';
 
+/** Citada na tela do resultado */
+export const FONTE_QUESTIONARIO = 'MTA-SNAP-IV, versão brasileira (Mattos et al., 2006)';
+
 /** Rótulos da escala, na ordem das notas (0 a 3) */
 export const ESCALA = ['Nem um pouco', 'Só um pouco', 'Bastante', 'Demais'] as const;
+
+/**
+ * Rótulos curtos dos botões (decidido em 02/11/2026, para caber numa linha).
+ * O leitor de tela fala os dois: "Muito, bastante".
+ * TODO: confirmar com a Jordana se os rótulos curtos não afetam a validade
+ */
+export const ESCALA_CURTA = ['Nada', 'Pouco', 'Muito', 'Demais'] as const;
 
 /** A partir desta nota ("Bastante"), o item conta como sintoma presente */
 export const NOTA_SINTOMA_PRESENTE = 2;

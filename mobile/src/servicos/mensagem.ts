@@ -137,7 +137,7 @@ const MensagemServicos = {
  * Espera a gravação com tempo limite.
  * `semConexao`: o servidor não respondeu a tempo (a mensagem pode chegar depois)
  */
-async function comTempoLimite(gravacao: Promise<boolean>, esperaMs: number): Promise<{ success: boolean; semConexao?: boolean }> {
+export async function comTempoLimite(gravacao: Promise<boolean>, esperaMs: number): Promise<{ success: boolean; semConexao?: boolean }> {
     let espera: ReturnType<typeof setTimeout> | undefined;
     const tempoEsgotado = new Promise<'tempo'>((resolve) => { espera = setTimeout(() => resolve('tempo'), esperaMs); });
     try {

@@ -77,7 +77,7 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
  * Explica por que não há "Ouvir" no conteúdo e como resolver. No Android só
  * a voz do Google comprova que roda no aparelho (ver servicos/voz.ts)
  */
-export function SemVozLocal({ oQue }: { oQue: 'mensagens' }) {
+export function SemVozLocal({ oQue }: { oQue: 'mensagens' | 'o resultado' }) {
     return (
         <Text style={{ fontSize: 16, lineHeight: 22, color: cores.textoSuave }}>
             Este celular não lê {oQue} em voz alta. Isso protege os dados da criança. Para ouvir, escolha a voz do Google em português nas configurações do celular (leitura de texto em voz).
