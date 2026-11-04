@@ -45,3 +45,13 @@ export interface PastaDocument {
 export interface Pasta extends PastaDocument {
     id: string;
 }
+
+/**
+ * Data e autor da última mensagem de uma pasta (função `ultimas_mensagens`
+ * do banco). Sem o texto: a lista de alunos não mostra o conteúdo
+ */
+export interface UltimaMensagem {
+    pastaId: string;
+    criadoEm: number;
+    autorUid: string | null;
+}

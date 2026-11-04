@@ -12,9 +12,10 @@ import { createClient } from "@supabase/supabase-js";
  * A chave anon é pública por natureza: quem protege os dados é o RLS.
  * A chave `service_role` NUNCA entra no app.
  *
- * O que fica guardado no celular: só o LOGIN (AsyncStorage), como em
- * qualquer app. Pastas e mensagens não ficam guardadas no aparelho
- * (celular compartilhado)
+ * O que fica guardado no celular (AsyncStorage): o LOGIN, como em
+ * qualquer app, e a data da última mensagem vista em cada pasta (para
+ * marcar "mensagem nova", ver servicos/vistas.ts). Nomes, pastas e
+ * mensagens não ficam guardados no aparelho (celular compartilhado)
  */
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const chaveAnon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
