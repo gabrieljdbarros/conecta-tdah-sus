@@ -9,7 +9,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { codigoDoTexto } from "../../src/helpers/convite.ts";
-import { duracaoPorExtenso, formatarDuracao, juntarMensagens, mensagemErro, mensagemErroAuth, paraMensagem, paraPasta } from "../../src/helpers/linhas.ts";
+import { anterioresAte, duracaoPorExtenso, formatarDuracao, juntarMensagens, mensagemErro, mensagemErroAuth, paraMensagem, paraPasta } from "../../src/helpers/linhas.ts";
 
 const CODIGO = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJ0123-_A"; // 43 caracteres
 
@@ -83,6 +83,19 @@ describe("conversão das linhas do banco", () => {
         const msg = (id, ms) => ({ id, texto: id, autorUid: "u", autorNome: "N", autorPapel: "mae", criadoEm: ms });
         const lista = juntarMensagens([msg("b", 2), msg("a", 1)], [msg("c", 3), msg("b", 2)], 2);
         assert.deepEqual(lista.map((m) => m.id), ["b", "c"]);
+    });
+
+    test("histórico: busca as anteriores até 1 ms depois da mais antiga carregada", () => {
+        const msg = (id, ms) => ({ id, texto: id, autorUid: "u", autorNome: "N", autorPapel: "mae", criadoEm: ms });
+        const maisAntiga = Date.UTC(2026, 0, 2, 10, 0, 0, 123);
+        assert.equal(anterioresAte([msg("a", maisAntiga), msg("b", maisAntiga + 5000)]), "2026-01-02T10:00:00.124Z");
+        assert.equal(anterioresAte([]), null);
+    });
+
+    test("histórico: juntar as anteriores mantém a ordem e não repete", () => {
+        const msg = (id, ms) => ({ id, texto: id, autorUid: "u", autorNome: "N", autorPapel: "mae", criadoEm: ms });
+        const lista = juntarMensagens([msg("c", 3), msg("d", 4)], [msg("c", 3), msg("b", 2), msg("a", 1)], Infinity);
+        assert.deepEqual(lista.map((m) => m.id), ["a", "b", "c", "d"]);
     });
 });
 

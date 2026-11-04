@@ -140,6 +140,17 @@ export function juntarMensagens(lista: Mensagem[], novas: Mensagem[], limite: nu
     return [...porId.values()].sort((a, b) => a.criadoEm - b.criadoEm).slice(-limite);
 }
 
+/**
+ * HISTÓRICO (RF12): até onde buscar as mensagens ANTERIORES às já
+ * carregadas. O banco guarda a data em microssegundos e a tela em
+ * milissegundos: buscar "antes de 1 ms depois da mais antiga" não pula
+ * nenhuma mensagem do mesmo milissegundo (as repetidas somem ao juntar)
+ */
+export function anterioresAte(lista: Mensagem[]): string | null {
+    if (lista.length === 0) return null;
+    return new Date(lista[0].criadoEm + 1).toISOString();
+}
+
 // ---------------------------------------------------------------------------
 // QUESTIONÁRIO SNAP-IV (tabela `questionarios`)
 // ---------------------------------------------------------------------------
