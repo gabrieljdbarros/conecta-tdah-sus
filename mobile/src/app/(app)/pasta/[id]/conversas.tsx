@@ -9,10 +9,10 @@ import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
 import { GravadorDeVoz, Gravacao, OuvirMensagemDeVoz } from "~/componentes/audio";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
-import MensagemServicos from "~/servicos/mensagem";
+import MensagemServicos, { ControleConversa } from "~/servicos/mensagem";
 import VistasServicos from "~/servicos/vistas";
 import { cores, medidas } from "~/tema/cores";
-import { LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
+import { MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
 
 const hora = (ms: number) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -39,6 +39,11 @@ export default function Conversas() {
     const [enviando, setEnviando] = useState(false);
     const [erroEnvio, setErroEnvio] = useState<string | null>(null);
     const [gravando, setGravando] = useState(false);
+    // Histórico (RF12): há mensagens anteriores às da tela?
+    const [temAnteriores, setTemAnteriores] = useState(false);
+    const [buscandoAnteriores, setBuscandoAnteriores] = useState(false);
+    const [erroAnteriores, setErroAnteriores] = useState(false);
+    const controle = useRef<ControleConversa | null>(null);
     const lista = useRef<FlatList<Mensagem>>(null);
     const conhecidas = useRef<Set<string> | null>(null);
     const pertoDoFim = useRef(true);
@@ -67,7 +72,7 @@ export default function Conversas() {
         if (!pastaId) return;
         conhecidas.current = null;
         pertoDoFim.current = true;
-        return MensagemServicos.ouvir(pastaId, (novas) => {
+        const conversa = MensagemServicos.ouvir(pastaId, (novas, anteriores) => {
             // Mensagens novas dos OUTROS (depois da primeira carga) são anunciadas,
             // só com o nome de quem mandou (o texto não é falado sem pedir)
             if (conhecidas.current) {
@@ -81,9 +86,25 @@ export default function Conversas() {
             const maisNova = novas[novas.length - 1];
             if (maisNova && user?.uid) VistasServicos.marcar(user.uid, pastaId, maisNova.criadoEm);
             setMensagens(novas);
+            setTemAnteriores(anteriores);
             setErroCanal(false);
         }, () => setErroCanal(true));
+        controle.current = conversa;
+        return () => { conversa.parar(); controle.current = null; };
     }, [pastaId, user?.uid]);
+
+    /** HISTÓRICO (RF12): mais 100 mensagens antes das que estão na tela */
+    const verAnteriores = async () => {
+        if (!controle.current || buscandoAnteriores) return;
+        setBuscandoAnteriores(true);
+        setErroAnteriores(false);
+        // A tela fica onde está (não desce para o fim)
+        pertoDoFim.current = false;
+        const ok = await controle.current.carregarAnteriores();
+        setBuscandoAnteriores(false);
+        if (!ok) { setErroAnteriores(true); return; }
+        anunciar('Mensagens anteriores carregadas.');
+    };
 
     if (carregando) return <Tela><Stack.Screen options={{ title: 'Conversas' }} /><Carregando texto="Abrindo as conversas..." /></Tela>;
     if (!pasta || !papel || !user) return <Tela><Stack.Screen options={{ title: 'Conversas' }} /><Aviso tipo="erro" texto="não foi possível abrir as conversas desta pasta." /></Tela>;
@@ -156,11 +177,19 @@ export default function Conversas() {
                         onScroll={({ nativeEvent: e }) => { pertoDoFim.current = e.contentOffset.y + e.layoutMeasurement.height >= e.contentSize.height - 80; }}
                         scrollEventThrottle={200}
                         onContentSizeChange={() => { if (pertoDoFim.current) lista.current?.scrollToEnd({ animated: false }); }}
+                        // Ao carregar as anteriores (no topo), a mensagem que estava na tela continua no lugar
+                        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
                         // No começo da conversa (sobe junto com ela)
                         ListHeaderComponent={
                             <View style={{ gap: 8 }}>
                                 {vozLocal === false && <SemVozLocal oQue="mensagens" />}
-                                {mensagens.length >= LIMITE_MENSAGENS && <Text style={[estilos.suave, { textAlign: 'center' }]}>Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</Text>}
+                                {/* Histórico (RF12): as anteriores vêm de 100 em 100, só quando a pessoa pede (pouca internet) */}
+                                {temAnteriores && (
+                                    <Botao titulo="Ver mensagens anteriores" tipo="contorno" icone="time-outline"
+                                        carregando={buscandoAnteriores} aoTocar={verAnteriores} />
+                                )}
+                                {erroAnteriores && <Aviso tipo="erro" texto="não deu para carregar as mensagens anteriores. Confira a internet e tente de novo." />}
+                                {!temAnteriores && mensagens.length > 0 && <Text style={[estilos.suave, { textAlign: 'center' }]}>Início da conversa</Text>}
                             </View>
                         }
                         ListEmptyComponent={<Text style={[estilos.texto, { textAlign: 'center' }]}>Ainda não há mensagens. Escreva a primeira!</Text>}

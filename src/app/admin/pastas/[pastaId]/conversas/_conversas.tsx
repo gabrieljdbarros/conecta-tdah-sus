@@ -2,13 +2,13 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PastaServices from "@/services/pasta";
-import MensagemServices from "@/services/mensagem";
+import MensagemServices, { ControleConversa } from "@/services/mensagem";
 import { papelNaPasta } from "@/helpers/pasta";
 import { AppLoader, AppOuvir, AppOuvirAudio, useVozDisponivel } from "@/themes/components";
 import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
-import { LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
+import { MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
@@ -44,6 +44,17 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
     const listaRef = useRef<HTMLOListElement>(null);
     const textoRef = useRef<HTMLTextAreaElement>(null);
     const rolarParaOFim = useRef(true); // na abertura e depois de enviar
+    // Histórico (RF12): mensagens anteriores às da tela, de 100 em 100
+    const [temAnteriores, setTemAnteriores] = useState(false);
+    const [buscandoAnteriores, setBuscandoAnteriores] = useState(false);
+    const [erroAnteriores, setErroAnteriores] = useState(false);
+    const [avisoAnteriores, setAvisoAnteriores] = useState('');
+    // Enquanto as anteriores entram no topo, o log não as lê em voz alta
+    const [logCalado, setLogCalado] = useState(false);
+    const controle = useRef<ControleConversa | null>(null);
+    const distanciaDoFim = useRef<number | null>(null); // para a tela não pular
+    const religarLog = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => () => { if (religarLog.current) clearTimeout(religarLog.current); }, []);
     // Mensagens são conteúdo: só voz que roda no aparelho (decisão travada 9)
     const vozLocal = useVozDisponivel(true);
 
@@ -68,15 +79,47 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
         setMensagens(null);
         setErroCanal(false);
         rolarParaOFim.current = true;
+        setTemAnteriores(false);
         // No erro (ex.: acesso perdido), as mensagens somem da tela
-        return MensagemServices.ouvir(pastaId, setMensagens, () => { setMensagens(null); setErroCanal(true); });
+        const conversa = MensagemServices.ouvir(pastaId, (lista, anteriores) => { setMensagens(lista); setTemAnteriores(anteriores); },
+            () => { setMensagens(null); setErroCanal(true); });
+        controle.current = conversa;
+        return () => { conversa.parar(); controle.current = null; };
     }, [pastaId, podeAbrir, tentativa]);
+
+    /** HISTÓRICO (RF12): mais 100 mensagens antes das que estão na tela */
+    const verAnteriores = async () => {
+        const lista = listaRef.current;
+        if (!controle.current || buscandoAnteriores) return;
+        setBuscandoAnteriores(true);
+        setErroAnteriores(false);
+        setAvisoAnteriores('');
+        setLogCalado(true);
+        if (lista) distanciaDoFim.current = lista.scrollHeight - lista.scrollTop;
+        const ok = await controle.current.carregarAnteriores();
+        setBuscandoAnteriores(false);
+        if (!ok) { distanciaDoFim.current = null; setErroAnteriores(true); }
+        else {
+            setAvisoAnteriores('Mensagens anteriores carregadas.');
+            // Sem mais anteriores, o botão some: o foco vai para a lista
+            if (!controle.current?.temAnteriores()) listaRef.current?.focus();
+        }
+        // A lista já foi atualizada antes do fim da carga; a folga garante
+        // que o leitor não leia as anteriores ao religar o aviso de mensagens novas
+        religarLog.current = setTimeout(() => setLogCalado(false), 1500);
+    };
 
     // Rola até a mensagem mais nova só na abertura, depois de enviar ou se a
     // pessoa já estava perto do fim — quem lê mensagens antigas não perde o lugar
     useEffect(() => {
         const lista = listaRef.current;
         if (!lista || !mensagens) return;
+        // Entraram as anteriores no topo: a mensagem que estava na tela continua no lugar
+        if (distanciaDoFim.current !== null) {
+            lista.scrollTop = lista.scrollHeight - distanciaDoFim.current;
+            distanciaDoFim.current = null;
+            return;
+        }
         const pertoDoFim = lista.scrollHeight - lista.scrollTop - lista.clientHeight < 120;
         if (rolarParaOFim.current || pertoDoFim) lista.scrollTop = lista.scrollHeight;
         rolarParaOFim.current = false;
@@ -155,10 +198,18 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     mensagens NOVAS, não as 100 de uma vez.
                     tabIndex permite rolar a lista pelo teclado */}
                 {mensagens && mensagens.length > 0 && <>
-                    {mensagens.length >= LIMITE_MENSAGENS && (
-                        <p className="ff-default text-[16px] text-gray-700">Mostrando as {LIMITE_MENSAGENS} mensagens mais recentes.</p>
+                    {/* Histórico (RF12): as anteriores vêm de 100 em 100, só quando a pessoa pede */}
+                    {temAnteriores && (
+                        // aria-disabled (e não disabled): o foco fica no botão enquanto carrega
+                        <button type="button" onClick={verAnteriores} aria-disabled={buscandoAnteriores}
+                            className="self-center min-h-[48px] px-5 rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px] cursor-pointer aria-disabled:cursor-wait">
+                            {buscandoAnteriores ? 'Carregando...' : 'Ver mensagens anteriores'}
+                        </button>
                     )}
-                    <ol ref={listaRef} role="log" tabIndex={0} aria-label="Mensagens"
+                    {erroAnteriores && <p role="alert" className={`${COR_ERRO} ff-default text-[16px]`}>Erro: não deu para carregar as mensagens anteriores. Tente de novo.</p>}
+                    <p role="status" className="sr-only">{avisoAnteriores}</p>
+                    {!temAnteriores && <p className="self-center ff-default text-[16px] text-(--cor-texto-suave)">Início da conversa</p>}
+                    <ol ref={listaRef} role="log" aria-live={logCalado ? 'off' : 'polite'} tabIndex={0} aria-label="Mensagens"
                         className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-300">
                         {mensagens.map((m, i) => {
                             const minha = m.autorUid === user?.uid;

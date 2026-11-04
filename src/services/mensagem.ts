@@ -2,7 +2,7 @@ import { supabase } from "@/services/supabase";
 import { AppUser } from "@/types/user";
 import { PapelNaPasta } from "@/types/pasta";
 import { LIMITE_MENSAGENS, Mensagem } from "@/types/mensagem";
-import { COLUNAS_MENSAGEM, juntarMensagens, LinhaMensagem, mensagemErro, paraMensagem } from "@/helpers/linhas";
+import { anterioresAte, COLUNAS_MENSAGEM, juntarMensagens, LinhaMensagem, mensagemErro, paraMensagem } from "@/helpers/linhas";
 
 /**
  * SERVICES DO CHAT DA PASTA (RN05, decisão travada 7)
@@ -10,25 +10,41 @@ import { COLUNAS_MENSAGEM, juntarMensagens, LinhaMensagem, mensagemErro, paraMen
  * da tabela `mensagens` (o Realtime também as respeita).
  */
 
+/** Conversa aberta: parar de acompanhar e carregar as mensagens anteriores */
+export interface ControleConversa {
+    parar: () => void;
+    carregarAnteriores: () => Promise<boolean>;
+    /** Ainda há mensagens anteriores às da tela? */
+    temAnteriores: () => boolean;
+}
+
 const MensagemServices = {
     /**
-     * Acompanha a conversa em tempo real: carrega as mensagens mais recentes
-     * e depois recebe cada mensagem nova. Chama `aoMudar` com a lista da
-     * mais antiga para a mais nova.
-     * Devolve a função que para de acompanhar (chamar ao sair da tela)
+     * Acompanha a conversa em tempo real: carrega as 100 mais recentes e
+     * depois recebe cada mensagem nova. As anteriores vêm de 100 em 100,
+     * quando a pessoa pede (histórico, RF12). `aoMudar` recebe a lista (da
+     * mais antiga para a mais nova) e se há mensagens anteriores.
+     * Devolve o controle da conversa (`parar` ao sair da tela)
      */
     ouvir: (
         pastaId: string,
-        aoMudar: (mensagens: Mensagem[]) => void,
-        aoFalhar: () => void
-    ): (() => void) => {
+        aoMudar: (mensagens: Mensagem[], temAnteriores: boolean) => void,
+        aoFalhar: () => void,
+    ): ControleConversa => {
         let lista: Mensagem[] = [];
         let carregou = false;
+        let buscando = false;
+        // Quantas ficam na tela: cresce a cada "Ver mensagens anteriores"
+        let limite = LIMITE_MENSAGENS;
+        let temAnteriores = false;
         const pendentes: Mensagem[] = []; // chegaram antes da carga inicial
 
         const juntar = (novas: Mensagem[]) => {
-            lista = juntarMensagens(lista, novas, LIMITE_MENSAGENS);
-            aoMudar(lista);
+            const todas = juntarMensagens(lista, novas, Infinity);
+            // Passou do limite: as mais antigas saem da tela, mas continuam no banco
+            if (todas.length > limite) temAnteriores = true;
+            lista = todas.slice(-limite);
+            aoMudar(lista, temAnteriores);
         };
 
         // Primeiro assina (para não perder mensagem enviada durante a carga),
@@ -59,10 +75,36 @@ const MensagemServices = {
                     return;
                 }
                 carregou = true;
+                temAnteriores = data.length === LIMITE_MENSAGENS;
                 juntar([...(data as LinhaMensagem[]).map(paraMensagem), ...pendentes]);
             });
 
-        return () => { supabase.removeChannel(canal); };
+        /**
+         * HISTÓRICO (RF12): mais 100 mensagens antes da mais antiga da tela.
+         * A mesma consulta, com o mesmo RLS: só membros da pasta leem.
+         * Devolve se deu certo
+         */
+        const carregarAnteriores = async (): Promise<boolean> => {
+            const ate = anterioresAte(lista);
+            if (!carregou || buscando || !ate) return true;
+            buscando = true;
+            const { data, error } = await supabase.from("mensagens")
+                .select(COLUNAS_MENSAGEM)
+                .eq("pasta_id", pastaId)
+                .lt("criado_em", ate)
+                .order("criado_em", { ascending: false })
+                .limit(LIMITE_MENSAGENS);
+            buscando = false;
+            if (error) return false;
+            temAnteriores = data.length === LIMITE_MENSAGENS;
+            lista = juntarMensagens(lista, (data as LinhaMensagem[]).map(paraMensagem), Infinity);
+            // Espaço para as que já estão na tela e para as novas que chegarem
+            limite = lista.length + LIMITE_MENSAGENS;
+            aoMudar(lista, temAnteriores);
+            return true;
+        };
+
+        return { parar: () => { supabase.removeChannel(canal); }, carregarAnteriores, temAnteriores: () => temAnteriores };
     },
 
     /**
