@@ -10,27 +10,57 @@ import { Pasta } from "@/types/pasta";
  * Cartões no estilo do design (iguais aos da web, em src/app/admin/pastas/_cartao.tsx)
  */
 
-/** Cartão de um aluno: o cartão inteiro é tocável e o nome lido é o do aluno */
-/** `conversas`: o cartão abre o chat do aluno em vez da pasta (aba Conversas) */
-export function CartaoPasta({ pasta, conversas }: { pasta: Pasta; conversas?: boolean }) {
+/** Última mensagem do aluno, para mostrar no cartão (recentes e "mensagem nova") */
+export interface InfoConversa {
+    quando?: string;
+    /** O mesmo, por extenso, para o leitor de tela */
+    quandoFalado?: string;
+    nova?: boolean;
+}
+
+/**
+ * Cartão de um aluno: o cartão inteiro é tocável e o nome lido é o do aluno.
+ * `conversas`: o cartão abre o chat em vez da pasta. `quem`: mãe e escola,
+ * para diferenciar alunos com o mesmo nome. `conversa`: quando foi a última
+ * mensagem e um ponto DISCRETO se há mensagem nova (decidido em 04/11/2026:
+ * sem notificação, sem contador e sem vermelho). A pista não fica só no
+ * ponto: a palavra "nova" vem junto, e o leitor de tela fala "mensagem nova"
+ */
+export function CartaoPasta({ pasta, conversas, quem, conversa }: {
+    pasta: Pasta; conversas?: boolean; quem?: string; conversa?: InfoConversa;
+}) {
+    const nova = !!conversa?.nova;
+    // O rótulo já diz o que o cartão abre (a dica nem sempre é falada)
+    const falado = [conversas ? `Conversa sobre ${pasta.nomeAluno}` : pasta.nomeAluno, quem, nova && 'mensagem nova',
+        conversa?.quandoFalado && `última mensagem ${conversa.quandoFalado}`].filter(Boolean).join(', ');
     return (
         <Pressable onPress={() => router.push({ pathname: conversas ? '/pasta/[id]/conversas' : '/pasta/[id]', params: { id: pasta.id } })}
-            accessibilityRole="button" accessibilityLabel={pasta.nomeAluno}
+            accessibilityRole="button" accessibilityLabel={falado}
             accessibilityHint={conversas ? 'Abre as conversas sobre o aluno' : 'Abre a pasta do aluno'}
             android_ripple={{ color: '#E5E7EB' }}
             style={({ pressed }) => [estilos.cartao, estilos.linha, pressed && { opacity: 0.85 }]}>
             <View style={estilos.circulo} importantForAccessibility="no">
-                <Ionicons name="folder" size={24} color={cores.link} />
+                <Ionicons name={conversas ? 'chatbubbles' : 'folder'} size={24} color={cores.link} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, gap: 2 }}>
                 <Text style={estilos.nome}>{pasta.nomeAluno}</Text>
+                {!!quem && <Text style={estilos.suave}>{quem}</Text>}
+                {!!conversa?.quando && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={[estilos.suave, nova && { color: cores.texto, fontWeight: '700' }]}>{conversa.quando}</Text>
+                        {nova && <>
+                            <View style={estilos.pontoNova} />
+                            <Text style={[estilos.suave, { color: cores.link, fontWeight: '700' }]}>nova</Text>
+                        </>}
+                    </View>
+                )}
             </View>
             <Ionicons name="chevron-forward" size={22} color={cores.textoSuave} importantForAccessibility="no" />
         </Pressable>
     );
 }
 
-/** Lista de cartões de alunos */
+/** Lista curta de cartões de alunos (a lista longa usa ListaAlunos, com rolagem leve) */
 export function ListaPastas({ pastas, conversas }: { pastas: Pasta[]; conversas?: boolean }) {
     return <View style={{ gap: 12 }}>{pastas.map((p) => <CartaoPasta key={p.id} pasta={p} conversas={conversas} />)}</View>;
 }
@@ -75,4 +105,6 @@ export const estilos = StyleSheet.create({
     rotulo: { fontSize: medidas.texto, fontWeight: '700', letterSpacing: 0.5, color: cores.secundaria },
     tituloCartao: { fontSize: 24, fontWeight: '800', color: cores.texto },
     tituloSecao: { fontSize: 24, fontWeight: '800', color: cores.texto, flexShrink: 1 },
+    // Ponto de "mensagem nova": pequeno e azul (o azul passa de 3:1 sobre branco)
+    pontoNova: { width: 10, height: 10, borderRadius: 5, backgroundColor: cores.link },
 });

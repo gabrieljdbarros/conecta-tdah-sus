@@ -1,6 +1,6 @@
 import { mensagemErro, supabase } from "~/servicos/supabase";
-import { COLUNAS_PASTA, LinhaPasta, ordenarPastas, paraPasta } from "@/helpers/linhas";
-import { Pasta } from "@/types/pasta";
+import { COLUNAS_PASTA, LinhaPasta, LinhaUltimaMensagem, ordenarPastas, paraPasta, paraUltimaMensagem } from "@/helpers/linhas";
+import { Pasta, UltimaMensagem } from "@/types/pasta";
 
 /**
  * SERVIÇOS DA PASTA DO ALUNO (RF03), iguais a src/services/pasta.ts da web.
@@ -27,6 +27,16 @@ const PastaServicos = {
         const { data, error } = await supabase.from("pastas").select(COLUNAS_PASTA);
         if (error) return { success: false, pastas: [] };
         return { success: true, pastas: ordenarPastas((data as LinhaPasta[]).map(paraPasta)) };
+    },
+
+    /**
+     * Data e autor da última mensagem de cada pasta (função do banco que só
+     * devolve as pastas de que a pessoa é membro). Sem o texto
+     */
+    ultimasMensagens: async (): Promise<{ success: boolean; ultimas: Map<string, UltimaMensagem> }> => {
+        const { data, error } = await supabase.rpc("ultimas_mensagens");
+        if (error) return { success: false, ultimas: new Map() };
+        return { success: true, ultimas: new Map((data as LinhaUltimaMensagem[]).map((l) => [l.pasta_id, paraUltimaMensagem(l)])) };
     },
 };
 

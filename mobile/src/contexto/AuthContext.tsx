@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "~/servicos/supabase";
 import { buscarPerfil } from "~/servicos/usuario";
+import VistasServicos from "~/servicos/vistas";
 import { AppUser } from "@/types/user";
 
 interface AuthValor {
@@ -88,6 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [sessao]);
 
     const sair = async () => {
+        // "Até onde li" fica só no aparelho: sai junto com a conta
+        if (user) await VistasServicos.apagar(user.uid);
         await supabase.auth.signOut();
         setUser(null);
     };

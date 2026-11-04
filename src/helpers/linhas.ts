@@ -8,7 +8,7 @@
  */
 // `import type`: some ao rodar, então os testes de lógica rodam direto no Node
 import type { AppUser, DadosPerfil, UserRole } from "@/types/user";
-import type { Participante, PapelNaPasta, Pasta } from "@/types/pasta";
+import type { Participante, PapelNaPasta, Pasta, UltimaMensagem } from "@/types/pasta";
 import type { Mensagem, TipoMensagem } from "@/types/mensagem";
 import type { NotaItem, Questionario, VersaoQuestionario } from "@/types/questionario";
 
@@ -66,6 +66,19 @@ export function paraPasta(linha: LinhaPasta): Pasta {
 
 /** Ordem alfabética do nome do aluno, como as telas mostram */
 export const ordenarPastas = (pastas: Pasta[]) => pastas.sort((a, b) => a.nomeAluno.localeCompare(b.nomeAluno, "pt-BR"));
+
+/** Linha da função `ultimas_mensagens` (data e autor, sem o texto) */
+export interface LinhaUltimaMensagem {
+    pasta_id: string;
+    criado_em: string;
+    autor_id: string | null;
+}
+
+export const paraUltimaMensagem = (linha: LinhaUltimaMensagem): UltimaMensagem => ({
+    pastaId: linha.pasta_id,
+    criadoEm: new Date(linha.criado_em).getTime(),
+    autorUid: linha.autor_id,
+});
 
 // ---------------------------------------------------------------------------
 // MENSAGEM (tabela `mensagens`)

@@ -10,6 +10,7 @@ import { GravadorDeVoz, Gravacao, OuvirMensagemDeVoz } from "~/componentes/audio
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
 import MensagemServicos from "~/servicos/mensagem";
+import VistasServicos from "~/servicos/vistas";
 import { cores, medidas } from "~/tema/cores";
 import { LIMITE_MENSAGENS, MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
 import { ROLE_LABELS } from "@/types/user";
@@ -75,6 +76,10 @@ export default function Conversas() {
                 else if (chegaram.length > 1) anunciar(`${chegaram.length} mensagens novas.`);
             }
             conhecidas.current = new Set(novas.map((m) => m.id));
+            // Conversa aberta = vista até a mensagem mais nova (a data é a do
+            // servidor, não o relógio do celular). Só fica neste aparelho
+            const maisNova = novas[novas.length - 1];
+            if (maisNova && user?.uid) VistasServicos.marcar(user.uid, pastaId, maisNova.criadoEm);
             setMensagens(novas);
             setErroCanal(false);
         }, () => setErroCanal(true));
