@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Keyboard, Text, TextInput, useWindowDimensions, View } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { ActivityIndicator, FlatList, Keyboard, Pressable, Text, TextInput, View } from "react-native";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
+import { Ilustracao } from "~/componentes/ilustracoes";
 import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
 import { GravadorDeVoz, Gravacao, OuvirMensagemDeVoz } from "~/componentes/audio";
 import { useAuth } from "~/contexto/AuthContext";
@@ -13,26 +14,46 @@ import MensagemServicos, { ControleConversa } from "~/servicos/mensagem";
 import VistasServicos from "~/servicos/vistas";
 import { cores, medidas } from "~/tema/cores";
 import { MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
-import { ROLE_LABELS } from "@/types/user";
+import { ROLE_LABELS, UserRole } from "@/types/user";
 
 const hora = (ms: number) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const dia = (ms: number) => new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-const iniciais = (nome: string) => {
-    const p = nome.trim().split(/\s+/).filter(Boolean);
-    return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
-};
+type NomeIcone = keyof typeof Ionicons.glyphMap;
 
 /**
- * CONVERSAS DA PASTA (RN05), em tempo real, como na web e no design:
- * balões (os dos outros em verde-claro com as iniciais; os meus em lilás),
- * a data como separador e "quem vê" sempre visível. Um só chat por pasta. Mensagens não são
- * editadas nem apagadas. Mensagens de texto e de voz (RF16)
+ * Quem escreveu (decisão travada 7): um ÍCONE de cor por papel, sempre com
+ * o nome e o papel escritos ao lado (a cor nunca é a única pista). As cores
+ * da paleta ficam só no FUNDO do ícone, com o desenho em escuro (#242424
+ * passa de 9:1 nas três); o nome é sempre escuro
+ */
+const VISUAL_PAPEL: Record<UserRole, { icone: NomeIcone; fundo: string }> = {
+    mae: { icone: 'heart', fundo: '#FFC067' },
+    escola: { icone: 'school', fundo: '#20BE36' },
+    medico: { icone: 'medkit', fundo: '#EAD0FC' },
+    admin: { icone: 'person', fundo: '#D1D5DB' },
+};
+
+function IconePapel({ papel }: { papel: UserRole }) {
+    const { icone, fundo } = VISUAL_PAPEL[papel] ?? VISUAL_PAPEL.admin;
+    return (
+        <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
+            style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: fundo, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name={icone} size={17} color={cores.texto} />
+        </View>
+    );
+}
+
+/**
+ * CONVERSAS DA PASTA (RN05), em tempo real, com o design novo: o nome do
+ * aluno no topo, balões brancos (os meus em lilás-claro, à direita), o
+ * ícone do papel de quem escreveu, a data como separador e "quem vê"
+ * sempre visível. Um só chat por pasta. Mensagens não são editadas nem
+ * apagadas. Mensagens de texto e de voz (RF16)
  */
 export default function Conversas() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { user } = useAuth();
     const { pasta, papel, carregando } = usePasta(id);
-    const { fontScale } = useWindowDimensions();
     const [mensagens, setMensagens] = useState<Mensagem[] | null>(null);
     const [erroCanal, setErroCanal] = useState(false);
     const [texto, setTexto] = useState('');
@@ -141,7 +162,7 @@ export default function Conversas() {
     const abrirGravador = () => { setErroEnvio(null); setGravando(true); };
     const fecharGravador = (aviso?: string) => { setGravando(false); setErroEnvio(aviso ?? null); };
 
-    const fonteGrande = fontScale > 1.3;
+    const temTexto = !!texto.trim();
 
     return (
         <View style={{
@@ -149,14 +170,36 @@ export default function Conversas() {
             // Margem dos botões do Android + o teclado, quando aberto
             paddingBottom: insets.bottom + alturaTeclado,
         }}>
-            <Stack.Screen options={{ title: 'Conversas' }} />
+            {/* Topo: girassol e o nome do aluno; à direita, as pessoas da pasta (convidar, ver quem está) */}
+            <Stack.Screen options={{
+                title: `Conversas sobre ${pasta.nomeAluno}`,
+                headerTitle: () => (
+                    <View accessible accessibilityRole="header" accessibilityLabel={`Conversas sobre ${pasta.nomeAluno}`}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+                        <Ilustracao nome="girassol" altura={34} />
+                        <View style={{ flexShrink: 1 }}>
+                            <Text numberOfLines={1} maxFontSizeMultiplier={1.3} style={{ fontSize: 19, fontWeight: '800', color: cores.texto }}>{pasta.nomeAluno}</Text>
+                            <Text numberOfLines={1} maxFontSizeMultiplier={1.3} style={{ fontSize: 14, color: cores.textoSuave }}>Pasta de acompanhamento</Text>
+                        </View>
+                    </View>
+                ),
+                headerStyle: { backgroundColor: '#FFFFFF' },
+                headerRight: () => (
+                    <Pressable onPress={() => router.push({ pathname: '/pasta/[id]/vinculos', params: { id: pasta.id } })}
+                        accessibilityRole="button" accessibilityLabel="Pessoas da pasta" accessibilityHint="Mostra quem está na pasta e os convites"
+                        hitSlop={8} style={{ minWidth: medidas.toque, height: medidas.toque, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="people-outline" size={24} color={cores.link} />
+                        {/* A palavra embaixo do ícone: nem todo mundo reconhece o desenho */}
+                        <Text maxFontSizeMultiplier={1.2} style={{ fontSize: 12, fontWeight: '700', color: cores.link }}>Pessoas</Text>
+                    </Pressable>
+                ),
+            }} />
             <View style={{ flex: 1 }}>
                 <View style={{ padding: medidas.espaco, paddingBottom: 8, gap: 10 }}>
                     {/* Com o teclado aberto o título e as instruções saem, para sobrar espaço para as mensagens */}
                     {!tecladoAberto && <>
-                        <Text accessibilityRole="header" style={estilos.tituloSecao}>Conversas sobre {pasta.nomeAluno}</Text>
                         <BotaoOuvir rotulo="Ouvir instruções"
-                            texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada.`} />
+                            texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, deixe o campo vazio, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada.`} />
                     </>}
 
                     {/* QUEM VÊ esta conversa (privacidade: sempre visível) */}
@@ -200,32 +243,38 @@ export default function Conversas() {
                             const voz = m.tipo === 'audio';
                             return (
                                 <View style={{ gap: 10 }}>
-                                    {novoDia && <Text accessibilityRole="header" style={[estilos.suave, { textAlign: 'center' }]}>{dia(m.criadoEm)}</Text>}
-                                    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, alignSelf: minha ? 'flex-end' : 'flex-start', maxWidth: '88%' }}>
-                                        {!minha && (
-                                            <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
-                                                style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: cores.secundaria, alignItems: 'center', justifyContent: 'center' }}>
-                                                <Text maxFontSizeMultiplier={1.2} style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>{iniciais(m.autorNome)}</Text>
-                                            </View>
-                                        )}
-                                        <View style={{
-                                            flexShrink: 1, borderRadius: 16, padding: 12, borderWidth: 1, gap: 8,
-                                            backgroundColor: minha ? '#EEF0FF' : '#E3F5F2', borderColor: minha ? '#C7CCF5' : '#B8E2DC',
-                                        }}>
-                                            {/* Lida de uma vez: "Fulano (Médico), 10:30: texto" */}
-                                            <View accessible accessibilityLabel={`${autor}, ${hora(m.criadoEm)}: ${voz ? (m.audioApagado ? 'mensagem de voz apagada' : 'mensagem de voz') : m.texto}`}>
-                                                <Text style={{ fontSize: 16, fontWeight: '700', color: cores.texto }}>
-                                                    {autor}<Text style={{ fontWeight: '400', color: cores.textoSuave }}> · {hora(m.criadoEm)}</Text>
+                                    {novoDia && (
+                                        <Text accessibilityRole="header" style={[estilos.suave, {
+                                            alignSelf: 'center', color: cores.texto, fontWeight: '600', fontSize: 15,
+                                            backgroundColor: cores.fundoInfo, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 2,
+                                        }]}>{dia(m.criadoEm)}</Text>
+                                    )}
+                                    <View style={{
+                                        alignSelf: minha ? 'flex-end' : 'flex-start', maxWidth: '88%', gap: 8, padding: 12, borderWidth: 1,
+                                        borderRadius: 16, borderTopLeftRadius: minha ? 16 : 4, borderTopRightRadius: minha ? 4 : 16,
+                                        backgroundColor: minha ? '#F3E6FD' : '#FFFFFF', borderColor: minha ? '#E2CBF5' : cores.bordaCartao,
+                                    }}>
+                                        {/* Lida de uma vez: "Fulano (Médico), 10:30: texto" */}
+                                        <View accessible accessibilityLabel={`${autor}, ${hora(m.criadoEm)}: ${voz ? (m.audioApagado ? 'mensagem de voz apagada' : 'mensagem de voz') : m.texto}`}
+                                            style={{ gap: 4 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                <IconePapel papel={m.autorPapel} />
+                                                <Text style={{ fontSize: 16, fontWeight: '800', color: cores.texto, flexShrink: 1 }}>
+                                                    {minha ? 'Você' : m.autorNome}<Text style={{ fontWeight: '400', color: cores.textoSuave }}> · {ROLE_LABELS[m.autorPapel]}</Text>
                                                 </Text>
-                                                {!voz && <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>}
                                             </View>
-                                            {voz && <OuvirMensagemDeVoz mensagem={m} descricao={minha ? 'sua mensagem' : `mensagem de ${m.autorNome}`} />}
+                                            {!voz && <Text style={{ fontSize: 17, lineHeight: 24, color: cores.texto }}>{m.texto}</Text>}
+                                        </View>
+                                        {voz && <OuvirMensagemDeVoz mensagem={m} descricao={minha ? 'sua mensagem' : `mensagem de ${m.autorNome}`} />}
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                                             {/* Conteúdo: só com voz do aparelho. Nas próprias mensagens
                                                 não aparece (a pessoa acabou de escrever) */}
-                                            {!minha && !voz && (
-                                                <BotaoOuvir conteudo disponivel={vozLocal} pequeno
+                                            {!minha && !voz
+                                                ? <BotaoOuvir conteudo disponivel={vozLocal} pequeno
                                                     texto={`${m.autorNome} escreveu: ${m.texto}`} descricao={`mensagem de ${m.autorNome}`} />
-                                            )}
+                                                : <View />}
+                                            {/* A hora já está no que o leitor de tela fala */}
+                                            <Text importantForAccessibility="no" accessibilityElementsHidden style={{ fontSize: 14, color: cores.textoSuave }}>{hora(m.criadoEm)}</Text>
                                         </View>
                                     </View>
                                 </View>
@@ -239,24 +288,43 @@ export default function Conversas() {
                     {gravando ? <GravadorDeVoz aoEnviar={enviarAudio} aoFechar={fecharGravador} /> : <>
                         {/* Aparece antes de tocar no campo; com o teclado aberto sai para dar espaço */}
                         {!tecladoAberto && <Text style={estilos.suave}>Depois de enviada, a mensagem não pode ser apagada.</Text>}
-                        <View style={{ flexDirection: fonteGrande ? 'column' : 'row', gap: 8, alignItems: fonteGrande ? 'stretch' : 'flex-end' }}>
+                        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
                             {/* Corretor desligado: o teclado não aprende termos de saúde */}
                             <TextInput value={texto} onChangeText={escrever} multiline maxLength={MAX_TEXTO_MENSAGEM}
                                 accessibilityLabel="Escreva sua mensagem" placeholder="Escreva sua mensagem" placeholderTextColor={cores.borda}
                                 autoCorrect={false} spellCheck={false} autoComplete="off" importantForAutofill="no"
                                 style={{
-                                    flex: fonteGrande ? undefined : 1, minHeight: medidas.toque, maxHeight: 140, borderWidth: 1, borderColor: cores.borda, borderRadius: 24,
-                                    paddingHorizontal: 16, paddingVertical: 12, fontSize: medidas.texto, color: cores.texto, backgroundColor: '#FFFFFF',
+                                    flex: 1, minHeight: 56, maxHeight: 140, borderWidth: 1, borderColor: cores.borda, borderRadius: 28,
+                                    paddingHorizontal: 18, paddingVertical: 14, fontSize: medidas.texto, color: cores.texto, backgroundColor: '#FFFFFF',
                                 }} />
-                            <View style={fonteGrande ? undefined : { minWidth: 120 }}>
-                                <Botao titulo={enviando ? 'Enviando' : 'Enviar'} icone="paper-plane" carregando={enviando} desabilitado={!texto.trim()} aoTocar={enviar} />
-                            </View>
+                            {/* Um botão só, como nos apps de mensagem: campo vazio grava áudio; com texto, envia */}
+                            <BotaoRedondo
+                                rotulo={temTexto ? (enviando ? 'Enviando' : 'Enviar') : 'Gravar áudio'}
+                                icone={temTexto ? 'paper-plane' : 'mic'} carregando={enviando}
+                                aoTocar={temTexto ? enviar : abrirGravador} />
                         </View>
-                        {/* Quem está escrevendo (teclado aberto) não precisa do botão de gravar */}
-                        {!tecladoAberto && <Botao titulo="Gravar áudio" tipo="contorno" icone="mic" desabilitado={enviando} aoTocar={abrirGravador} />}
                     </>}
                 </View>
             </View>
         </View>
+    );
+}
+
+/**
+ * Botão redondo do chat (enviar / gravar). Laranja com ícone branco (ícone
+ * precisa de 3:1; o laranja dá 3,1:1) e o nome escrito embaixo, em escuro,
+ * para quem não reconhece o ícone
+ */
+function BotaoRedondo({ rotulo, icone, aoTocar, carregando = false }: { rotulo: string; icone: NomeIcone; aoTocar: () => void; carregando?: boolean }) {
+    return (
+        <Pressable onPress={aoTocar} disabled={carregando} accessibilityRole="button" accessibilityLabel={rotulo}
+            accessibilityState={{ busy: carregando, disabled: carregando }} style={{ alignItems: 'center', gap: 2, minWidth: 76 }}>
+            {({ pressed }) => <>
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: cores.destaque, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 }}>
+                    {carregando ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name={icone} size={26} color="#FFFFFF" />}
+                </View>
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.3} style={{ fontSize: 14, fontWeight: '700', color: cores.texto, textAlign: 'center' }}>{rotulo}</Text>
+            </>}
+        </Pressable>
     );
 }
