@@ -194,7 +194,7 @@ export function mensagemErroAuth(error: { code?: string; name?: string } | null)
         case "email_exists":
             return "Já existe uma conta com este e-mail";
         case "weak_password":
-            return "A senha precisa ter pelo menos 6 caracteres";
+            return "A senha precisa ter pelo menos 8 caracteres";
         case "over_request_rate_limit":
         case "over_email_send_rate_limit":
             return "Muitas tentativas. Tente novamente em alguns minutos";
