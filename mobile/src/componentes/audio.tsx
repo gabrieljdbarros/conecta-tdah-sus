@@ -157,22 +157,39 @@ export function OuvirMensagemDeVoz({ mensagem, descricao }: { mensagem: Mensagem
         setAbrindo(false);
     };
 
-    const titulo = tocandoEsta ? 'Parar' : `Ouvir áudio (${formatarDuracao(duracao)})`;
+    // Design novo: botão redondo de tocar, a "onda" (só enfeite) e a duração.
+    // A linha inteira é o botão (alvo grande); embaixo, a palavra do que ele faz
     return (
         <View style={{ gap: 8 }}>
             <Pressable onPress={alternar} disabled={abrindo}
                 accessibilityRole="button" accessibilityState={{ busy: abrindo }}
                 accessibilityLabel={tocandoEsta ? `Parar o áudio, ${descricao}` : `Ouvir áudio, ${descricao}, ${duracaoPorExtenso(duracao)}`}
-                android_ripple={{ color: '#FFFFFF55' }}
-                style={({ pressed }) => ({
-                    minHeight: medidas.toque, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 10,
-                    paddingHorizontal: 18, borderRadius: 24, backgroundColor: cores.secundaria, opacity: pressed ? 0.85 : 1,
-                })}>
-                {abrindo ? <ActivityIndicator color="#FFFFFF" />
-                    : <Ionicons name={tocandoEsta ? 'stop' : 'play'} size={24} color="#FFFFFF" importantForAccessibility="no" />}
-                <Text style={{ fontSize: medidas.textoBotao, fontWeight: '700', color: '#FFFFFF', flexShrink: 1 }}>{abrindo ? 'Abrindo...' : titulo}</Text>
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, opacity: pressed ? 0.85 : 1 })}>
+                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: cores.secundaria, alignItems: 'center', justifyContent: 'center' }}>
+                    {abrindo ? <ActivityIndicator color="#FFFFFF" />
+                        : <Ionicons name={tocandoEsta ? 'stop' : 'play'} size={26} color="#FFFFFF" importantForAccessibility="no" />}
+                </View>
+                <View style={{ flexShrink: 1, gap: 2 }}>
+                    <Onda tocando={tocandoEsta} />
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: cores.texto }}>
+                        {abrindo ? 'Abrindo...' : tocandoEsta ? 'Tocando · toque para parar' : `Ouvir áudio · ${formatarDuracao(duracao)}`}
+                    </Text>
+                </View>
             </Pressable>
             {erro && <Aviso tipo="erro" texto={erro} />}
+        </View>
+    );
+}
+
+/** Desenho de onda sonora (enfeite, escondido do leitor de tela). Fixo: não gasta bateria animando */
+const ALTURAS_ONDA = [8, 14, 22, 12, 18, 26, 16, 10, 20, 24, 12, 18, 8, 14, 20, 10];
+function Onda({ tocando }: { tocando: boolean }) {
+    return (
+        <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 28 }}>
+            {ALTURAS_ONDA.map((h, i) => (
+                <View key={i} style={{ width: 3, height: h, borderRadius: 2, backgroundColor: tocando ? cores.secundaria : cores.textoSuave }} />
+            ))}
         </View>
     );
 }
