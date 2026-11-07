@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Botao } from "~/componentes/basicos";
 import { Ilustracao } from "~/componentes/ilustracoes";
 import { cores, medidas } from "~/tema/cores";
 import { Pasta } from "@/types/pasta";
@@ -65,16 +64,17 @@ export function ListaPastas({ pastas, conversas }: { pastas: Pasta[]; conversas?
     return <View style={{ gap: 12 }}>{pastas.map((p) => <CartaoPasta key={p.id} pasta={p} conversas={conversas} />)}</View>;
 }
 
-/** Cartão "Cadastre o aluno" (design), para a mãe que ainda não tem pasta */
-export function CartaoCriarPasta() {
+/**
+ * Estado vazio (telas novas): a ilustração da pasta com "+", um título, o
+ * que fazer e o botão da ação ("Cadastrar estudante" ou "Entrar com convite")
+ */
+export function EstadoVazio({ titulo, texto, children }: { titulo: string; texto: string; children: ReactNode }) {
     return (
-        <View style={[estilos.cartao, { backgroundColor: '#FFF7EE', gap: 8 }]}>
-            <Ilustracao nome="pastaVazia" altura={120} style={{ alignSelf: 'center' }} />
-            {/* Rótulo pequeno em verde-petróleo (o laranja não pode ser texto pequeno) */}
-            <Text style={estilos.rotulo}>PASTA DO ALUNO</Text>
-            <Text accessibilityRole="header" style={estilos.tituloCartao}>Cadastre o aluno</Text>
-            <Text style={estilos.texto}>Com poucas informações você já pode começar a conectar a escola e os médicos. Sem burocracia.</Text>
-            <Botao titulo="Criar pasta do aluno" icone="add" aoTocar={() => router.push('/pasta/nova')} />
+        <View style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
+            <Ilustracao nome="pastaVazia" altura={140} />
+            <Text accessibilityRole="header" style={[estilos.tituloCartao, { textAlign: 'center' }]}>{titulo}</Text>
+            <Text style={[estilos.texto, { textAlign: 'center', color: cores.textoSuave }]}>{texto}</Text>
+            <View style={{ alignSelf: 'stretch', marginTop: 6 }}>{children}</View>
         </View>
     );
 }
