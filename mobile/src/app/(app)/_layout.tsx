@@ -27,9 +27,8 @@ export default function LayoutLogado() {
             headerBackButtonDisplayMode: 'minimal',
         }}>
             <Stack.Screen name="(abas)" options={{ headerShown: false }} />
-            <Stack.Screen name="pasta/nova" options={{ title: 'Criar pasta' }} />
             <Stack.Screen name="pasta/[id]/index" options={{ title: 'Pasta do aluno' }} />
-            <Stack.Screen name="entrar-pasta" options={{ title: 'Entrar numa pasta' }} />
+            <Stack.Screen name="entrar-pasta" options={{ title: 'Entrar com convite' }} />
         </Stack>
     );
 }

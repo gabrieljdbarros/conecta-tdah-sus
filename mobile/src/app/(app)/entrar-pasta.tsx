@@ -21,7 +21,7 @@ export default function EntrarPasta() {
     const [colado, setColado] = useState(false);
 
     if (user?.role !== 'escola' && user?.role !== 'medico')
-        return <Tela><Stack.Screen options={{ title: 'Entrar numa pasta' }} /><Paragrafo>Só a escola e o médico entram em pastas por convite. A família cria a pasta.</Paragrafo></Tela>;
+        return <Tela><Stack.Screen options={{ title: 'Entrar com convite' }} /><Paragrafo>Só a escola e o médico entram em pastas por convite. A família cria a pasta.</Paragrafo></Tela>;
 
     // Facilita para quem não sabe colar: lê o que foi copiado no WhatsApp
     const colar = async () => {
@@ -52,7 +52,7 @@ export default function EntrarPasta() {
 
     return (
         <Tela>
-            <Stack.Screen options={{ title: 'Entrar numa pasta' }} />
+            <Stack.Screen options={{ title: 'Entrar com convite' }} />
             <View style={{ gap: 12 }}>
                 <Titulo nivel={2}>Recebeu um convite?</Titulo>
                 <BotaoOuvir rotulo="Ouvir instruções" texto="Para entrar na pasta de um aluno, copie o link que a família mandou. Depois toque em Colar o link copiado e em Entrar na pasta. O link vale 48 horas e só funciona uma vez." />
