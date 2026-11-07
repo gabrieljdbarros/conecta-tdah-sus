@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Alert, Share, Text, View } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Ionicons } from "@expo/vector-icons";
-import { anunciar, Aviso, Botao, Carregando, focarLeitor, Paragrafo, Tela } from "~/componentes/basicos";
+import QRCode from "react-native-qrcode-svg";
+import { anunciar, Aviso, Botao, Carregando, focarLeitor, Janela, Paragrafo, Tela } from "~/componentes/basicos";
 import { BotaoOuvir } from "~/componentes/ouvir";
 import { estilos, Secao } from "~/componentes/cartoes";
 import { useAuth } from "~/contexto/AuthContext";
@@ -25,6 +26,10 @@ function formatarValidade(ms: number): string {
  *   convites e remove pessoas; convite vencido tem "Gerar novo convite"
  * - escola/médico podem sair da pasta
  * As funções do banco e o RLS garantem tudo isso; aqui é a tela.
+ * Convite gerado (telas novas): abre numa janela com o QR CODE do mesmo
+ * link (quem está perto aponta a câmera do celular e a página do convite
+ * abre no navegador, sem instalar nada), mais Copiar link e Compartilhar.
+ * O QR é desenhado no próprio celular: o link não passa por nenhum site
  * As confirmações usam a janela do próprio sistema (o TalkBack lê a pergunta
  * e os botões e leva o foco até ela)
  */
@@ -36,10 +41,15 @@ export default function Vinculos() {
     const [gerando, setGerando] = useState<PapelConvidado | null>(null);
     const [link, setLink] = useState<{ papel: PapelConvidado; url: string; expiraEm: number } | null>(null);
     const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
+    // Janela do convite: aberta/fechada separado do link, para o conteúdo não
+    // sumir durante a animação de fechar. `usou`: já copiou ou compartilhou
+    const [janelaAberta, setJanelaAberta] = useState(false);
+    const [usou, setUsou] = useState(false);
+    // Mensagens da janela (ficam dentro dela: atrás, ninguém veria nem ouviria)
     const [avisoCopia, setAvisoCopia] = useState<string | null>(null);
+    const [avisoJanela, setAvisoJanela] = useState<string | null>(null);
     const [erroConvites, setErroConvites] = useState(false);
     const refAviso = useRef<View>(null);
-    const refCartao = useRef<View>(null);
     // Momento da última leitura dos convites (separa os válidos dos vencidos)
     const [agora, setAgora] = useState(0);
     const ehDona = !!user && !!pasta && pasta.donoUid === user.uid;
@@ -52,9 +62,6 @@ export default function Vinculos() {
         setAgora(Date.now());
     }, [user, ehDona, id]);
     useFocusEffect(useCallback(() => { carregarConvites(); }, [carregarConvites]));
-
-    // Convite pronto: o foco vai até o cartão (o título é lido ao chegar)
-    useEffect(() => { if (link) focarLeitor(refCartao.current); }, [link]);
 
     if (carregando) return <Tela><Stack.Screen options={{ title: 'Vínculos' }} /><Carregando texto="Abrindo os vínculos..." /></Tela>;
     if (!pasta || !papel || !user) return <Tela><Aviso tipo="erro" texto="não foi possível abrir esta pasta." /></Tela>;
@@ -76,8 +83,11 @@ export default function Vinculos() {
         if (success && token && expiraEm) {
             // O vencido não serve mais: sai da lista (se falhar, só continua aparecendo)
             if (substituir && !(await ConviteServicos.cancelar(substituir.id)).success)
-                setAviso({ ok: false, texto: 'o convite novo foi gerado, mas não deu para apagar o vencido. Tente de novo mais tarde.' });
+                setAvisoJanela('o convite novo foi gerado, mas não deu para apagar o vencido. Tente de novo mais tarde.');
+            else setAvisoJanela(null);
             setLink({ papel: p, url: linkDoConvite(token), expiraEm });
+            setUsou(false);
+            setJanelaAberta(true);
             carregarConvites();
         } else informar(false, message ?? 'não foi possível gerar o convite.');
     };
@@ -86,14 +96,27 @@ export default function Vinculos() {
         if (!link) return;
         // Abre a lista de apps do celular (WhatsApp, SMS...). Texto neutro: sem
         // nome do aluno e sem dizer do que se trata
-        await Share.share({ message: `Convite para acompanhar um aluno. Toque no link para entrar pelo navegador, ou copie e cole no aplicativo: ${link.url}` });
+        try {
+            await Share.share({ message: `Convite para acompanhar um aluno. Toque no link para entrar pelo navegador, ou copie e cole no aplicativo: ${link.url}` });
+            setUsou(true);
+        } catch {
+            setAvisoJanela('não deu para abrir a lista de aplicativos. Toque em Copiar link.');
+            anunciar('Erro: não deu para abrir a lista de aplicativos. Toque em Copiar link.');
+        }
     };
 
     const copiar = async () => {
         if (!link) return;
         const url = link.url;
-        await Clipboard.setStringAsync(url);
-        // A confirmação aparece no próprio cartão, perto do botão
+        try {
+            await Clipboard.setStringAsync(url);
+        } catch {
+            setAvisoJanela('não deu para copiar. Toque em Compartilhar convite.');
+            anunciar('Erro: não deu para copiar. Toque em Compartilhar convite.');
+            return;
+        }
+        setUsou(true);
+        // A confirmação aparece na própria janela, perto do botão
         const texto = 'Link copiado. Cole na conversa e envie agora. Daqui a 1 minuto ele sai da área de copiar.';
         setAvisoCopia(texto);
         anunciar(texto);
@@ -138,16 +161,64 @@ export default function Vinculos() {
             },
         }]);
 
+    // Fechar a janela do convite: o link some (não aparece de novo) e a lista
+    // de "esperando resposta" mostra o convite
+    const fecharConvite = () => {
+        setJanelaAberta(false);
+        // Depois da animação, o link sai da memória da tela
+        setTimeout(() => { setLink(null); setAvisoCopia(null); setAvisoJanela(null); }, 400);
+    };
+    // Fechar sem ter copiado nem compartilhado perde o convite (ele não
+    // aparece de novo): pergunta antes. Vale para o X, o toque fora e o voltar
+    const pedirParaFechar = () => {
+        if (usou) { fecharConvite(); return; }
+        Alert.alert('Fechar sem enviar o convite?', 'Você ainda não copiou nem compartilhou. Depois de fechar, este convite não aparece de novo.',
+            [{ text: 'Não, voltar', style: 'cancel' }, { text: 'Sim, fechar', style: 'destructive', onPress: fecharConvite }]);
+    };
+
     const participantes = Object.entries(pasta.participantes).sort(([, a], [, b]) => ORDEM_PAPEL[a.papel] - ORDEM_PAPEL[b.papel]);
     const pendentes = convites.filter((c) => c.expiraEm > agora);
     const vencidos = convites.filter((c) => c.expiraEm <= agora);
+
+    const secaoConvidar = (
+        <Secao titulo="Convidar">
+            <Paragrafo>O convite é um link, que também aparece como QR code. Se a pessoa estiver perto, ela aponta a câmera do celular para o QR. Se não, você manda o link (por exemplo, pelo WhatsApp). Quem abrir passa a acompanhar o aluno.</Paragrafo>
+            <Botao titulo={gerando === 'escola' ? 'Gerando...' : 'Convidar escola'} icone="school" carregando={gerando === 'escola'} desabilitado={!!gerando} aoTocar={() => convidar('escola')} />
+            <Botao titulo={gerando === 'medico' ? 'Gerando...' : 'Convidar médico'} icone="medkit" carregando={gerando === 'medico'} desabilitado={!!gerando} aoTocar={() => convidar('medico')} />
+
+            {erroConvites && <Aviso tipo="erro" texto="não foi possível ver os convites. Volte a esta tela para tentar de novo." />}
+
+            {pendentes.length > 0 && <>
+                <Text accessibilityRole="header" style={[estilos.nome, { marginTop: 8 }]}>Convites esperando resposta</Text>
+                {pendentes.map((c) => (
+                    <View key={c.id} style={[estilos.cartao, { gap: 8 }]}>
+                        <Text style={estilos.nome}>Convite para {PARA_QUEM[c.papel]}</Text>
+                        <Text style={estilos.suave}>Esperando resposta: vale até {formatarValidade(c.expiraEm)}</Text>
+                        <Botao titulo={`Cancelar convite para ${PARA_QUEM[c.papel]}`} tipo="contorno" icone="close-circle-outline" aoTocar={() => cancelarConvite(c)}
+                            dica={`Convite válido até ${formatarValidade(c.expiraEm)}`} />
+                    </View>
+                ))}
+            </>}
+
+            {vencidos.length > 0 && <>
+                <Text accessibilityRole="header" style={[estilos.nome, { marginTop: 8 }]}>Convites vencidos</Text>
+                {vencidos.map((c) => (
+                    <View key={c.id} style={[estilos.cartao, { gap: 8 }]}>
+                        <Text style={estilos.nome}>Convite para {PARA_QUEM[c.papel]}</Text>
+                        <Text style={[estilos.texto, { color: cores.erro }]}>Venceu em {formatarValidade(c.expiraEm)}</Text>
+                        <Botao titulo={`Gerar novo convite para ${PARA_QUEM[c.papel]}`} tipo="contorno" icone="refresh" desabilitado={!!gerando} aoTocar={() => convidar(c.papel, c)} />
+                    </View>
+                ))}
+            </>}
+        </Secao>
+    );
 
     return (
         <Tela>
             <Stack.Screen options={{ title: 'Vínculos' }} />
             <Text accessibilityRole="header" style={estilos.suave}>Pasta de {pasta.nomeAluno}</Text>
             <BotaoOuvir rotulo="Ouvir instruções" texto={ehDona
-                ? 'Aqui você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar escola ou Convidar médico. Depois toque em Compartilhar ou em Copiar link e envie para a pessoa. O link vale 48 horas e só funciona uma vez. Para tirar alguém da pasta, toque em Remover.'
+                ? 'Aqui você vê quem acompanha o aluno. Para chamar a escola ou o médico, toque em Convidar escola ou Convidar médico. Vai aparecer um QR code: se a pessoa estiver perto, ela aponta a câmera do celular para ele. Se não, toque em Copiar link ou em Compartilhar convite e envie para a pessoa. O link vale 48 horas e só funciona uma vez. Para tirar alguém da pasta, toque em Remover.'
                 : 'Aqui você vê quem acompanha o aluno. Se não quiser mais acompanhar, toque em Sair da pasta.'} />
             {/* Mensagem das ações: recebe o foco depois de cancelar, remover etc. */}
             <View ref={refAviso} accessible={!!aviso} accessibilityLabel={aviso ? `${aviso.ok ? 'Pronto' : 'Erro'}: ${aviso.texto}` : undefined}>
@@ -155,52 +226,7 @@ export default function Vinculos() {
             </View>
 
             {/* Pelo atalho "Convidar" da pasta, convidar vem primeiro */}
-            {abrirConvidar === '1' && ehDona && (
-                <Secao titulo="Convidar">
-                    <Paragrafo>O convite é um link. Você manda o link para a escola ou para o médico (por exemplo, pelo WhatsApp), e quem abrir passa a acompanhar o aluno.</Paragrafo>
-                    <Botao titulo={gerando === 'escola' ? 'Gerando...' : 'Convidar escola'} icone="school" carregando={gerando === 'escola'} desabilitado={!!gerando} aoTocar={() => convidar('escola')} />
-                    <Botao titulo={gerando === 'medico' ? 'Gerando...' : 'Convidar médico'} icone="medkit" carregando={gerando === 'medico'} desabilitado={!!gerando} aoTocar={() => convidar('medico')} />
-
-                    {link && (
-                        <View style={[estilos.cartao, { borderColor: cores.destaque, borderWidth: 2, gap: 10 }]}>
-                            <View ref={refCartao} accessible accessibilityRole="header"
-                                accessibilityLabel={`Convite para ${PARA_QUEM[link.papel]} pronto. Vale até ${formatarValidade(link.expiraEm)} e só funciona para uma pessoa. Mande agora: este link não aparece de novo.`}>
-                                <Text style={estilos.tituloSecao}>Convite para {PARA_QUEM[link.papel]} pronto</Text>
-                                <Text style={estilos.texto}>Vale até {formatarValidade(link.expiraEm)} e só funciona para uma pessoa.</Text>
-                                {/* Antes dos botões: é um aviso para ler antes de agir */}
-                                <Text style={[estilos.texto, { fontWeight: '700' }]}>Mande agora: por segurança, este link não aparece de novo.</Text>
-                            </View>
-                            <Botao titulo="Compartilhar" icone="share-social" aoTocar={compartilhar} dica="Abre a lista de aplicativos para mandar o link" />
-                            <Botao titulo="Copiar link" tipo="contorno" icone="copy-outline" aoTocar={copiar} />
-                            {avisoCopia && <Aviso tipo="sucesso" texto={avisoCopia} silencioso />}
-                        </View>
-                    )}
-                    {erroConvites && <Aviso tipo="erro" texto="não foi possível ver os convites. Volte a esta tela para tentar de novo." />}
-
-                    {pendentes.length > 0 && <>
-                        <Text accessibilityRole="header" style={[estilos.nome, { marginTop: 8 }]}>Convites esperando resposta</Text>
-                        {pendentes.map((c) => (
-                            <View key={c.id} style={[estilos.cartao, { gap: 8 }]}>
-                                <Text style={estilos.nome}>Convite para {PARA_QUEM[c.papel]}</Text>
-                                <Text style={estilos.suave}>Esperando resposta: vale até {formatarValidade(c.expiraEm)}</Text>
-                                <Botao titulo={`Cancelar convite para ${PARA_QUEM[c.papel]}`} tipo="contorno" icone="close-circle-outline" aoTocar={() => cancelarConvite(c)}
-                                    dica={`Convite válido até ${formatarValidade(c.expiraEm)}`} />
-                            </View>
-                        ))}
-                    </>}
-
-                    {vencidos.length > 0 && <>
-                        <Text accessibilityRole="header" style={[estilos.nome, { marginTop: 8 }]}>Convites vencidos</Text>
-                        {vencidos.map((c) => (
-                            <View key={c.id} style={[estilos.cartao, { gap: 8 }]}>
-                                <Text style={estilos.nome}>Convite para {PARA_QUEM[c.papel]}</Text>
-                                <Text style={[estilos.texto, { color: cores.erro }]}>Venceu em {formatarValidade(c.expiraEm)}</Text>
-                                <Botao titulo={`Gerar novo convite para ${PARA_QUEM[c.papel]}`} tipo="contorno" icone="refresh" desabilitado={!!gerando} aoTocar={() => convidar(c.papel, c)} />
-                            </View>
-                        ))}
-                    </>}
-                </Secao>
-            )}
+            {abrirConvidar === '1' && ehDona && secaoConvidar}
             <Secao titulo="Com acesso à pasta">
                 {participantes.map(([uid, p]) => {
                     const nome = uid === user.uid ? `${p.nome} (você)` : p.nome;
@@ -225,52 +251,32 @@ export default function Vinculos() {
                 })}
             </Secao>
 
-            {abrirConvidar !== '1' && ehDona && (
-                <Secao titulo="Convidar">
-                    <Paragrafo>O convite é um link. Você manda o link para a escola ou para o médico (por exemplo, pelo WhatsApp), e quem abrir passa a acompanhar o aluno.</Paragrafo>
-                    <Botao titulo={gerando === 'escola' ? 'Gerando...' : 'Convidar escola'} icone="school" carregando={gerando === 'escola'} desabilitado={!!gerando} aoTocar={() => convidar('escola')} />
-                    <Botao titulo={gerando === 'medico' ? 'Gerando...' : 'Convidar médico'} icone="medkit" carregando={gerando === 'medico'} desabilitado={!!gerando} aoTocar={() => convidar('medico')} />
+            {abrirConvidar !== '1' && ehDona && secaoConvidar}
 
-                    {link && (
-                        <View style={[estilos.cartao, { borderColor: cores.destaque, borderWidth: 2, gap: 10 }]}>
-                            <View ref={refCartao} accessible accessibilityRole="header"
-                                accessibilityLabel={`Convite para ${PARA_QUEM[link.papel]} pronto. Vale até ${formatarValidade(link.expiraEm)} e só funciona para uma pessoa. Mande agora: este link não aparece de novo.`}>
-                                <Text style={estilos.tituloSecao}>Convite para {PARA_QUEM[link.papel]} pronto</Text>
-                                <Text style={estilos.texto}>Vale até {formatarValidade(link.expiraEm)} e só funciona para uma pessoa.</Text>
-                                {/* Antes dos botões: é um aviso para ler antes de agir */}
-                                <Text style={[estilos.texto, { fontWeight: '700' }]}>Mande agora: por segurança, este link não aparece de novo.</Text>
-                            </View>
-                            <Botao titulo="Compartilhar" icone="share-social" aoTocar={compartilhar} dica="Abre a lista de aplicativos para mandar o link" />
-                            <Botao titulo="Copiar link" tipo="contorno" icone="copy-outline" aoTocar={copiar} />
-                            {avisoCopia && <Aviso tipo="sucesso" texto={avisoCopia} silencioso />}
+            {/* CONVITE GERADO: QR, copiar e compartilhar */}
+            <Janela visivel={janelaAberta} aoFechar={pedirParaFechar} icone="checkmark-circle-outline" titulo="Convite gerado!"
+                descricao={link ? `Mostre o QR code para ${PARA_QUEM[link.papel]} apontar a câmera do celular, ou envie o link.` : undefined}>
+                {link && <>
+                    <View accessible accessibilityRole="image"
+                        accessibilityLabel={`Desenho quadrado do convite, o QR code, para ${PARA_QUEM[link.papel]}. A pessoa aponta a câmera do celular para ele. Se ela não estiver perto, use Copiar link ou Compartilhar convite.`}
+                        style={{ alignSelf: 'center', padding: 16, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: cores.bordaCartao }}>
+                        {/* Preto no branco, com margem: é o que as câmeras leem melhor */}
+                        <QRCode value={link.url} size={200} color="#000000" backgroundColor="#FFFFFF" ecl="M" />
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 12, backgroundColor: cores.fundoInfo }}>
+                        <Ionicons name="time-outline" size={22} color={cores.texto} style={{ marginTop: 1 }} importantForAccessibility="no" />
+                        <View style={{ flex: 1, gap: 4 }}>
+                            <Text style={[estilos.texto, { fontSize: 16 }]}>Vale até {formatarValidade(link.expiraEm)} e só funciona para uma pessoa.</Text>
+                            <Text style={[estilos.texto, { fontSize: 16, fontWeight: '700' }]}>Mande agora: por segurança, este convite não aparece de novo.</Text>
                         </View>
-                    )}
-                    {erroConvites && <Aviso tipo="erro" texto="não foi possível ver os convites. Volte a esta tela para tentar de novo." />}
-
-                    {pendentes.length > 0 && <>
-                        <Text accessibilityRole="header" style={[estilos.nome, { marginTop: 8 }]}>Convites esperando resposta</Text>
-                        {pendentes.map((c) => (
-                            <View key={c.id} style={[estilos.cartao, { gap: 8 }]}>
-                                <Text style={estilos.nome}>Convite para {PARA_QUEM[c.papel]}</Text>
-                                <Text style={estilos.suave}>Esperando resposta: vale até {formatarValidade(c.expiraEm)}</Text>
-                                <Botao titulo={`Cancelar convite para ${PARA_QUEM[c.papel]}`} tipo="contorno" icone="close-circle-outline" aoTocar={() => cancelarConvite(c)}
-                                    dica={`Convite válido até ${formatarValidade(c.expiraEm)}`} />
-                            </View>
-                        ))}
-                    </>}
-
-                    {vencidos.length > 0 && <>
-                        <Text accessibilityRole="header" style={[estilos.nome, { marginTop: 8 }]}>Convites vencidos</Text>
-                        {vencidos.map((c) => (
-                            <View key={c.id} style={[estilos.cartao, { gap: 8 }]}>
-                                <Text style={estilos.nome}>Convite para {PARA_QUEM[c.papel]}</Text>
-                                <Text style={[estilos.texto, { color: cores.erro }]}>Venceu em {formatarValidade(c.expiraEm)}</Text>
-                                <Botao titulo={`Gerar novo convite para ${PARA_QUEM[c.papel]}`} tipo="contorno" icone="refresh" desabilitado={!!gerando} aoTocar={() => convidar(c.papel, c)} />
-                            </View>
-                        ))}
-                    </>}
-                </Secao>
-            )}
+                    </View>
+                    {avisoJanela && <Aviso tipo="erro" texto={avisoJanela} silencioso />}
+                    {/* Acima do botão: com a fonte grande, continua à vista */}
+                    {avisoCopia && <Aviso tipo="sucesso" texto={avisoCopia} silencioso />}
+                    <Botao titulo="Copiar link" icone="copy-outline" aoTocar={copiar} />
+                    <Botao titulo="Compartilhar convite" tipo="contorno" icone="share-social" aoTocar={compartilhar} dica="Abre a lista de aplicativos para mandar o link" />
+                </>}
+            </Janela>
         </Tela>
     );
 }
