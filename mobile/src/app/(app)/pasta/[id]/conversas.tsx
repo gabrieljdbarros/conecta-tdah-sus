@@ -46,9 +46,10 @@ function IconePapel({ papel }: { papel: UserRole }) {
 /**
  * CONVERSAS DA PASTA (RN05), em tempo real, com o design novo: o nome do
  * aluno no topo, balões brancos (os meus em lilás-claro, à direita), o
- * ícone do papel de quem escreveu, a data como separador e "quem vê"
- * sempre visível. Um só chat por pasta. Mensagens não são editadas nem
- * apagadas. Mensagens de texto e de voz (RF16)
+ * ícone do papel de quem escreveu e a data como separador. Quem vê a
+ * conversa é dito no "Ouvir instruções" (o aviso fixo saiu em 07/11/2026,
+ * para dar espaço às mensagens). Um só chat por pasta. Mensagens não são
+ * editadas nem apagadas. Mensagens de texto e de voz (RF16)
  */
 export default function Conversas() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -195,19 +196,13 @@ export default function Conversas() {
                 ),
             }} />
             <View style={{ flex: 1 }}>
-                <View style={{ padding: medidas.espaco, paddingBottom: 8, gap: 10 }}>
-                    {/* Com o teclado aberto o título e as instruções saem, para sobrar espaço para as mensagens */}
-                    {!tecladoAberto && <>
+                {/* Com o teclado aberto as instruções saem, para sobrar espaço para as mensagens */}
+                {!tecladoAberto && (
+                    <View style={{ padding: medidas.espaco, paddingBottom: 8 }}>
                         <BotaoOuvir rotulo="Ouvir instruções"
                             texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, deixe o campo vazio, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada.`} />
-                    </>}
-
-                    {/* QUEM VÊ esta conversa (privacidade: sempre visível) */}
-                    <View accessible style={{ flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: cores.fundoInfo, borderRadius: medidas.raio, paddingHorizontal: 10, paddingVertical: 8 }}>
-                        <Ionicons name="eye" size={20} color={cores.secundaria} importantForAccessibility="no" />
-                        <Text style={[estilos.texto, { flexShrink: 1, fontSize: 16 }]}>Família, escola e médicos da pasta veem esta conversa.</Text>
                     </View>
-                </View>
+                )}
 
                 {/* MENSAGENS */}
                 {mensagens === null && !erroCanal && <Carregando texto="Carregando as mensagens..." />}
