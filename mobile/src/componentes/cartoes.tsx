@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Botao } from "~/componentes/basicos";
+import { Ilustracao } from "~/componentes/ilustracoes";
 import { cores, medidas } from "~/tema/cores";
 import { Pasta } from "@/types/pasta";
 
@@ -39,9 +40,8 @@ export function CartaoPasta({ pasta, conversas, quem, conversa }: {
             accessibilityHint={conversas ? 'Abre as conversas sobre o aluno' : 'Abre a pasta do aluno'}
             android_ripple={{ color: '#E5E7EB' }}
             style={({ pressed }) => [estilos.cartao, estilos.linha, pressed && { opacity: 0.85 }]}>
-            <View style={estilos.circulo} importantForAccessibility="no">
-                <Ionicons name={conversas ? 'chatbubbles' : 'folder'} size={24} color={cores.link} />
-            </View>
+            {/* Girassol da Daya em cada aluno (decorativo: o nome já é lido) */}
+            <Ilustracao nome="girassol" altura={44} />
             <View style={{ flex: 1, gap: 2 }}>
                 <Text style={estilos.nome}>{pasta.nomeAluno}</Text>
                 {!!quem && <Text style={estilos.suave}>{quem}</Text>}
@@ -69,6 +69,7 @@ export function ListaPastas({ pastas, conversas }: { pastas: Pasta[]; conversas?
 export function CartaoCriarPasta() {
     return (
         <View style={[estilos.cartao, { backgroundColor: '#FFF7EE', gap: 8 }]}>
+            <Ilustracao nome="pastaVazia" altura={120} style={{ alignSelf: 'center' }} />
             {/* Rótulo pequeno em verde-petróleo (o laranja não pode ser texto pequeno) */}
             <Text style={estilos.rotulo}>PASTA DO ALUNO</Text>
             <Text accessibilityRole="header" style={estilos.tituloCartao}>Cadastre o aluno</Text>
@@ -98,7 +99,6 @@ export const estilos = StyleSheet.create({
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1,
     },
     linha: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-    circulo: { width: 48, height: 48, borderRadius: 24, backgroundColor: cores.fundo, alignItems: 'center', justifyContent: 'center' },
     nome: { fontSize: 18, fontWeight: '700', color: cores.texto },
     texto: { fontSize: 17, lineHeight: 24, color: cores.texto },
     suave: { fontSize: medidas.texto, color: cores.textoSuave },

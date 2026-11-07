@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Image, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
 import { Redirect, router } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { anunciar, Aviso, Botao, Campo, LinkTexto, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { Ilustracao } from "~/componentes/ilustracoes";
 import { BotaoOuvir } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
@@ -46,9 +47,8 @@ export default function Entrar() {
 
     return (
         <Tela centralizar branco semCabecalho>
-            {/* Decorativo: o título logo abaixo já diz onde a pessoa está */}
-            <Image source={require('../../assets/logo.png')} importantForAccessibility="no" accessibilityElementsHidden
-                style={{ width: 260, height: 70, alignSelf: 'center', marginBottom: 24 }} resizeMode="contain" />
+            {/* O logo diz o nome do app; o título logo abaixo diz onde a pessoa está */}
+            <Ilustracao nome="logo" altura={180} rotulo="Conecta TDAH SUS" style={{ alignSelf: 'center', marginBottom: 16 }} />
 
             {!modoSenha ? (
                 <Formik initialValues={{ email: '', senha: '' }} validationSchema={esquema}
