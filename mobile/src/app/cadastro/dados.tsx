@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { TextInput, View } from "react-native";
-import { Redirect, router } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { anunciar, Aviso, Botao, Campo, LinkTexto, Opcoes, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { anunciar, Aviso, Botao, Campo, LinkTexto, Paragrafo, Segmentado, Tela, Titulo } from "~/componentes/basicos";
 import { BotaoOuvir } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
@@ -30,7 +30,7 @@ const esquema = Yup.object({
     role: Yup.string().oneOf(['mae', 'escola', 'medico'], 'Escolha um perfil').required('Escolha um perfil'),
     nome: Yup.string().trim().max(MAX, MSG_MAX).required('Campo obrigatório'),
     email: Yup.string().email('E-mail inválido').required('Campo obrigatório'),
-    senha: Yup.string().min(6, 'A senha precisa ter pelo menos 6 caracteres').required('Campo obrigatório'),
+    senha: Yup.string().min(8, 'A senha precisa ter pelo menos 8 caracteres').required('Campo obrigatório'),
     confirmarSenha: Yup.string().oneOf([Yup.ref('senha')], 'As senhas não são iguais').required('Campo obrigatório'),
     grauParentesco: obrigatorioSe('mae'),
     nomeEscola: obrigatorioSe('escola'),
@@ -54,8 +54,8 @@ function montarDadosPerfil(v: Valores): DadosPerfil {
 }
 
 // Ordem dos campos na tela e o nome de cada um (para dizer qual corrigir)
-const ORDEM: (keyof Valores)[] = ['nome', 'role', 'grauParentesco', 'nomeEscola', 'cargo', 'disciplina',
-    'crm', 'especialidade', 'unidadeSUS', 'email', 'senha', 'confirmarSenha'];
+const ORDEM: (keyof Valores)[] = ['role', 'nome', 'email', 'grauParentesco', 'nomeEscola', 'cargo', 'disciplina',
+    'crm', 'especialidade', 'unidadeSUS', 'senha', 'confirmarSenha'];
 const ROTULOS: Record<keyof Valores, string> = {
     nome: 'Nome', role: 'Tipo de perfil', grauParentesco: 'Grau de parentesco', nomeEscola: 'Nome da escola',
     cargo: 'Cargo', disciplina: 'Disciplina', crm: 'CRM', especialidade: 'Especialidade', unidadeSUS: 'Unidade SUS',
@@ -72,18 +72,27 @@ const vazio: Valores = {
     grauParentesco: '', nomeEscola: '', cargo: '', disciplina: '', crm: '', especialidade: '', unidadeSUS: '',
 };
 
-/** Cadastro ("Crie seu acesso"), na mesma ordem da web */
+const PERFIS: Perfil[] = ['mae', 'escola', 'medico'];
+
+/**
+ * Cadastro, passo 2 (design da Daya, "Crie sua conta"): o perfil escolhido
+ * no passo 1 vem marcado nas abas do topo e pode ser trocado aqui. Os
+ * campos são os da decisão travada 4 (sem telefone, foto ou nome da criança)
+ */
 export default function Cadastro() {
     const { user, recarregarUsuario } = useAuth();
+    const { perfil } = useLocalSearchParams<{ perfil?: string }>();
     const [erro, setErro] = useState<string | null>(null);
     // Campos de texto, para levar o foco ao primeiro com erro
     const refs = useRef<Partial<Record<keyof Valores, TextInput | null>>>({});
     const registrar = (campo: keyof Valores) => (el: TextInput | null) => { refs.current[campo] = el; };
     if (user) return <Redirect href="/inicio" />;
+    // Sem perfil válido (link quebrado): volta para a escolha
+    if (!PERFIS.includes(perfil as Perfil)) return <Redirect href="/cadastro" />;
 
     return (
         <Tela branco>
-            <Formik initialValues={vazio} validationSchema={esquema}
+            <Formik initialValues={{ ...vazio, role: perfil as Perfil }} validationSchema={esquema}
                 onSubmit={async (v) => {
                     setErro(null);
                     const { success, message } = await UsuarioServicos.cadastrar({
@@ -95,7 +104,7 @@ export default function Cadastro() {
                     if (success) await recarregarUsuario();
                     else setErro(message ?? 'Não foi possível criar a conta');
                 }}>
-                {({ handleChange, handleSubmit, setFieldValue, validateForm, values, errors, submitCount, isSubmitting }) => {
+                {({ handleChange, handleSubmit, setFieldValue, setErrors, validateForm, values, errors, submitCount, isSubmitting }) => {
                     const e = (campo: keyof Valores) => (submitCount > 0 ? errors[campo] : undefined);
                     const comErro = ORDEM.filter((c) => errors[c]);
                     const resumo = comErro.length === 0 ? '' : `${comErro.length === 1 ? 'Há 1 campo' : `Há ${comErro.length} campos`} para corrigir. O primeiro é: ${ROTULOS[comErro[0]]}.`;
@@ -110,19 +119,22 @@ export default function Cadastro() {
                     };
                     return (
                         <View style={{ gap: 12 }}>
-                            <Titulo destaque>Crie seu acesso</Titulo>
-                            <Paragrafo>Cadastre-se para participar do acompanhamento do aluno.</Paragrafo>
-                            <BotaoOuvir rotulo="Ouvir instruções" texto="Escreva o seu nome. Escolha quem você é: mãe ou responsável, escola ou médico. Responda as perguntas que aparecerem. Depois escreva o seu e-mail e crie uma senha com pelo menos seis letras ou números. No fim, toque em Criar conta." />
+                            <Titulo>Crie sua conta</Titulo>
+                            <Paragrafo suave>Preencha seus dados para começar a usar o Conecta TDAH SUS.</Paragrafo>
+                            <BotaoOuvir rotulo="Ouvir instruções" texto="Confira se o seu perfil está certo nas opções do topo: Responsável, Escola ou Médico. Escreva o seu nome completo e o seu e-mail. Responda as perguntas do seu perfil. Depois crie uma senha com pelo menos oito letras ou números e repita a senha. No fim, toque em Cadastrar." />
 
-                            <Campo ref={registrar('nome')} rotulo="Nome" value={values.nome} onChangeText={handleChange('nome')}
-                                autoComplete="name" placeholder="Nome completo" erro={e('nome')} />
-                            <Opcoes<Perfil> rotulo="Tipo de perfil" valor={values.role} erro={e('role')}
-                                aoEscolher={(v) => { setFieldValue('role', v); anunciar(CAMPOS_DO_PERFIL[v]); }}
+                            <Segmentado<Perfil> rotulo="Como você deseja participar?" valor={values.role as Perfil}
+                                // Troca de perfil: os erros antigos (de campos que sumiram) saem da contagem
+                                aoEscolher={(v) => { setFieldValue('role', v, false); setErrors({}); anunciar(CAMPOS_DO_PERFIL[v]); }}
                                 opcoes={[
-                                    { valor: 'mae', titulo: 'Mãe, pai ou responsável' },
-                                    { valor: 'escola', titulo: 'Escola' },
-                                    { valor: 'medico', titulo: 'Médico (SUS)' },
+                                    { valor: 'mae', titulo: 'Responsável', falado: 'Mãe ou responsável' },
+                                    { valor: 'escola', titulo: 'Escola', falado: 'Escola ou professor' },
+                                    { valor: 'medico', titulo: 'Médico', falado: 'Profissional de psiquiatria' },
                                 ]} />
+                            <Campo ref={registrar('nome')} rotulo="Nome completo" value={values.nome} onChangeText={handleChange('nome')}
+                                autoComplete="name" placeholder="Digite aqui" erro={e('nome')} />
+                            <Campo ref={registrar('email')} rotulo="E-mail" value={values.email} onChangeText={handleChange('email')} keyboardType="email-address"
+                                autoCapitalize="none" autoComplete="email" placeholder="exemplo@email.com" erro={e('email')} />
 
                             {values.role === 'mae' && (
                                 <Campo ref={registrar('grauParentesco')} rotulo="Grau de parentesco" value={values.grauParentesco} onChangeText={handleChange('grauParentesco')}
@@ -145,10 +157,8 @@ export default function Cadastro() {
                                     placeholder="Nome da unidade de saúde" erro={e('unidadeSUS')} />
                             </>}
 
-                            <Campo ref={registrar('email')} rotulo="E-mail" value={values.email} onChangeText={handleChange('email')} keyboardType="email-address"
-                                autoCapitalize="none" autoComplete="email" placeholder="Seu melhor e-mail" erro={e('email')} />
                             <Campo ref={registrar('senha')} rotulo="Senha" senha value={values.senha} onChangeText={handleChange('senha')}
-                                autoComplete="new-password" placeholder="Pelo menos 6 letras ou números" erro={e('senha')} />
+                                autoComplete="new-password" placeholder="Pelo menos 8 letras ou números" erro={e('senha')} />
                             <Campo ref={registrar('confirmarSenha')} rotulo="Confirmar senha" senha value={values.confirmarSenha} onChangeText={handleChange('confirmarSenha')}
                                 autoComplete="new-password" placeholder="Repita a senha" erro={e('confirmarSenha')} />
 
@@ -157,8 +167,8 @@ export default function Cadastro() {
                             {/* Para quem enxerga: o mesmo resumo que o leitor de tela falou */}
                             {submitCount > 0 && resumo !== '' && <Aviso tipo="erro" texto={resumo} silencioso />}
                             {erro && <Aviso tipo="erro" texto={erro} />}
-                            <Botao titulo={isSubmitting ? 'Criando...' : 'Criar conta'} aoTocar={enviar} carregando={isSubmitting} />
-                            <LinkTexto titulo="Já tenho conta: entrar" aoTocar={() => router.back()} />
+                            <Botao titulo={isSubmitting ? 'Cadastrando...' : 'Cadastrar'} aoTocar={enviar} carregando={isSubmitting} />
+                            <LinkTexto titulo="Já tem conta? Entrar" aoTocar={() => router.replace('/entrar')} />
                         </View>
                     );
                 }}

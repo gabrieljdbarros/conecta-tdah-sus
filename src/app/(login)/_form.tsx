@@ -69,7 +69,7 @@ export default function LoginForm({ focarTitulo = false }: { focarTitulo?: boole
                 initialValues={{email: '', password: ''}}
                 validationSchema={Yup.object({
                     email: Yup.string().required('Campo obrigatório').email('Campo precisa ser um email'),
-                    password: Yup.string().required('Campo obrigatório').min(6, 'Campo precisa ter pelo menos 6 caracteres')
+                    password: Yup.string().required('Campo obrigatório') // sem mínimo: quem criou a senha quando o mínimo era 6 continua entrando
                 })}
                 onSubmit={onSubmitLogin}
                 >

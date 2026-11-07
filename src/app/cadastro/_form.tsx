@@ -52,7 +52,7 @@ const validationSchema = Yup.object({
     role: Yup.string().oneOf(['mae', 'escola', 'medico'], 'Selecione um perfil').required('Selecione um perfil'),
     nome: Yup.string().trim().max(MAX, MSG_MAX).required('Campo obrigatório'),
     email: Yup.string().email('Campo precisa ser um email').required('Campo obrigatório'),
-    password: Yup.string().min(6, 'A senha precisa ter pelo menos 6 caracteres').required('Campo obrigatório'),
+    password: Yup.string().min(8, 'A senha precisa ter pelo menos 8 caracteres').required('Campo obrigatório'),
     confirmarSenha: Yup.string().oneOf([Yup.ref('password')], 'As senhas não coincidem').required('Campo obrigatório'),
 
     grauParentesco: Yup.string().trim().max(MAX, MSG_MAX).when('role', { is: 'mae', then: (s) => s.required('Campo obrigatório') }),
@@ -149,7 +149,7 @@ export default function CadastroForm() {
                         Cadastre-se para participar do acompanhamento do estudante.
                     </p>
                     <AppOuvir rotulo="Ouvir instruções" className="self-start mb-3"
-                        texto="Escreva o seu nome. Escolha quem você é: mãe ou responsável, escola ou médico. Responda as perguntas que aparecerem. Depois escreva o seu e-mail e crie uma senha com pelo menos seis letras ou números. No fim, toque em Criar conta." />
+                        texto="Escreva o seu nome. Escolha quem você é: mãe ou responsável, escola ou médico. Responda as perguntas que aparecerem. Depois escreva o seu e-mail e crie uma senha com pelo menos oito letras ou números. No fim, toque em Criar conta." />
                     {/* Sempre montado: o leitor de tela anuncia quando o texto aparece */}
                     <p role="status" className="ff-default text-[16px] mb-3 empty:hidden">
                         {convite && 'Crie sua conta para aceitar o convite. Escolha o seu perfil: escola ou médico.'}
@@ -186,7 +186,7 @@ export default function CadastroForm() {
                     </>}
 
                     <AppInput label="E-mail" placeholder="Seu melhor e-mail" name="email" type="email" onChange={handleChange} autoComplete="email" error={errors.email} mostrarErro={submitCount > 0} className="mb-2" />
-                    <AppInput label="Senha" placeholder="Pelo menos 6 letras ou números" name="password" type="password" onChange={handleChange} openPassword autoComplete="new-password" error={errors.password} mostrarErro={submitCount > 0} className="mb-2" />
+                    <AppInput label="Senha" placeholder="Pelo menos 8 letras ou números" name="password" type="password" onChange={handleChange} openPassword autoComplete="new-password" error={errors.password} mostrarErro={submitCount > 0} className="mb-2" />
                     <AppInput label="Confirmar senha" placeholder="Repita a senha" name="confirmarSenha" type="password" onChange={handleChange} openPassword autoComplete="new-password" error={errors.confirmarSenha} mostrarErro={submitCount > 0} />
 
                     {/* TODO (LGPD): quando houver o texto dos termos de uso e do

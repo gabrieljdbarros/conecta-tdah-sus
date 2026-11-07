@@ -16,7 +16,7 @@ export default function LayoutLogado() {
     // Celular compartilhado: não deixa gravação de voz esquecida no aparelho
     useEffect(() => { limparGravacoesEsquecidas(); }, []);
     if (carregando) return <Tela centralizar semCabecalho><Carregando /></Tela>;
-    if (!user) return <Redirect href="/entrar" />;
+    if (!user) return <Redirect href="/boas-vindas" />;
 
     return (
         <Stack screenOptions={{

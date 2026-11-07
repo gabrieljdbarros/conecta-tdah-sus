@@ -73,7 +73,7 @@ export default function NovaSenhaForm() {
                 <Formik
                     initialValues={{ senha: '', confirmacao: '' }}
                     validationSchema={Yup.object({
-                        senha: Yup.string().required('Campo obrigatório').min(6, 'Use pelo menos 6 caracteres'),
+                        senha: Yup.string().required('Campo obrigatório').min(8, 'Use pelo menos 8 caracteres'),
                         confirmacao: Yup.string().required('Campo obrigatório').oneOf([Yup.ref('senha')], 'As senhas não são iguais'),
                     })}
                     onSubmit={async ({ senha }) => {
@@ -90,7 +90,7 @@ export default function NovaSenhaForm() {
                             <p className="ff-default text-[18px] leading-relaxed text-(--cor-texto) mt-2 mb-3">Escolha uma senha nova para a sua conta.</p>
                             <AppOuvir rotulo="Ouvir instruções" className="self-start mb-3"
                                 texto="Escreva a senha nova duas vezes, igual nas duas, e toque em Salvar senha." />
-                            <AppInput label="Senha nova" placeholder="Pelo menos 6 caracteres" name="senha" type="password" openPassword autoComplete="new-password" onChange={handleChange} error={errors.senha} mostrarErro={submitCount > 0} className="mb-2" />
+                            <AppInput label="Senha nova" placeholder="Pelo menos 8 caracteres" name="senha" type="password" openPassword autoComplete="new-password" onChange={handleChange} error={errors.senha} mostrarErro={submitCount > 0} className="mb-2" />
                             <AppInput label="Repita a senha nova" placeholder="Igual à de cima" name="confirmacao" type="password" openPassword autoComplete="new-password" onChange={handleChange} error={errors.confirmacao} mostrarErro={submitCount > 0} />
                             {submitCount > 0 && Object.keys(errors).length > 0 && (
                                 <p role="alert" className={`${COR_ERRO} ff-default text-[16px] text-center mt-3`}>Erro: corrija os campos marcados em vermelho acima.</p>

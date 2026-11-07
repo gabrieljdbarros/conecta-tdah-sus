@@ -1,6 +1,6 @@
 import { ReactNode, Ref, useEffect, useState } from "react";
 import {
-    AccessibilityInfo, ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView,
+    AccessibilityInfo, ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, ScrollView,
     StyleSheet, Text, TextInput, TextInputProps, View,
 } from "react-native";
 import { Edge, SafeAreaView } from "react-native-safe-area-context";
@@ -178,6 +178,75 @@ export function Opcoes<T extends string>({ rotulo, opcoes, valor, aoEscolher, er
 }
 
 /**
+ * Abas de escolha lado a lado (ex.: Responsável / Escola / Médico no
+ * cadastro, design da Daya). Para o leitor de tela é um grupo de opções
+ * (radio): cada uma diz o nome do grupo e se está marcada. A marcada fica
+ * azul com texto branco (7,1:1) e em negrito (não depende só da cor)
+ */
+export function Segmentado<T extends string>({ rotulo, opcoes, valor, aoEscolher }: {
+    rotulo: string; valor: T; aoEscolher: (v: T) => void;
+    /** `falado`: nome completo para o leitor de tela (na tela vai o curto) */
+    opcoes: { valor: T; titulo: string; falado?: string }[];
+}) {
+    return (
+        <View style={estilos.grupoCampo}>
+            <Text style={estilos.rotulo} accessibilityElementsHidden importantForAccessibility="no">{rotulo}</Text>
+            <View style={estilos.segmentado} accessibilityRole="radiogroup">
+                {opcoes.map((o, i) => {
+                    const marcado = o.valor === valor;
+                    return (
+                        <Pressable key={o.valor} onPress={() => aoEscolher(o.valor)}
+                            accessibilityRole="radio" accessibilityState={{ checked: marcado }} accessibilityLabel={`${rotulo}: ${o.falado ?? o.titulo}, ${i + 1} de ${opcoes.length}`}
+                            style={[estilos.segmento, marcado && { backgroundColor: cores.link }]}>
+                            {/* Com a fonte grande do celular, quebra a linha em vez de encolher */}
+                            <Text style={{ fontSize: 16, textAlign: 'center', fontWeight: marcado ? '800' : '600', color: marcado ? '#FFFFFF' : cores.texto }}>{o.titulo}</Text>
+                        </Pressable>
+                    );
+                })}
+            </View>
+        </View>
+    );
+}
+
+/**
+ * Janela que sobe da parte de baixo da tela (design da Daya: "Esqueceu sua
+ * senha?", convite, cadastrar estudante). Acessível:
+ *  - o leitor de tela fica preso dentro dela (accessibilityViewIsModal) e
+ *    anuncia o título ao abrir;
+ *  - fecha pelo X ("Fechar"), tocando fora ou com o "voltar" do Android
+ */
+export function Janela({ visivel, titulo, descricao, icone, aoFechar, children }: {
+    visivel: boolean; titulo: string; descricao?: string; icone?: NomeIcone; aoFechar: () => void; children: ReactNode;
+}) {
+    useEffect(() => { if (visivel) anunciar(descricao ? `${titulo}. ${descricao}` : titulo, 600); }, [visivel, titulo, descricao]);
+    return (
+        <Modal visible={visivel} transparent animationType="slide" onRequestClose={aoFechar} statusBarTranslucent navigationBarTranslucent>
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+                {/* Fundo escurecido: tocar fora fecha (o leitor de tela usa o X) */}
+                <Pressable style={estilos.fundoJanela} onPress={aoFechar} importantForAccessibility="no" accessibilityElementsHidden />
+                <SafeAreaView edges={['bottom']} style={estilos.janela} accessibilityViewIsModal>
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                        {icone && (
+                            <View style={estilos.iconeJanela} importantForAccessibility="no">
+                                <Ionicons name={icone} size={26} color={cores.link} />
+                            </View>
+                        )}
+                        <View style={{ flex: 1, gap: 2 }}>
+                            <Text accessibilityRole="header" style={estilos.tituloJanela}>{titulo}</Text>
+                            {descricao && <Text style={{ fontSize: 17, lineHeight: 24, color: cores.textoSuave }}>{descricao}</Text>}
+                        </View>
+                        <Pressable onPress={aoFechar} accessibilityRole="button" accessibilityLabel="Fechar" hitSlop={8} style={estilos.olho}>
+                            <Ionicons name="close" size={28} color={cores.texto} />
+                        </Pressable>
+                    </View>
+                    <ScrollView contentContainerStyle={{ gap: 12, paddingTop: 16 }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
+                </SafeAreaView>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
+
+/**
  * Mensagem de erro, sucesso ou informação. É FALADA pelo leitor de tela
  * quando aparece ou muda (announceForAccessibility funciona no Android e no
  * iOS). O texto começa com "Erro:" ou "Pronto:" (não depende só da cor)
@@ -244,4 +313,16 @@ export const estilos = StyleSheet.create({
     textoOpcao: { fontSize: 17, color: cores.texto, flexShrink: 1 },
     aviso: { borderWidth: 1, borderRadius: medidas.raio, padding: 12 },
     carregando: { alignItems: 'center', gap: 12, padding: 24 },
+    segmentado: {
+        flexDirection: 'row', gap: 4, padding: 4, backgroundColor: '#FFFFFF',
+        borderWidth: 1, borderColor: cores.borda, borderRadius: medidas.raio + 2,
+    },
+    segmento: { flex: 1, minHeight: medidas.toque, borderRadius: medidas.raio - 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+    fundoJanela: { flex: 1, backgroundColor: 'rgba(36,36,36,0.55)' },
+    janela: {
+        backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+        paddingHorizontal: medidas.espaco, paddingTop: 20, paddingBottom: 16, maxHeight: '90%',
+    },
+    iconeJanela: { width: 48, height: 48, borderRadius: medidas.raio, backgroundColor: cores.fundoInfo, alignItems: 'center', justifyContent: 'center' },
+    tituloJanela: { fontSize: 24, fontWeight: '800', color: cores.texto },
 });
