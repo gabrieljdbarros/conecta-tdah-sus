@@ -217,7 +217,7 @@ export const estilos = StyleSheet.create({
     titulo2: { fontSize: 24, lineHeight: 30 },
     paragrafo: { fontSize: 18, lineHeight: 26, color: cores.texto },
     botao: {
-        minHeight: medidas.toque, borderRadius: 999, borderWidth: 2, paddingHorizontal: 20, paddingVertical: 10,
+        minHeight: medidas.toque, borderRadius: medidas.raio, borderWidth: 2, paddingHorizontal: 20, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     },
     // flexShrink: com a fonte grande do celular, o texto quebra a linha em vez de sair do botão
@@ -228,7 +228,7 @@ export const estilos = StyleSheet.create({
     grupoCampo: { gap: 4 },
     rotulo: { fontSize: medidas.texto, color: cores.texto, fontWeight: '600' },
     caixaCampo: {
-        minHeight: medidas.toque, borderWidth: 1, borderColor: cores.borda, borderRadius: 8,
+        minHeight: medidas.toque, borderWidth: 1, borderColor: cores.borda, borderRadius: medidas.raio,
         backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center',
     },
     caixaFocada: { borderColor: cores.link, borderWidth: 2 },
@@ -238,7 +238,7 @@ export const estilos = StyleSheet.create({
     textoErro: { fontSize: medidas.texto, color: cores.erro },
     opcao: {
         minHeight: medidas.toque, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8,
-        borderWidth: 1, borderColor: cores.borda, borderRadius: 8, backgroundColor: '#FFFFFF',
+        borderWidth: 1, borderColor: cores.borda, borderRadius: medidas.raio, backgroundColor: '#FFFFFF',
     },
     opcaoMarcada: { borderColor: cores.link, borderWidth: 2 },
     textoOpcao: { fontSize: 17, color: cores.texto, flexShrink: 1 },

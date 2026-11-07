@@ -65,8 +65,8 @@ export default function Inicio() {
                             ? 'Esta é a tela de início. Você ainda não tem pasta. Para começar, toque em Criar pasta do aluno.'
                             : 'Esta é a tela de início. Você ainda não acompanha nenhum aluno. Peça à família o link de convite e toque em Entrar numa pasta.'
                         : muitas
-                            ? `Esta é a tela de início. Para achar um aluno, escreva o nome ${ehMae ? 'dele' : 'dele, da mãe ou da escola'} no campo de busca. Embaixo estão as últimas conversas. A palavra nova mostra onde há mensagem nova. Toque no aluno para abrir a conversa. Para ver todos, toque em Ver todos os alunos. Na barra de baixo você muda de tela: Início, Pastas, Conversas e Perfil.`
-                            : `Esta é a tela de início. Para conversar sobre o aluno, toque em ${pastas.length === 1 ? 'Abrir conversa' : 'Conversa sobre e o nome do aluno'}. Embaixo ficam ${ehMae ? 'as pastas dos seus filhos' : 'os alunos que você acompanha'}: toque no nome do aluno para abrir a pasta. Na barra de baixo você muda de tela: Início, Pastas, Conversas e Perfil.`} />
+                            ? `Esta é a tela de início. Para achar um aluno, escreva o nome ${ehMae ? 'dele' : 'dele, da mãe ou da escola'} no campo de busca. Embaixo estão as últimas conversas. A palavra nova mostra onde há mensagem nova. Toque no aluno para abrir a conversa. Para ver todos, toque em Ver todos os alunos. Na barra de baixo você muda de tela: Início, Pastas e Perfil.`
+                            : `Esta é a tela de início. Para conversar sobre o aluno, toque em ${pastas.length === 1 ? 'Abrir conversa' : 'Conversa sobre e o nome do aluno'}. Embaixo ficam ${ehMae ? 'as pastas dos seus filhos' : 'os alunos que você acompanha'}: toque no nome do aluno para abrir a pasta. Na barra de baixo você muda de tela: Início, Pastas e Perfil.`} />
                     {ehMae && pastas.length === 0 && <CartaoCriarPasta />}
                     {!ehMae && pastas.length === 0 && <>
                         <Paragrafo>Você ainda não acompanha nenhum aluno. Peça à família o link de convite.</Paragrafo>
