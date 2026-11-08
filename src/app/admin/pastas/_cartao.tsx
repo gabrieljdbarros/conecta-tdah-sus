@@ -29,7 +29,7 @@ export function ListaPastas({ pastas }: { pastas: Pasta[] }) {
 
 /**
  * Convite para a mãe criar a primeira pasta (cartão "Cadastre o estudante"
- * do design). Rótulo pequeno em verde-petróleo (5,8:1 no fundo do cartão), não em laranja
+ * do design). Rótulo pequeno em azul (cor secundária; 7,1:1), não em laranja
  */
 export function CartaoCriarPasta() {
     return (

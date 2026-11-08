@@ -159,7 +159,7 @@ export default function CadastroForm() {
 
                     <AppSelect label="Tipo de perfil" name="role" onChange={handleChange} value={values.role} error={errors.role} mostrarErro={submitCount > 0} className="mb-2">
                         <option value="">Selecione...</option>
-                        {/* Convite só serve para escola ou médico (a Function recusa mãe) */}
+                        {/* Convite só serve para escola ou médico (a função aceitar_convite do banco recusa outro papel) */}
                         {!convite && <option value="mae">Mãe / Responsável</option>}
                         <option value="escola">Escola</option>
                         <option value="medico">Médico (SUS)</option>

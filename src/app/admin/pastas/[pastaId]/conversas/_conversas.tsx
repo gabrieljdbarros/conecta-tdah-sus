@@ -9,7 +9,7 @@ import { vozSuportada } from "@/helpers/voz";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
 import { MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
-import { ROLE_LABELS } from "@/types/user";
+import { ROLE_LABELS, UserRole } from "@/types/user";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -24,10 +24,26 @@ function formatarDia(ms: number): string {
     return new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-/** Iniciais do nome no círculo do autor (o design usa foto; aqui não guardamos foto) */
-function iniciais(nome: string): string {
-    const partes = nome.trim().split(/\s+/).filter(Boolean);
-    return ((partes[0]?.[0] ?? '') + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase();
+/**
+ * Quem escreveu (decisão travada 7), IGUAL ao app: um ícone de cor por
+ * papel, sempre com o nome e o papel escritos ao lado (a cor nunca é a única
+ * pista). A cor fica só no FUNDO do ícone, com o desenho em escuro
+ * (#242424 passa de 9:1 nas três)
+ */
+const VISUAL_PAPEL: Record<UserRole, { icone: string; fundo: string }> = {
+    mae: { icone: 'ion-heart', fundo: 'bg-[#FFC067]' },
+    escola: { icone: 'ion-university', fundo: 'bg-[#20BE36]' },
+    medico: { icone: 'ion-medkit', fundo: 'bg-[#EAD0FC]' },
+    admin: { icone: 'ion-person', fundo: 'bg-[#D1D5DB]' },
+};
+
+function IconePapel({ papel }: { papel: UserRole }) {
+    const { icone, fundo } = VISUAL_PAPEL[papel] ?? VISUAL_PAPEL.admin;
+    return (
+        <span aria-hidden="true" className={`inline-flex items-center justify-center w-[30px] h-[30px] shrink-0 rounded-full ${fundo} text-(--cor-texto) text-[17px]`}>
+            <i className={icone} />
+        </span>
+    );
 }
 
 export default function Conversas({ pastaId }: { pastaId: string }) {
@@ -175,10 +191,8 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
             )}
 
             <div className="flex flex-col gap-3">
-                {/* QUEM VÊ esta conversa */}
-                <p className="ff-default text-[16px] text-(--cor-texto) p-3 rounded-xl bg-[#EEF2FF] flex items-center gap-2">
-                    <i className="ion-eye text-(--cor-secundaria)" aria-hidden="true" />Família, escola e médicos da pasta veem esta conversa.
-                </p>
+                {/* Quem vê a conversa é dito no "Ouvir instruções" (o aviso fixo saiu
+                    em 08/11/2026, como no app em 07/11) */}
 
                 {/* ESTADOS fora do log, para não serem lidos como mensagens */}
                 {mensagens === null && !erroCanal && <p role="status" className="ff-default text-[16px]">Carregando as mensagens...</p>}
@@ -210,7 +224,7 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                     <p role="status" className="sr-only">{avisoAnteriores}</p>
                     {!temAnteriores && <p className="self-center ff-default text-[16px] text-(--cor-texto-suave)">Início da conversa</p>}
                     <ol ref={listaRef} role="log" aria-live={logCalado ? 'off' : 'polite'} tabIndex={0} aria-label="Mensagens"
-                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-white border border-gray-300">
+                        className="flex flex-col gap-3 min-h-[200px] max-h-[55dvh] overflow-y-auto p-3 rounded-xl bg-(--background-secondary) border border-gray-300">
                         {mensagens.map((m, i) => {
                             const minha = m.autorUid === user?.uid;
                             const dia = formatarDia(m.criadoEm);
@@ -218,17 +232,13 @@ export default function Conversas({ pastaId }: { pastaId: string }) {
                             return (
                                 <li key={m.id} className="flex flex-col gap-3">
                                     {novoDia && <p className="self-center ff-default text-[16px] text-(--cor-texto-suave)">{dia}</p>}
-                                    <div className={`flex items-end gap-2 max-w-[90%] ${minha ? 'self-end' : 'self-start'}`}>
-                                        {!minha && (
-                                            <span aria-hidden="true" className="flex items-center justify-center w-[40px] h-[40px] shrink-0 rounded-full bg-(--cor-secundaria) text-white ff-default text-[15px] font-bold">
-                                                {iniciais(m.autorNome)}
-                                            </span>
-                                        )}
-                                        <div className={`rounded-2xl p-3 ${minha ? 'bg-[#EEF0FF] border border-[#C7CCF5]' : 'bg-[#E3F5F2] border border-[#B8E2DC]'}`}>
+                                    {/* Balões como no app: os meus lilás-claro à direita, os outros brancos à esquerda */}
+                                    <div className={`max-w-[90%] ${minha ? 'self-end' : 'self-start'}`}>
+                                        <div className={`rounded-2xl border p-3 ${minha ? 'rounded-tr-[4px] bg-[#F3E6FD] border-[#E2CBF5]' : 'rounded-tl-[4px] bg-white border-[#D1D5DB]'}`}>
                                             {/* "Você" identifica a autoria sem depender de cor ou posição */}
-                                            <p className="ff-default text-[16px] font-bold text-(--cor-texto)">
-                                                {minha ? 'Você' : `${m.autorNome} (${ROLE_LABELS[m.autorPapel]})`}
-                                                <span className="font-normal text-(--cor-texto-suave)"> · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span>
+                                            <p className="flex flex-wrap items-center gap-x-2 ff-default text-[16px] font-extrabold text-(--cor-texto)">
+                                                <IconePapel papel={m.autorPapel} />
+                                                <span>{minha ? 'Você' : m.autorNome}<span className="font-normal text-(--cor-texto-suave)"> · {ROLE_LABELS[m.autorPapel]} · <time dateTime={new Date(m.criadoEm).toISOString()}>{formatarHora(m.criadoEm)}</time></span></span>
                                             </p>
                                             {m.tipo === 'audio' ? (
                                                 <AppOuvirAudio mensagem={m} descricao={minha ? 'sua mensagem' : `mensagem de ${m.autorNome}`} className="mt-2" />

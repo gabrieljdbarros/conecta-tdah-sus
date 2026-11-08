@@ -9,7 +9,9 @@
 *    (19px bold = "texto grande" no WCAG; 3,1:1 passa); como cor de texto,
 *    só em TÍTULO grande (24px ou mais, negrito) sobre fundo BRANCO
 *  - link (azul dos links do design): links, botões de contorno, seleção e foco (7,1:1)
-*  - secundaria (verde-petróleo do "Ouvir relatório"): ações secundárias (6,48:1)
+*  - secundaria: "Ouvir" e ações de apoio. Desde 08/11/2026 é o MESMO azul
+*    do link (antes, verde-petróleo #006a63): laranja = ação principal,
+*    azul = navegação e apoio (7,1:1)
 *  - borda (cinza dos campos do design): borda e placeholder dos campos,
 *    sempre sobre fundo branco (4,5:1; sobre o lilás do fundo cairia para 4,27)
 */
@@ -18,7 +20,7 @@
   --background-secondary: #faf8ff;
   --cor-destaque: #ff5c00;
   --cor-link: #0155a0;
-  --cor-secundaria: #006a63;
+  --cor-secundaria: #0155a0;
   --cor-texto: #242424;
   --cor-texto-suave: #5a5a5a;
   --cor-borda: #737686;

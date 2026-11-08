@@ -44,11 +44,11 @@ export default function InicioPage() {
     }, [carregandoSessao, user, carregar]);
 
     const primeiroNome = user?.nome?.trim().split(/\s+/)[0];
-    const titulo = primeiroNome ? `Olá, ${primeiroNome}` : 'Início';
+    const titulo = primeiroNome ? `Olá, ${primeiroNome}!` : 'Início';
     const ehMae = user?.role === 'mae';
 
     return (
-        <AppMainContainer title={titulo} subtitulo={hoje} destaque>
+        <AppMainContainer title={titulo} subtitulo={hoje} destaque realce={primeiroNome}>
             {(carregandoSessao || carregando) && (
                 <div role="status" className="flex flex-col items-center gap-3">
                     <AppLoader size={50} className="self-center" />
