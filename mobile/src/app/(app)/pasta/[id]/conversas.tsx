@@ -4,9 +4,9 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, Tela } from "~/componentes/basicos";
-import { estilos } from "~/componentes/cartoes";
+import { estilos, IconePapel } from "~/componentes/cartoes";
 import { Ilustracao } from "~/componentes/ilustracoes";
-import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
+import { BotaoInstrucoes, BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
 import { GravadorDeVoz, Gravacao, OuvirMensagemDeVoz } from "~/componentes/audio";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
@@ -14,34 +14,12 @@ import MensagemServicos, { ControleConversa } from "~/servicos/mensagem";
 import VistasServicos from "~/servicos/vistas";
 import { cores, medidas } from "~/tema/cores";
 import { MAX_TEXTO_MENSAGEM, Mensagem } from "@/types/mensagem";
-import { ROLE_LABELS, UserRole } from "@/types/user";
+import { ROLE_LABELS } from "@/types/user";
+
+type NomeIcone = keyof typeof Ionicons.glyphMap;
 
 const hora = (ms: number) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const dia = (ms: number) => new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-type NomeIcone = keyof typeof Ionicons.glyphMap;
-
-/**
- * Quem escreveu (decisão travada 7): um ÍCONE de cor por papel, sempre com
- * o nome e o papel escritos ao lado (a cor nunca é a única pista). As cores
- * da paleta ficam só no FUNDO do ícone, com o desenho em escuro (#242424
- * passa de 9:1 nas três); o nome é sempre escuro
- */
-const VISUAL_PAPEL: Record<UserRole, { icone: NomeIcone; fundo: string }> = {
-    mae: { icone: 'heart', fundo: '#FFC067' },
-    escola: { icone: 'school', fundo: '#20BE36' },
-    medico: { icone: 'medkit', fundo: '#EAD0FC' },
-    admin: { icone: 'person', fundo: '#D1D5DB' },
-};
-
-function IconePapel({ papel }: { papel: UserRole }) {
-    const { icone, fundo } = VISUAL_PAPEL[papel] ?? VISUAL_PAPEL.admin;
-    return (
-        <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
-            style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: fundo, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name={icone} size={17} color={cores.texto} />
-        </View>
-    );
-}
 
 /**
  * CONVERSAS DA PASTA (RN05), em tempo real, com o design novo: o nome do
@@ -199,7 +177,7 @@ export default function Conversas() {
                 {/* Com o teclado aberto as instruções saem, para sobrar espaço para as mensagens */}
                 {!tecladoAberto && (
                     <View style={{ padding: medidas.espaco, paddingBottom: 8 }}>
-                        <BotaoOuvir rotulo="Ouvir instruções"
+                        <BotaoInstrucoes
                             texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, deixe o campo vazio, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada.`} />
                     </View>
                 )}

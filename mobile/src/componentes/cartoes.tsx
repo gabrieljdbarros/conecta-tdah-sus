@@ -5,6 +5,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Ilustracao } from "~/componentes/ilustracoes";
 import { cores, medidas } from "~/tema/cores";
 import { Pasta } from "@/types/pasta";
+import { UserRole } from "@/types/user";
+
+type NomeIcone = keyof typeof Ionicons.glyphMap;
 
 /**
  * Cartões no estilo do design (iguais aos da web, em src/app/admin/pastas/_cartao.tsx)
@@ -39,8 +42,13 @@ export function CartaoPasta({ pasta, conversas, quem, conversa }: {
             accessibilityHint={conversas ? 'Abre as conversas sobre o aluno' : 'Abre a pasta do aluno'}
             android_ripple={{ color: '#E5E7EB' }}
             style={({ pressed }) => [estilos.cartao, estilos.linha, pressed && { opacity: 0.85 }]}>
-            {/* Girassol da Daya em cada aluno (decorativo: o nome já é lido) */}
-            <Ilustracao nome="girassol" altura={44} />
+            {/* Conversa: balão de conversa, para não confundir com a pasta, que
+                tem o girassol (os dois são decorativos: o rótulo já diz o que abre) */}
+            {conversas
+                ? <View style={estilos.iconeConversa} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+                    <Ionicons name="chatbubble-outline" size={26} color={cores.link} />
+                </View>
+                : <Ilustracao nome="girassol" altura={44} />}
             <View style={{ flex: 1, gap: 2 }}>
                 <Text style={estilos.nome}>{pasta.nomeAluno}</Text>
                 {!!quem && <Text style={estilos.suave}>{quem}</Text>}
@@ -56,6 +64,30 @@ export function CartaoPasta({ pasta, conversas, quem, conversa }: {
             </View>
             <Ionicons name="chevron-forward" size={22} color={cores.textoSuave} importantForAccessibility="no" />
         </Pressable>
+    );
+}
+
+/**
+ * Quem é quem (decisão travada 7): um ÍCONE de cor por papel, o mesmo no
+ * chat e na pasta, sempre com o nome e o papel escritos ao lado (a cor
+ * nunca é a única pista). As cores da paleta ficam só no FUNDO do ícone,
+ * com o desenho em escuro (#242424 passa de 9:1 nas três)
+ */
+const VISUAL_PAPEL: Record<UserRole, { icone: NomeIcone; fundo: string }> = {
+    mae: { icone: 'heart', fundo: '#FFC067' },
+    escola: { icone: 'school', fundo: '#20BE36' },
+    medico: { icone: 'medkit', fundo: '#EAD0FC' },
+    admin: { icone: 'person', fundo: '#D1D5DB' },
+};
+
+/** Ícone do papel (decorativo: o nome do papel vem escrito ao lado) */
+export function IconePapel({ papel, tamanho = 30 }: { papel: UserRole; tamanho?: number }) {
+    const { icone, fundo } = VISUAL_PAPEL[papel] ?? VISUAL_PAPEL.admin;
+    return (
+        <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
+            style={{ width: tamanho, height: tamanho, borderRadius: tamanho / 2, backgroundColor: fundo, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name={icone} size={Math.round(tamanho * 0.57)} color={cores.texto} />
+        </View>
     );
 }
 
@@ -105,6 +137,8 @@ export const estilos = StyleSheet.create({
     rotulo: { fontSize: medidas.texto, fontWeight: '700', letterSpacing: 0.5, color: cores.secundaria },
     tituloCartao: { fontSize: 24, fontWeight: '800', color: cores.texto },
     tituloSecao: { fontSize: 24, fontWeight: '800', color: cores.texto, flexShrink: 1 },
+    // Ícone do cartão de conversa (balão), no lugar do girassol da pasta
+    iconeConversa: { width: 44, height: 44, borderRadius: 22, backgroundColor: cores.fundoInfo, alignItems: 'center', justifyContent: 'center' },
     // Ponto de "mensagem nova": pequeno e azul (o azul passa de 3:1 sobre branco)
     pontoNova: { width: 10, height: 10, borderRadius: 5, backgroundColor: cores.link },
 });
