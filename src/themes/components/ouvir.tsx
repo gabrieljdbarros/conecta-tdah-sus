@@ -76,6 +76,20 @@ export default function AppOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo 
         await falar(texto, { id, somenteLocal: conteudo });
     };
 
+    // "Ouvir instruções" da tela: botão redondo só com o alto-falante, igual ao
+    // app (08/11/2026). O nome continua para o leitor de tela (sr-only) e
+    // aparece ao passar o mouse (title)
+    if (rotulo === 'Ouvir instruções') {
+        const nome = falando ? 'Parar' : rotulo;
+        return (
+            <button type="button" onClick={alternar} title={nome}
+                className={`inline-flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-full bg-(--cor-secundaria) text-white text-[26px] cursor-pointer ${className}`}>
+                <i className={falando ? 'ion-stop' : 'ion-volume-high'} aria-hidden="true" />
+                <span className="sr-only">{nome}</span>
+            </button>
+        );
+    }
+
     return (
         <button type="button" onClick={alternar}
             className={`inline-flex items-center gap-2 min-h-[48px] px-4 rounded-full border-2 border-(--cor-secundaria) text-white bg-(--cor-secundaria) ff-default text-[16px] cursor-pointer ${className}`}>

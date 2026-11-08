@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { router } from "expo-router";
-import { Aviso, Botao, Carregando, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { Aviso, Botao, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { EstadoVazio, estilos } from "~/componentes/cartoes";
 import { ListaAlunos } from "~/componentes/alunos";
 import { JanelaNovaPasta } from "~/componentes/novaPasta";
@@ -20,12 +20,10 @@ export default function Pastas() {
     const [novaPasta, setNovaPasta] = useState(false);
     const ehMae = user?.role === 'mae';
 
-    const titulo = <>
-        <Titulo nivel={2}>Minhas pastas</Titulo>
-        <Paragrafo suave>Acesse as pastas dos estudantes que você acompanha.</Paragrafo>
-    </>;
+    // O título "Minhas pastas" fica no cabeçalho do topo, com o girassol
+    const titulo = <Paragrafo suave>Acesse as pastas dos estudantes que você acompanha.</Paragrafo>;
     const instrucoes = (
-        <BotaoOuvir rotulo="Ouvir instruções" texto={ehMae
+        <BotaoInstrucoes texto={ehMae
             ? 'Aqui ficam as pastas dos seus filhos. Toque no nome do aluno para abrir a pasta. Para criar uma pasta nova, toque em Cadastrar estudante e escreva o nome da criança.'
             : 'Aqui ficam as pastas dos alunos que você acompanha, em ordem alfabética. Para achar um aluno, escreva o nome dele, da mãe ou da escola no campo de busca. Toque no nome do aluno para abrir a pasta. A palavra nova mostra onde há mensagem nova. Para entrar numa pasta nova, peça o link de convite à família e toque em Entrar com convite.'} />
     );

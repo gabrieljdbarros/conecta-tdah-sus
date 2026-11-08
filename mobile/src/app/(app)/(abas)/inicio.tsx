@@ -2,8 +2,8 @@ import { ReactElement, useState } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Aviso, Botao, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { Aviso, Botao, Carregando, estilos as estilosBasicos, Paragrafo, Tela } from "~/componentes/basicos";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { CampoBusca, infoConversa, ResultadoBusca } from "~/componentes/alunos";
 import { CartaoPasta, EstadoVazio, estilos, Secao } from "~/componentes/cartoes";
 import { Ilustracao } from "~/componentes/ilustracoes";
@@ -45,11 +45,11 @@ export default function Inicio() {
             <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 }}>
                     <View style={{ flex: 1 }} accessible accessibilityRole="header">
-                        <Text style={{ fontSize: 16, fontWeight: '700', letterSpacing: 0.5, color: cores.textoSuave }}>CONECTA TDAH SUS</Text>
+                        <Text style={estilosBasicos.marca}>CONECTA TDAH SUS</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            {/* Título em escuro: o laranja só passa no AA em letra grande sobre branco */}
+                            {/* Nome em laranja (realce): passa no AA porque é letra grande (28, negrito) sobre branco */}
                             <Text style={{ fontSize: 28, fontWeight: '800', color: cores.texto, flexShrink: 1 }}>
-                                {primeiroNome ? `Olá, ${primeiroNome}!` : 'Início'}
+                                {primeiroNome ? <>Olá, <Text style={{ color: cores.destaque }}>{primeiroNome}</Text>!</> : 'Início'}
                             </Text>
                             <Ilustracao nome="brilho" altura={24} />
                         </View>
@@ -75,7 +75,7 @@ export default function Inicio() {
                 </>}
 
                 {!carregando && !erro && user && <>
-                    <BotaoOuvir rotulo="Ouvir instruções" texto={pastas.length === 0
+                    <BotaoInstrucoes texto={pastas.length === 0
                         ? ehMae
                             ? 'Esta é a tela de início. Você ainda não tem pasta. Para começar, toque em Cadastrar estudante e escreva o nome da criança.'
                             : 'Esta é a tela de início. Você ainda não acompanha nenhum aluno. Peça à família o link de convite e toque em Entrar com convite.'

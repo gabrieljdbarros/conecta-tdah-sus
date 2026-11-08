@@ -29,8 +29,8 @@ export function useVozDisponivel(somenteLocal: boolean): boolean | null {
  *  - `descricao`: complemento só para o leitor de tela (ex.: "mensagem de Ana")
  *  - `pequeno`: versão discreta, dentro do balão da conversa (alvo continua 48)
  */
-export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = false, disponivel, pequeno = false }: {
-    texto: string; rotulo?: string; descricao?: string; conteudo?: boolean; disponivel?: boolean | null; pequeno?: boolean;
+export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = false, disponivel, pequeno = false, soIcone = false }: {
+    texto: string; rotulo?: string; descricao?: string; conteudo?: boolean; disponivel?: boolean | null; pequeno?: boolean; soIcone?: boolean;
 }) {
     const id = useId();
     const verificado = useVozDisponivel(conteudo);
@@ -59,6 +59,17 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
 
     // O rótulo troca entre "Ouvir" e "Parar": o leitor de tela fala o que o botão faz agora
     const titulo = falando ? 'Parar' : rotulo;
+    if (soIcone) {
+        // Redondo, só o desenho do alto-falante (telas novas); 56 de toque.
+        // O nome continua sendo falado pelo leitor de tela
+        return (
+            <Pressable onPress={alternar} accessibilityRole="button" accessibilityLabel={titulo}
+                android_ripple={{ color: '#FFFFFF55', borderless: true }}
+                style={{ width: 56, height: 56, borderRadius: 28, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', backgroundColor: cores.secundaria }}>
+                <Ionicons name={falando ? 'stop' : 'volume-high'} size={28} color="#FFFFFF" importantForAccessibility="no" />
+            </Pressable>
+        );
+    }
     return (
         <Pressable onPress={alternar} accessibilityRole="button" accessibilityLabel={descricao ? `${titulo}: ${descricao}` : titulo}
             android_ripple={{ color: '#FFFFFF55' }}
@@ -71,6 +82,11 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
             <Text style={{ fontSize: 16, fontWeight: '700', color: pequeno ? cores.secundaria : '#FFFFFF', flexShrink: 1 }}>{titulo}</Text>
         </Pressable>
     );
+}
+
+/** "Ouvir instruções" da tela: botão redondo só com o alto-falante */
+export function BotaoInstrucoes({ texto }: { texto: string }) {
+    return <BotaoOuvir rotulo="Ouvir instruções" texto={texto} soIcone />;
 }
 
 /**

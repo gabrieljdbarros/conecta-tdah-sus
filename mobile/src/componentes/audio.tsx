@@ -381,10 +381,22 @@ function OuvirGravacao({ uri, duracaoS, desabilitado }: { uri: string; duracaoS:
         if (status.didJustFinish) player.seekTo(0).catch(() => { });
     }, [status.didJustFinish, player]);
 
-    const alternar = () => {
+    // No Android, o player pode abrir o arquivo antes de o gravador terminar
+    // de escrevê-lo (fica "vazio" e não toca, mas o envio funciona). Na
+    // primeira vez que a pessoa toca em Ouvir, o arquivo é recarregado
+    const recarregado = useRef(false);
+    const alternar = async () => {
         if (status.playing) { player.pause(); return; }
         pararAudio();
         pararDeFalar();
+        // Igual ao ouvir das mensagens: saída de áudio de reprodução, não de gravação
+        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).catch(() => { });
+        if (!recarregado.current) {
+            player.replace({ uri });
+            recarregado.current = true;
+        } else if (status.duration > 0 && status.currentTime >= status.duration - 0.2) {
+            await player.seekTo(0).catch(() => { });
+        }
         player.play();
     };
 

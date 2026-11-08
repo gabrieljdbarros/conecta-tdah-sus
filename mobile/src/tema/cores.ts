@@ -5,12 +5,14 @@
  *    (19+ negrito = "texto grande"; 3,1:1), ou título grande sobre branco.
  *    Nunca texto pequeno
  *  - link (azul dos links do design): links, contorno, seleção e foco (7,1:1)
- *  - secundaria (verde-petróleo): "Ouvir" e rótulos pequenos (6,48:1)
+ *  - secundaria: "Ouvir", áudio e rótulos pequenos. Desde 08/11/2026 é o
+ *    MESMO azul do link (antes, verde-petróleo #006A63): só dois papéis de
+ *    cor, laranja = ação principal, azul = navegação e apoio (7,1:1)
  */
 export const cores = {
     destaque: '#FF5C00',
     link: '#0155A0',
-    secundaria: '#006A63',
+    secundaria: '#0155A0',
     texto: '#242424',
     textoSuave: '#5A5A5A',
     borda: '#737686',
@@ -34,4 +36,7 @@ export const medidas = {
     textoBotao: 19,
     raio: 12,
     espaco: 16,
+    /** Barra de abas flutuante: altura e distância do pé da tela */
+    barraAbas: 80,
+    margemBarraAbas: 12,
 } as const;

@@ -1,10 +1,11 @@
-import { ReactNode, Ref, useEffect, useState } from "react";
+import { createContext, ReactNode, Ref, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-    AccessibilityInfo, ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, ScrollView,
+    AccessibilityInfo, ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Pressable, ScrollView,
     StyleSheet, Text, TextInput, TextInputProps, View,
 } from "react-native";
-import { Edge, SafeAreaView } from "react-native-safe-area-context";
+import { Edge, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Ilustracao } from "~/componentes/ilustracoes";
 import { cores, medidas } from "~/tema/cores";
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
@@ -33,6 +34,49 @@ export function focarLeitor(elemento: View | null) {
 }
 
 /**
+ * Espaço livre no fim das telas das abas: a barra de abas FLUTUA por cima do
+ * conteúdo, então o último item precisa poder rolar até acima dela
+ */
+export function useEspacoBarraAbas() {
+    const { bottom } = useSafeAreaInsets();
+    return medidas.barraAbas + medidas.margemBarraAbas + bottom + 24;
+}
+
+/**
+ * Cabeçalho das telas (telas novas), no lugar da barra cinza: o nome do app
+ * pequeno em azul, o título grande e o girassol, como na Início. Nas telas
+ * que abrem por cima de outra, a seta de voltar (alvo de 48) à esquerda.
+ * O leitor de tela lê "Conecta TDAH SUS, título" como cabeçalho
+ */
+export function Cabecalho({ titulo, aoVoltar }: { titulo: string; aoVoltar?: () => void }) {
+    return (
+        // Sem linha embaixo: separa só pelo branco sobre o fundo da tela, igual à Início
+        <SafeAreaView edges={['top', 'left', 'right']} style={{ backgroundColor: '#FFFFFF' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: aoVoltar ? 4 : medidas.espaco, paddingRight: medidas.espaco, paddingVertical: 10 }}>
+                {aoVoltar && (
+                    <Pressable onPress={aoVoltar} accessibilityRole="button" accessibilityLabel="Voltar" hitSlop={4}
+                        android_ripple={{ color: '#E5E7EB', borderless: true }} style={estilos.olho}>
+                        <Ionicons name="arrow-back" size={28} color={cores.texto} />
+                    </Pressable>
+                )}
+                <View style={{ flex: 1 }} accessible accessibilityRole="header" accessibilityLabel={`Conecta TDAH SUS, ${titulo}`}>
+                    <Text maxFontSizeMultiplier={1.3} style={estilos.marca}>CONECTA TDAH SUS</Text>
+                    <Text numberOfLines={2} maxFontSizeMultiplier={1.3} style={{ fontSize: 24, fontWeight: '800', color: cores.texto }}>{titulo}</Text>
+                </View>
+                <Ilustracao nome="girassol" altura={44} />
+            </View>
+        </SafeAreaView>
+    );
+}
+
+/**
+ * Campo com foco: a Tela rola até ele ficar acima do teclado. Os campos
+ * avisam quando recebem o foco (o teclado pode já estar aberto, ao passar
+ * do e-mail para a senha)
+ */
+const TelaTeclado = createContext<() => void>(() => { });
+
+/**
  * Tela com rolagem, área segura e teclado.
  * - `branco`: fundo branco, obrigatório quando há título laranja (sobre o
  *   lilás do fundo o laranja cai para 2,9:1 e reprova)
@@ -40,20 +84,61 @@ export function focarLeitor(elemento: View | null) {
  *   status do celular (no Android atual o app ocupa a tela inteira)
  * - `emAba`: tela dentro das abas. A barra de abas já desvia dos botões do
  *   Android; sem isto, sobraria uma faixa vazia em cima dela
+ *
+ * TECLADO: em alguns Android (testado num Samsung com o Expo Go) o ajuste
+ * automático do React Native não move nada e o teclado cobre os campos.
+ * Por isso a própria tela cuida disso: com o teclado aberto, ganha um
+ * espaço no fim do tamanho dele (para poder rolar) e rola até o campo em
+ * uso ficar visível acima do teclado
  */
 export function Tela({ children, centralizar = false, branco = false, semCabecalho = false, emAba = false }: {
     children: ReactNode; centralizar?: boolean; branco?: boolean; semCabecalho?: boolean; emAba?: boolean;
 }) {
     const bordas: Edge[] = [...(semCabecalho ? ['top' as const] : []), ...(emAba ? [] : ['bottom' as const]), 'left', 'right'];
+    const espacoBarra = useEspacoBarraAbas();
+    const rolagem = useRef<ScrollView>(null);
+    const deslocamento = useRef(0);
+    // Topo do teclado na tela (null: fechado) e a altura dele
+    const topoTeclado = useRef<number | null>(null);
+    const [alturaTeclado, setAlturaTeclado] = useState(0);
+
+    const mostrarCampo = useCallback(() => {
+        // Espera o teclado e o espaço do fim aparecerem antes de medir
+        setTimeout(() => {
+            const campo = TextInput.State.currentlyFocusedInput();
+            const topo = topoTeclado.current;
+            if (!campo || topo === null) return;
+            campo.measureInWindow((_x, y, _l, altura) => {
+                const falta = y + altura + 24 - topo;
+                if (falta > 0) rolagem.current?.scrollTo({ y: deslocamento.current + falta, animated: true });
+            });
+        }, 120);
+    }, []);
+
+    useEffect(() => {
+        const abriu = Keyboard.addListener('keyboardDidShow', (e) => {
+            topoTeclado.current = e.endCoordinates.screenY;
+            setAlturaTeclado(e.endCoordinates.height);
+            mostrarCampo();
+        });
+        const fechou = Keyboard.addListener('keyboardDidHide', () => {
+            topoTeclado.current = null;
+            setAlturaTeclado(0);
+        });
+        return () => { abriu.remove(); fechou.remove(); };
+    }, [mostrarCampo]);
+
     return (
         <SafeAreaView style={[estilos.tela, branco && { backgroundColor: '#FFFFFF' }]} edges={bordas}>
-            {/* "padding" nos dois sistemas: o teclado não cobre o campo em uso */}
-            <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-                <ScrollView contentContainerStyle={[estilos.conteudo, centralizar && { flexGrow: 1, justifyContent: 'center' }]}
-                    keyboardShouldPersistTaps="handled">
+            <TelaTeclado.Provider value={mostrarCampo}>
+                <ScrollView ref={rolagem} contentContainerStyle={[estilos.conteudo, emAba && { paddingBottom: espacoBarra }, centralizar && { flexGrow: 1, justifyContent: 'center' }]}
+                    keyboardShouldPersistTaps="handled" scrollEventThrottle={16}
+                    onScroll={(e) => { deslocamento.current = e.nativeEvent.contentOffset.y; }}>
                     {children}
+                    {/* Espaço do tamanho do teclado: o último campo consegue subir acima dele */}
+                    {alturaTeclado > 0 && <View style={{ height: alturaTeclado }} />}
                 </ScrollView>
-            </KeyboardAvoidingView>
+            </TelaTeclado.Provider>
         </SafeAreaView>
     );
 }
@@ -119,17 +204,23 @@ export function Campo({ rotulo, erro, senha = false, ref, ...props }: TextInputP
 }) {
     const [mostrar, setMostrar] = useState(false);
     const [focado, setFocado] = useState(false);
+    const mostrarCampo = useContext(TelaTeclado);
+    // editable={false}: campo travado (ex.: e-mail no perfil), cinza com texto escuro (AA)
+    const travado = props.editable === false;
     return (
         <View style={estilos.grupoCampo}>
             <Text style={estilos.rotulo} accessibilityElementsHidden importantForAccessibility="no">{rotulo}</Text>
-            <View style={[estilos.caixaCampo, focado && estilos.caixaFocada, !!erro && estilos.caixaErro]}>
-                <TextInput {...props} ref={ref}
+            <View style={[estilos.caixaCampo, travado && estilos.caixaTravada, focado && estilos.caixaFocada, !!erro && estilos.caixaErro]}>
+                {/* Senha: sem maiúscula automática nem corretor (o teclado não muda nem
+                    aprende o que a pessoa digita). Vem antes de {...props}: a tela pode trocar */}
+                <TextInput {...(senha && { autoCapitalize: 'none' as const, autoCorrect: false, spellCheck: false })} {...props} ref={ref}
                     accessibilityLabel={erro ? `${rotulo}. Erro: ${erro}` : rotulo}
+                    accessibilityState={travado ? { disabled: true } : undefined}
                     secureTextEntry={senha && !mostrar}
                     placeholderTextColor={cores.borda}
-                    onFocus={(e) => { setFocado(true); props.onFocus?.(e); }}
+                    onFocus={(e) => { setFocado(true); mostrarCampo(); props.onFocus?.(e); }}
                     onBlur={(e) => { setFocado(false); props.onBlur?.(e); }}
-                    style={[estilos.entrada, props.multiline && { minHeight: 160, textAlignVertical: 'top' }]} />
+                    style={[estilos.entrada, travado && { color: cores.textoDesabilitado }, props.multiline && { minHeight: 160, textAlignVertical: 'top' }]} />
                 {senha && (
                     <Pressable onPress={() => setMostrar(!mostrar)} accessibilityRole="switch"
                         accessibilityLabel="Mostrar senha" accessibilityState={{ checked: mostrar }} style={estilos.olho}>
@@ -300,7 +391,11 @@ export const estilos = StyleSheet.create({
         minHeight: medidas.toque, borderWidth: 1, borderColor: cores.borda, borderRadius: medidas.raio,
         backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center',
     },
+    // Travado: fundo cinza-claro, borda clara; o texto #374151 fica em 9,6:1
+    caixaTravada: { backgroundColor: '#F3F4F6', borderColor: cores.bordaCartao },
     caixaFocada: { borderColor: cores.link, borderWidth: 2 },
+    // "CONECTA TDAH SUS" no topo das telas: azul dos links (7,1:1 sobre branco)
+    marca: { fontSize: 16, fontWeight: '700', letterSpacing: 0.5, color: cores.link },
     caixaErro: { borderColor: cores.erro, borderWidth: 2 },
     entrada: { flex: 1, fontSize: medidas.texto, color: cores.texto, paddingHorizontal: 12, paddingVertical: 10, minHeight: medidas.toque },
     olho: { width: medidas.toque, height: medidas.toque, alignItems: 'center', justifyContent: 'center' },

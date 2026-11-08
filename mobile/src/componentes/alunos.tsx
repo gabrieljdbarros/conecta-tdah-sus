@@ -2,7 +2,7 @@ import { ReactElement, useRef, useState } from "react";
 import { FlatList, KeyboardAvoidingView, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { estilos as base } from "~/componentes/basicos";
+import { estilos as base, useEspacoBarraAbas } from "~/componentes/basicos";
 import { CartaoPasta, estilos, InfoConversa } from "~/componentes/cartoes";
 import { cores } from "~/tema/cores";
 import { buscarPastas, quandoFoi, quemEstaNaPasta, temMensagemNova } from "@/helpers/recentes";
@@ -84,11 +84,13 @@ export function ListaAlunos({ pastas, ultimas, vistas, meuUid, cabecalho, conver
 }) {
     const [busca, setBusca] = useState('');
     const achados = buscarPastas(pastas, busca);
+    // A lista fica numa aba: o último cartão rola até acima da barra flutuante
+    const espacoBarra = useEspacoBarraAbas();
     return (
         <SafeAreaView style={base.tela} edges={['left', 'right']}>
             <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
                 <FlatList data={achados} keyExtractor={(p) => p.id}
-                    contentContainerStyle={base.conteudo} keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={[base.conteudo, { paddingBottom: espacoBarra }]} keyboardShouldPersistTaps="handled"
                     ListHeaderComponent={
                         <View style={{ gap: 12 }}>
                             {cabecalho}

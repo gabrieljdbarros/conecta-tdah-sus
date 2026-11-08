@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { Redirect, router } from "expo-router";
 import { Botao, LinkTexto, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
 import { Ilustracao } from "~/componentes/ilustracoes";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 
 /**
@@ -22,7 +22,7 @@ export default function BoasVindas() {
                 <View style={{ alignSelf: 'stretch' }}>
                     <Paragrafo>Família, escola e saúde juntas no cuidado com a criança.</Paragrafo>
                 </View>
-                <BotaoOuvir rotulo="Ouvir instruções" texto="Bem-vindo ao Conecta TDAH SUS. Aqui a família, a escola e a saúde conversam juntas sobre a criança. Para criar a sua conta, toque em Cadastrar. Se você já tem conta, toque em Já tenho conta, entrar." />
+                <BotaoInstrucoes texto="Bem-vindo ao Conecta TDAH SUS. Aqui a família, a escola e a saúde conversam juntas sobre a criança. Para criar a sua conta, toque em Cadastrar. Se você já tem conta, toque em Já tenho conta, entrar." />
             </View>
             <View style={{ gap: 8, marginTop: 24 }}>
                 <Botao titulo="Cadastrar" icone="person-add-outline" aoTocar={() => router.push('/cadastro')} />

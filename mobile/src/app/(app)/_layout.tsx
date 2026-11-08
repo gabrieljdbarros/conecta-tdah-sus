@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Redirect, Stack } from "expo-router";
 import { limparGravacoesEsquecidas } from "~/componentes/audio";
-import { Carregando, Tela } from "~/componentes/basicos";
+import { Cabecalho, Carregando, Tela } from "~/componentes/basicos";
 import { useAuth } from "~/contexto/AuthContext";
 import { cores } from "~/tema/cores";
 
@@ -11,6 +11,16 @@ import { cores } from "~/tema/cores";
  * As abas ficam em (abas); as telas que se abrem por cima delas (pasta,
  * criar pasta...) ficam aqui, com a seta de voltar na barra do topo
  */
+/**
+ * Cabeçalho das telas novas (girassol, sem a barra cinza), com a seta de
+ * voltar. O chat continua com o topo próprio dele (nome do aluno e Pessoas)
+ */
+const cabecalhoNovo = {
+    header: ({ options, navigation, back }: { options: { title?: string }; navigation: { goBack: () => void }; back?: object }) => (
+        <Cabecalho titulo={options.title ?? ''} aoVoltar={back ? () => navigation.goBack() : undefined} />
+    ),
+};
+
 export default function LayoutLogado() {
     const { user, carregando } = useAuth();
     // Celular compartilhado: não deixa gravação de voz esquecida no aparelho
@@ -27,8 +37,11 @@ export default function LayoutLogado() {
             headerBackButtonDisplayMode: 'minimal',
         }}>
             <Stack.Screen name="(abas)" options={{ headerShown: false }} />
-            <Stack.Screen name="pasta/[id]/index" options={{ title: 'Pasta do aluno' }} />
-            <Stack.Screen name="entrar-pasta" options={{ title: 'Entrar com convite' }} />
+            <Stack.Screen name="pasta/[id]/index" options={{ ...cabecalhoNovo, title: 'Pasta do aluno' }} />
+            <Stack.Screen name="pasta/[id]/vinculos" options={{ ...cabecalhoNovo, title: 'Vínculos' }} />
+            <Stack.Screen name="pasta/[id]/questionario/index" options={{ ...cabecalhoNovo, title: 'Questionário SNAP-IV' }} />
+            <Stack.Screen name="pasta/[id]/questionario/responder" options={{ ...cabecalhoNovo, title: 'Responder questionário' }} />
+            <Stack.Screen name="entrar-pasta" options={{ ...cabecalhoNovo, title: 'Entrar com convite' }} />
         </Stack>
     );
 }

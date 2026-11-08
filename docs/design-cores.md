@@ -49,12 +49,25 @@ O mínimo é 4,5:1 para texto normal e 3:1 para texto grande (19px em negrito ou
 |---|---|---|
 | `--cor-destaque` | `#FF5C00` | **fundo** (botão principal, menu ativo), com texto branco **19px negrito**; como cor de texto, só em **título grande** (24px ou mais, negrito) sobre fundo **branco** |
 | `--cor-link` | `#0155A0` | links, botões de contorno, item selecionado, anel de foco |
-| `--cor-secundaria` | `#006A63` | botão "Ouvir" |
+| `--cor-secundaria` | `#0155A0` | botão "Ouvir", áudio e ações de apoio (igual ao link desde 08/11/2026) |
 | `--cor-borda` | `#737686` | borda e placeholder dos campos, sempre sobre fundo branco (4,5:1) |
 | `--cor-texto` / `--cor-texto-suave` | `#242424` / `#5A5A5A` | texto |
 | `--background-secondary` / `--background-primary` | `#FAF8FF` / `#FFFFFF` | fundo das telas / dos cartões |
 
 Erro (`#B91C1C`) e sucesso (`#166534`) continuam os anteriores: a paleta não define essas cores.
+
+## Dois papéis de cor (08/11/2026)
+
+Com laranja, azul e verde-petróleo nas mesmas telas, faltava unidade. A
+secundária passou a usar o **mesmo azul** `#0155A0` do link: **laranja chama
+para a ação principal; azul é navegação e apoio** (Ouvir, áudio, seleção).
+A mesma cor sempre quer dizer o mesmo tipo de coisa, o que ajuda quem tem
+baixa alfabetização. As barras do gráfico do questionário (app) também são
+azuis, em dois tons: `#0155A0` (desatenção) e `#3A7BD5` (hiperatividade e
+impulsividade; 3,4:1 contra o trilho cinza `#E5E7EB`, o tom mais claro que
+passa nos 3:1). Quem diferencia os grupos é o nome escrito; sem cor de
+"alerta", a tela não sugere que um grupo é "pior". O verde-petróleo
+`#006A63` não é mais usado.
 
 ## Se for preciso mudar
 

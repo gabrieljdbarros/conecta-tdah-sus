@@ -5,7 +5,7 @@ import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router"
 import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, estilos as base, focarLeitor, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { ItemPergunta, useReduzirAnimacoes } from "~/componentes/questionario";
 import { useAuth } from "~/contexto/AuthContext";
 import { usePasta } from "~/ganchos/usePasta";
@@ -170,7 +170,7 @@ export default function ResponderQuestionario() {
                     {parte === 0 && (
                         <>
                             <Paragrafo>Para cada frase, escolha o quanto ela descreve o aluno.</Paragrafo>
-                            <BotaoOuvir rotulo="Ouvir instruções" texto={
+                            <BotaoInstrucoes texto={
                                 'Para cada frase, escolha o quanto ela descreve o aluno: nada, pouco, muito ou demais. '
                                 + `São 18 frases, em ${PARTES.length} partes. Toque em Ouvir pergunta para escutar cada uma. `
                                 + 'As respostas só são guardadas quando você toca em Concluir, no fim.'} />

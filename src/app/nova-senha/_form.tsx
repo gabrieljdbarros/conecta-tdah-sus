@@ -85,7 +85,7 @@ export default function NovaSenhaForm() {
                 >
                     {({ handleChange, handleSubmit, isSubmitting, errors, submitCount }) => (
                         <form onSubmit={handleSubmit} className="flex flex-col">
-                            <AppLogo className="mb-10 lg:hidden" largura={260} prioridade />
+                            <AppLogo className="mb-8 lg:hidden" largura={140} prioridade />
                             <h1 ref={tituloRef} tabIndex={-1} className={CLASSE_TITULO}>Criar nova senha</h1>
                             <p className="ff-default text-[18px] leading-relaxed text-(--cor-texto) mt-2 mb-3">Escolha uma senha nova para a sua conta.</p>
                             <AppOuvir rotulo="Ouvir instruções" className="self-start mb-3"
