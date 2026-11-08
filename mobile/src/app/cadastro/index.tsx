@@ -2,7 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { Redirect, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Paragrafo, Tela, Titulo } from "~/componentes/basicos";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import { cores, medidas } from "~/tema/cores";
 import { UserRole } from "@/types/user";
@@ -28,7 +28,7 @@ export default function EscolherPerfil() {
         <Tela branco>
             <Titulo>Como você deseja participar?</Titulo>
             <Paragrafo suave>Escolha o perfil que melhor representa você.</Paragrafo>
-            <BotaoOuvir rotulo="Ouvir instruções" texto="Escolha quem você é. Se você é mãe, pai ou responsável pela criança, toque em Mãe ou responsável. Se você é da escola, toque em Escola ou professor. Se você é médico, toque em Profissional de psiquiatria." />
+            <BotaoInstrucoes texto="Escolha quem você é. Se você é mãe, pai ou responsável pela criança, toque em Mãe ou responsável. Se você é da escola, toque em Escola ou professor. Se você é médico, toque em Profissional de psiquiatria." />
             <View style={{ gap: 12 }}>
                 {PERFIS.map((p) => (
                     <Pressable key={p.valor} onPress={() => router.push({ pathname: '/cadastro/dados', params: { perfil: p.valor } })}

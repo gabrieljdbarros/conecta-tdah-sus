@@ -2,7 +2,8 @@ import { Tabs } from "expo-router";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { cores } from "~/tema/cores";
+import { Cabecalho } from "~/componentes/basicos";
+import { cores, medidas } from "~/tema/cores";
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -14,7 +15,7 @@ const aba = (titulo: string, icone: NomeIcone, iconeAberto: NomeIcone) => ({
             style={{ fontSize: 16, fontWeight: focused ? '700' : '500', color: focused ? cores.texto : cores.textoSuave }}>{titulo}</Text>
     ),
     tabBarAccessibilityLabel: titulo,
-    // Aba aberta (design da Daya): o ícone ganha uma "pílula" de fundo claro.
+    // Aba aberta (telas novas): o ícone ganha uma "pílula" de fundo claro.
     // Azul sobre o fundo claro: 6,6:1. A pista não fica só na cor: o nome
     // embaixo fica em negrito, e o leitor de tela diz "selecionado"
     tabBarIcon: ({ focused }: { focused: boolean }) => (
@@ -26,25 +27,36 @@ const aba = (titulo: string, icone: NomeIcone, iconeAberto: NomeIcone) => ({
 
 /**
  * Abas no rodapé (RF15): Início · Pastas · Perfil, com o NOME embaixo de
- * cada ícone (público com baixa alfabetização). Três itens, decidido em
- * 06/11/2026 com as telas da Daya: as conversas recentes ficam na Início
- * e a lista completa (com busca e a marca de "nova") na aba Pastas
+ * cada ícone (público com baixa alfabetização; o protótipo só tem ícones).
+ * Três itens, decidido em 06/11/2026 com as telas novas: as conversas
+ * recentes ficam na Início e a lista completa (com busca e a marca de
+ * "nova") na aba Pastas.
+ * A barra FLUTUA (telas novas): pílula branca arredondada, com sombra,
+ * acima dos botões do Android. As telas das abas deixam espaço no fim para
+ * o último item não ficar embaixo dela (useEspacoBarraAbas)
  */
 export default function LayoutAbas() {
-    // Espaço dos botões do Android (voltar, início...) ou da barra de gestos:
-    // a barra de abas fica ACIMA deles, com a altura certa para ícone + nome
     const { bottom } = useSafeAreaInsets();
     return (
         <Tabs screenOptions={{
-            headerStyle: { backgroundColor: cores.barraTopo },
-            headerTitleStyle: { color: cores.tituloBarra, fontSize: 20, fontWeight: '600' },
+            // Sem a barra cinza: o cabeçalho das telas novas, com o girassol
+            header: ({ options }) => <Cabecalho titulo={options.title ?? ''} />,
             sceneStyle: { backgroundColor: cores.fundo },
-            tabBarStyle: { height: 76 + bottom, paddingTop: 8, paddingBottom: bottom + 8, borderTopColor: cores.bordaCartao },
-            tabBarItemStyle: { gap: 4 },
+            // Com o teclado aberto (ex.: Perfil), a barra some e não cobre o campo em uso
+            tabBarHideOnKeyboard: true,
+            tabBarStyle: {
+                position: 'absolute', bottom: bottom + medidas.margemBarraAbas, marginHorizontal: 20,
+                height: medidas.barraAbas, paddingTop: 8, paddingBottom: 8,
+                borderRadius: medidas.barraAbas / 2, borderTopWidth: 0, backgroundColor: '#FFFFFF',
+                shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8,
+            },
+            // A pílula desvia dos botões do Android pela posição (bottom), e a
+            // altura e o espaço interno fixos acima substituem os da biblioteca
+            tabBarItemStyle: { gap: 4, borderRadius: medidas.barraAbas / 2 },
         }}>
             <Tabs.Screen name="inicio" options={{ ...aba('Início', 'home-outline', 'home'), headerShown: false }} />
-            <Tabs.Screen name="pastas" options={aba('Pastas', 'folder-outline', 'folder')} />
-            <Tabs.Screen name="perfil" options={{ ...aba('Perfil', 'person-outline', 'person'), title: 'Meu perfil' }} />
+            <Tabs.Screen name="pastas" options={{ ...aba('Pastas', 'folder-outline', 'folder'), title: 'Minhas pastas', tabBarAccessibilityLabel: 'Pastas' }} />
+            <Tabs.Screen name="perfil" options={{ ...aba('Perfil', 'person-outline', 'person'), title: 'Meu perfil', tabBarAccessibilityLabel: 'Perfil' }} />
         </Tabs>
     );
 }

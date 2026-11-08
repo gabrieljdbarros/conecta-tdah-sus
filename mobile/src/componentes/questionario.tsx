@@ -87,10 +87,16 @@ export function ItemPergunta({ pergunta, valor, aoEscolher, bloqueado = false, r
     );
 }
 
-/** Cor de cada grupo: as duas passam de 3:1 contra o trilho cinza (WCAG 1.4.11) */
+/**
+ * Barras em dois tons de AZUL (08/11/2026): seguem os dois papéis de cor do
+ * app e não sugerem que um grupo é "pior" (sem interpretação, decisão 11).
+ * O tom ajuda a separar os grupos, mas quem diferencia é o nome escrito em
+ * cima. Contra o trilho cinza #E5E7EB (WCAG 1.4.11, mínimo 3:1): #0155A0
+ * 6,0:1; #3A7BD5 3,4:1 (o azul mais claro que ainda passa)
+ */
 const COR_GRUPO: Record<GrupoSintomas, string> = {
     desatencao: cores.link,
-    hiperatividadeImpulsividade: cores.secundaria,
+    hiperatividadeImpulsividade: '#3A7BD5',
 };
 const GRUPOS: GrupoSintomas[] = ['desatencao', 'hiperatividadeImpulsividade'];
 
@@ -119,8 +125,9 @@ export function BarrasSintomas({ questionario }: { questionario: Questionario })
             {GRUPOS.map((grupo) => (
                 <View key={grupo} accessible accessibilityRole="text"
                     accessibilityLabel={`${TITULO_GRUPO[grupo]}: ${deNove(contagem[grupo])} marcadas como Muito ou Demais`} style={{ gap: 4 }}>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}>
-                        <Text style={estilos.texto}>{TITULO_GRUPO[grupo]}</Text>
+                    {/* Nome à esquerda (quebra a linha se for longo) e o número sempre à direita, nos dois grupos */}
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+                        <Text style={[estilos.texto, { flexShrink: 1 }]}>{TITULO_GRUPO[grupo]}</Text>
                         <Text style={[estilos.texto, { fontWeight: '700' }]}>{deNove(contagem[grupo])}</Text>
                     </View>
                     {/* Trilho com borda: mostra o tamanho total mesmo com 0 */}

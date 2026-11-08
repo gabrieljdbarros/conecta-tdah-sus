@@ -5,7 +5,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { Aviso, Botao, Campo, Janela, LinkTexto, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
 import { Ilustracao } from "~/componentes/ilustracoes";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
 import { cores } from "~/tema/cores";
@@ -82,7 +82,7 @@ export default function Entrar() {
                         <View style={{ gap: 12 }}>
                             <Titulo destaque>Bem-vindo de volta!</Titulo>
                             <Paragrafo>Entre na sua conta para continuar conectado.</Paragrafo>
-                            <BotaoOuvir rotulo="Ouvir instruções" texto="Para entrar, escreva o seu e-mail e a sua senha e toque em Entrar. Se esqueceu a senha, toque em Esqueci minha senha. Se ainda não tem conta, toque em Não tem conta? Cadastre-se." />
+                            <BotaoInstrucoes texto="Para entrar, escreva o seu e-mail e a sua senha e toque em Entrar. Se esqueceu a senha, toque em Esqueci minha senha. Se ainda não tem conta, toque em Não tem conta? Cadastre-se." />
                             <Campo ref={refEmail} rotulo="E-mail" value={values.email} onChangeText={handleChange('email')}
                                 keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress"
                                 placeholder="Digite seu e-mail" erro={submitCount > 0 ? errors.email : undefined} />

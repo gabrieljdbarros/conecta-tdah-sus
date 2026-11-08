@@ -1,11 +1,13 @@
 import { useCallback, useState } from "react";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { Aviso, Botao, Carregando, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
+import { Aviso, Botao, Carregando, Tela, Titulo } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
-import { BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
+import { BotaoInstrucoes, BotaoOuvir, SemVozLocal, useVozDisponivel } from "~/componentes/ouvir";
 import { BarrasSintomas, resultadoPorExtenso } from "~/componentes/questionario";
 import { usePasta } from "~/ganchos/usePasta";
+import { cores } from "~/tema/cores";
 import QuestionarioServicos from "~/servicos/questionario";
 import { FONTE_QUESTIONARIO } from "@/helpers/questionario";
 import { Questionario } from "@/types/questionario";
@@ -36,7 +38,7 @@ export default function ResultadoQuestionario() {
         return () => { ativo = false; };
     }, [id]));
 
-    const titulo = <Stack.Screen options={{ title: 'Questionário' }} />;
+    const titulo = <Stack.Screen options={{ title: 'Questionário SNAP-IV' }} />;
     if (carregando || (questionarios === null && !erro)) return <Tela>{titulo}<Carregando texto="Abrindo o questionário..." /></Tela>;
     if (!pasta || !papel) return <Tela>{titulo}<Aviso tipo="erro" texto="não foi possível abrir o questionário desta pasta." /></Tela>;
 
@@ -45,18 +47,21 @@ export default function ResultadoQuestionario() {
 
     return (
         <Tela>
+            {/* O nome "Questionário SNAP-IV" fica só no cabeçalho do topo (telas novas) */}
             {titulo}
-            <Titulo>Questionário SNAP-IV</Titulo>
-            <BotaoOuvir rotulo="Ouvir instruções" texto={
-                'São 18 perguntas sobre atenção, agitação e impulsividade do aluno, respondidas pela família. '
-                + 'Para cada data, o gráfico mostra quantas perguntas foram marcadas como Muito ou Demais, em dois grupos: '
-                + 'desatenção, e hiperatividade e impulsividade. ' + TRIAGEM
-                + (ehMae ? ' Para responder, toque em Responder o questionário.' : '')} />
-            <Paragrafo>
-                18 perguntas sobre atenção, agitação e impulsividade do aluno, respondidas pela família.
-                O gráfico mostra quantas foram marcadas como “Muito” ou “Demais”.
-            </Paragrafo>
-            <Aviso tipo="info" texto={TRIAGEM} silencioso />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={[estilos.texto, { flex: 1 }]}>18 perguntas sobre atenção e agitação do aluno, respondidas pela família.</Text>
+                <BotaoInstrucoes texto={
+                    'São 18 perguntas sobre atenção, agitação e impulsividade do aluno, respondidas pela família. '
+                    + 'Para cada data, o gráfico mostra quantas perguntas foram marcadas como Muito ou Demais, em dois grupos: '
+                    + 'desatenção, e hiperatividade e impulsividade. ' + TRIAGEM
+                    + (ehMae ? ' Para responder, toque em Responder o questionário.' : '')} />
+            </View>
+            {/* Triagem, não diagnóstico (decisão 11): continua visível, numa linha só */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessible>
+                <Ionicons name="information-circle-outline" size={22} color={cores.link} importantForAccessibility="no" />
+                <Text style={[estilos.suave, { flex: 1 }]}>{TRIAGEM}</Text>
+            </View>
 
             {ehMae && <Botao titulo="Responder o questionário" icone="create" aoTocar={() => router.push(`/pasta/${pasta.id}/questionario/responder` as never)} />}
 
@@ -68,9 +73,12 @@ export default function ResultadoQuestionario() {
 
             {lista.length > 0 && (
                 <>
-                    <Titulo nivel={2}>Respostas</Titulo>
-                    {/* O resultado é dado de saúde: só com voz que roda no aparelho (decisão 9) */}
-                    <BotaoOuvir rotulo="Ouvir resultado" conteudo disponivel={vozLocal} texto={lista.map(resultadoPorExtenso).join(' ')} />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
+                        <Titulo nivel={2}>Respostas</Titulo>
+                        {/* O resultado é dado de saúde: só com voz que roda no aparelho (decisão 9) */}
+                        <BotaoOuvir rotulo="Ouvir resultado" pequeno conteudo disponivel={vozLocal} texto={lista.map(resultadoPorExtenso).join(' ')} />
+                    </View>
+                    <Text style={estilos.suave}>Perguntas marcadas como “Muito” ou “Demais”, em cada data.</Text>
                     {vozLocal === false && <SemVozLocal oQue="o resultado" />}
                     {lista.map((q) => <BarrasSintomas key={q.id} questionario={q} />)}
                 </>

@@ -4,7 +4,7 @@ import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { anunciar, Aviso, Botao, Campo, LinkTexto, Paragrafo, Segmentado, Tela, Titulo } from "~/componentes/basicos";
-import { BotaoOuvir } from "~/componentes/ouvir";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
 import { DadosPerfil, UserRole } from "@/types/user";
@@ -121,7 +121,7 @@ export default function Cadastro() {
                         <View style={{ gap: 12 }}>
                             <Titulo>Crie sua conta</Titulo>
                             <Paragrafo suave>Preencha seus dados para começar a usar o Conecta TDAH SUS.</Paragrafo>
-                            <BotaoOuvir rotulo="Ouvir instruções" texto="Confira se o seu perfil está certo nas opções do topo: Responsável, Escola ou Médico. Escreva o seu nome completo e o seu e-mail. Responda as perguntas do seu perfil. Depois crie uma senha com pelo menos oito letras ou números e repita a senha. No fim, toque em Cadastrar." />
+                            <BotaoInstrucoes texto="Confira se o seu perfil está certo nas opções do topo: Responsável, Escola ou Médico. Escreva o seu nome completo e o seu e-mail. Responda as perguntas do seu perfil. Depois crie uma senha com pelo menos oito letras ou números e repita a senha. No fim, toque em Cadastrar." />
 
                             <Segmentado<Perfil> rotulo="Como você deseja participar?" valor={values.role as Perfil}
                                 // Troca de perfil: os erros antigos (de campos que sumiram) saem da contagem

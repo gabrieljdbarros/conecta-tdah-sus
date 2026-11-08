@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
-import { Alert, Text, TextInput, View } from "react-native";
+import { Alert, TextInput, View } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { anunciar, Aviso, Botao, Campo, Tela, Titulo } from "~/componentes/basicos";
-import { BotaoOuvir } from "~/componentes/ouvir";
-import { estilos } from "~/componentes/cartoes";
+import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
 import { DadosPerfil, ROLE_LABELS } from "@/types/user";
@@ -52,17 +51,6 @@ export default function Perfil() {
 
     return (
         <Tela emAba>
-            <View style={[estilos.cartao, { gap: 8 }]}>
-                <View accessible accessibilityLabel={`E-mail: ${user.email}. Não pode ser alterado.`}>
-                    <Text style={estilos.suave}>E-mail (não pode ser alterado)</Text>
-                    <Text style={estilos.texto}>{user.email}</Text>
-                </View>
-                <View accessible accessibilityLabel={`Perfil: ${ROLE_LABELS[user.role]}. Não pode ser alterado.`}>
-                    <Text style={estilos.suave}>Perfil (não pode ser alterado)</Text>
-                    <Text style={estilos.texto}>{ROLE_LABELS[user.role]}</Text>
-                </View>
-            </View>
-
             <Formik initialValues={iniciais} validationSchema={esquema} enableReinitialize
                 onSubmit={async (v) => {
                     setAviso(null);
@@ -94,8 +82,11 @@ export default function Perfil() {
                     return (
                         <View style={{ gap: 12 }}>
                             <Titulo nivel={2}>Seus dados</Titulo>
-                            <BotaoOuvir rotulo="Ouvir instruções" texto="Aqui você muda o seu nome e os seus dados. Depois toque em Salvar alterações. Para sair, toque em Sair do aplicativo, lá embaixo." />
+                            <BotaoInstrucoes texto="Aqui você muda o seu nome e os seus dados. O e-mail e o perfil, em cinza, não podem ser mudados. Depois toque em Salvar alterações. Para sair, toque em Sair do aplicativo, lá embaixo." />
                             <Campo ref={registrar('nome')} rotulo="Nome" value={values.nome} onChangeText={mudar('nome')} autoComplete="name" erro={e('nome')} />
+                            {/* E-mail e perfil: junto dos outros campos, travados e em cinza (as regras do banco também recusam a mudança) */}
+                            <Campo rotulo="E-mail (não pode ser alterado)" value={user.email ?? ''} editable={false} />
+                            <Campo rotulo="Perfil (não pode ser alterado)" value={ROLE_LABELS[user.role]} editable={false} />
                             {papel === 'mae' && (
                                 <Campo ref={registrar('grauParentesco')} rotulo="Grau de parentesco" value={values.grauParentesco} onChangeText={mudar('grauParentesco')} erro={e('grauParentesco')} />
                             )}
