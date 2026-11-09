@@ -26,6 +26,9 @@
       ],
       "@/helpers/recentes": [
         "../src/helpers/recentes"
+      ],
+      "@/helpers/sobre": [
+        "../src/helpers/sobre"
       ]
     }
   },

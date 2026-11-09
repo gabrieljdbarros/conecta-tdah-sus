@@ -2,7 +2,7 @@
 import AppMenuItem from "./menu-item";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROLE_LABELS } from "@/types/user";
-import { AppSair, itensDoMenu } from "./navegacao";
+import { AppLinkSobre, AppSair, itensDoMenu } from "./navegacao";
 import AppLogo from "./logo";
 
 /**
@@ -30,7 +30,8 @@ export default function AppMenu() {
                 {itensDoMenu(user).map((item) => <AppMenuItem key={item.url} {...item} />)}
             </nav>
 
-            {/* No celular (só o admin vê este menu), o nome "Sair" fica para o leitor de tela */}
+            {/* No celular (só o admin vê este menu), os nomes "Sobre" e "Sair" ficam para o leitor de tela */}
+            <AppLinkSobre className="mb-2 w-full [&>span]:sr-only md:[&>span]:not-sr-only" />
             <AppSair className="mb-[50px] w-full [&>span]:sr-only md:[&>span]:not-sr-only" />
         </div>
     )

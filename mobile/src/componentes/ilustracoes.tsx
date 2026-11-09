@@ -15,6 +15,9 @@ const IMAGENS = {
     abelha: { fonte: require('../../assets/ilustracoes/abelha.png'), proporcao: 186 / 132 },
     brilho: { fonte: require('../../assets/ilustracoes/brilho.png'), proporcao: 48 / 72 },
     pastaVazia: { fonte: require('../../assets/ilustracoes/pasta-vazia.png'), proporcao: 462 / 360 },
+    // Logos da tela Sobre (recortados e reduzidos: pouco peso no app)
+    cesmacCitec: { fonte: require('../../assets/ilustracoes/cesmac-citec.png'), proporcao: 264 / 240 },
+    cesmac: { fonte: require('../../assets/ilustracoes/cesmac.png'), proporcao: 600 / 172 },
 } as const;
 
 export type NomeIlustracao = keyof typeof IMAGENS;

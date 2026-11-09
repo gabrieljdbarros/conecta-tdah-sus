@@ -1,4 +1,4 @@
-import { AppMainContainer, AppSair } from "@/themes/components";
+import { AppLinkSobre, AppMainContainer, AppSair } from "@/themes/components";
 import EditarPerfilForm from "./_form";
 
 export const metadata = {
@@ -13,8 +13,9 @@ export default async function EditarPerfilPage({ params }: { params: Promise<{ u
     return (
         <AppMainContainer title="Meu perfil">
             <EditarPerfilForm userID={userID} />
-            {/* No celular não há menu lateral: o "Sair" fica aqui, na aba Perfil */}
-            <AppSair semMenuLateral className="md:hidden mt-8 mx-auto" />
+            {/* No celular não há menu lateral: "Sobre o aplicativo" e "Sair" ficam aqui, na aba Perfil */}
+            <AppLinkSobre semMenuLateral className="md:hidden mt-8 mx-auto" />
+            <AppSair semMenuLateral className="md:hidden mt-2 mx-auto" />
         </AppMainContainer>
     )
 }
