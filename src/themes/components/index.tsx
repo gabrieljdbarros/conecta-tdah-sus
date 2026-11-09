@@ -9,5 +9,5 @@ export { default as AppLoader } from './loader';
 export { default as AppOuvir, useVozDisponivel } from './ouvir';
 export { default as AppOuvirAudio } from './audio';
 export { default as AppBarraInferior } from './barra-inferior';
-export { AppSair } from './navegacao';
+export { AppLinkSobre, AppSair } from './navegacao';
 export { default as AppLogo } from './logo';

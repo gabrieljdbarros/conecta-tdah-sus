@@ -42,6 +42,7 @@ export default function LayoutLogado() {
             <Stack.Screen name="pasta/[id]/questionario/index" options={{ ...cabecalhoNovo, title: 'Questionário SNAP-IV' }} />
             <Stack.Screen name="pasta/[id]/questionario/responder" options={{ ...cabecalhoNovo, title: 'Responder questionário' }} />
             <Stack.Screen name="entrar-pasta" options={{ ...cabecalhoNovo, title: 'Entrar com convite' }} />
+            <Stack.Screen name="sobre" options={{ ...cabecalhoNovo, title: 'Sobre o aplicativo' }} />
         </Stack>
     );
 }

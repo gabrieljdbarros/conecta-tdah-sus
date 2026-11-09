@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Alert, TextInput, View } from "react-native";
+import { router } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { anunciar, Aviso, Botao, Campo, Tela, Titulo } from "~/componentes/basicos";
@@ -82,7 +83,7 @@ export default function Perfil() {
                     return (
                         <View style={{ gap: 12 }}>
                             <Titulo nivel={2}>Seus dados</Titulo>
-                            <BotaoInstrucoes texto="Aqui você muda o seu nome e os seus dados. O e-mail e o perfil, em cinza, não podem ser mudados. Depois toque em Salvar alterações. Para sair, toque em Sair do aplicativo, lá embaixo." />
+                            <BotaoInstrucoes texto="Aqui você muda o seu nome e os seus dados. O e-mail e o perfil, em cinza, não podem ser mudados. Depois toque em Salvar alterações. Lá embaixo, Sobre o aplicativo conta quem fez o aplicativo, e Sair do aplicativo sai da sua conta neste celular." />
                             <Campo ref={registrar('nome')} rotulo="Nome" value={values.nome} onChangeText={mudar('nome')} autoComplete="name" erro={e('nome')} />
                             {/* E-mail e perfil: junto dos outros campos, travados e em cinza (as regras do banco também recusam a mudança) */}
                             <Campo rotulo="E-mail (não pode ser alterado)" value={user.email ?? ''} editable={false} />
@@ -107,8 +108,13 @@ export default function Perfil() {
                 }}
             </Formik>
 
-            {/* Sair (celular compartilhado: sair é importante), com confirmação */}
+            {/* Sobre o aplicativo (RF15): quem fez o app; fora da barra de abas, que já está cheia */}
             <View style={{ marginTop: 24 }}>
+                <Botao titulo="Sobre o aplicativo" tipo="contorno" icone="information-circle-outline" aoTocar={() => router.push('/sobre')} />
+            </View>
+
+            {/* Sair (celular compartilhado: sair é importante), com confirmação */}
+            <View style={{ marginTop: 12 }}>
                 <Botao titulo="Sair do aplicativo" tipo="contorno" icone="log-out-outline" aoTocar={confirmarSaida} />
             </View>
         </Tela>

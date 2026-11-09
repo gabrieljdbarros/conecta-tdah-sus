@@ -1,5 +1,6 @@
 "use client";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppUser } from "@/types/user";
 import { Ionicons } from "@/types/ionicos";
@@ -64,5 +65,24 @@ export function AppSair({ className = '', semMenuLateral = false }: { className?
             <i className="ion-log-out" aria-hidden="true" />
             <span>Sair</span>
         </button>
+    );
+}
+
+/**
+ * Link "Sobre o aplicativo" (RF15): fica perto do "Sair", no menu lateral
+ * e, no celular, na tela de perfil. Fora da barra de abas, que já está cheia
+ */
+export function AppLinkSobre({ className = '', semMenuLateral = false }: { className?: string, semMenuLateral?: boolean }) {
+    const { user } = useAuth();
+    const aberto = usePathname() === '/admin/sobre';
+    // O admin já tem o link no menu lateral, inclusive no celular
+    if (semMenuLateral && user?.role === 'admin') return null;
+
+    return (
+        <Link href="/admin/sobre" aria-current={aberto ? 'page' : undefined}
+            className={`min-h-[48px] px-4 flex items-center justify-center gap-2 text-[18px] text-(--cor-link) font-bold ${className}`}>
+            <i className="ion-information-circled" aria-hidden="true" />
+            <span>Sobre o aplicativo</span>
+        </Link>
     );
 }
