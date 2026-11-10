@@ -1,8 +1,7 @@
 import { ReactElement, useState } from "react";
 import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Aviso, Botao, Carregando, estilos as estilosBasicos, Paragrafo, Tela } from "~/componentes/basicos";
+import { Aviso, Botao, Carregando, Paragrafo, Tela, TopoDaAba } from "~/componentes/basicos";
 import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { CampoBusca, infoConversa, ResultadoBusca } from "~/componentes/alunos";
 import { CartaoPasta, EstadoVazio, estilos, Secao } from "~/componentes/cartoes";
@@ -42,23 +41,14 @@ export default function Inicio() {
 
     return (
         <View style={{ flex: 1, backgroundColor: cores.fundo }}>
-            <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 }}>
-                    <View style={{ flex: 1 }} accessible accessibilityRole="header">
-                        <Text style={estilosBasicos.marca}>CONECTA TDAH SUS</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            {/* Nome em laranja (realce): passa no AA porque é letra grande (28, negrito) sobre branco */}
-                            <Text style={{ fontSize: 28, fontWeight: '800', color: cores.texto, flexShrink: 1 }}>
-                                {primeiroNome ? <>Olá, <Text style={{ color: cores.destaque }}>{primeiroNome}</Text>!</> : 'Início'}
-                            </Text>
-                            <Ilustracao nome="brilho" altura={24} />
-                        </View>
-                    </View>
-                    <Ilustracao nome="girassol" altura={48} />
-                </View>
-            </SafeAreaView>
-
-            <Tela emAba>
+            <Tela emAba semCabecalho>
+                {/* Topo sem faixa branca (aba sem cabeçalho): marca, "Olá, Nome!" e o girassol.
+                    O nome deixou de ser laranja: sobre o fundo lilás o laranja cai para
+                    2,9:1 e reprova no AA (no branco da faixa antiga passava) */}
+                <TopoDaAba marca falado={primeiroNome ? `Olá, ${primeiroNome}!` : 'Início'}
+                    titulo={primeiroNome ? `Olá, ${primeiroNome}!` : 'Início'}>
+                    <Ilustracao nome="brilho" altura={24} />
+                </TopoDaAba>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: cores.fundoInfo }}>
                     <Ilustracao nome="abelha" altura={52} />
                     <View style={{ flex: 1, gap: 2 }}>
