@@ -42,13 +42,10 @@ export function CartaoPasta({ pasta, conversas, quem, conversa }: {
             accessibilityHint={conversas ? 'Abre as conversas sobre o aluno' : 'Abre a pasta do aluno'}
             android_ripple={{ color: '#E5E7EB' }}
             style={({ pressed }) => [estilos.cartao, estilos.linha, pressed && { opacity: 0.85 }]}>
-            {/* Conversa: balão de conversa, para não confundir com a pasta, que
-                tem o girassol (os dois são decorativos: o rótulo já diz o que abre) */}
-            {conversas
-                ? <View style={estilos.iconeConversa} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-                    <Ionicons name="chatbubble-outline" size={26} color={cores.link} />
-                </View>
-                : <Ilustracao nome="girassol" altura={44} />}
+            {/* Conversa: girassol com o balão roxo; pasta: a pasta com o girassol.
+                Cada desenho diz o que o cartão abre (o girassol sozinho já é o
+                logo). Decorativos: o rótulo já diz o que abre. 56: menor, embola */}
+            <Ilustracao nome={conversas ? 'girassolConversa' : 'pastaGirassol'} altura={56} />
             <View style={{ flex: 1, gap: 2 }}>
                 <Text style={estilos.nome}>{pasta.nomeAluno}</Text>
                 {!!quem && <Text style={estilos.suave}>{quem}</Text>}
@@ -137,8 +134,6 @@ export const estilos = StyleSheet.create({
     rotulo: { fontSize: medidas.texto, fontWeight: '700', letterSpacing: 0.5, color: cores.secundaria },
     tituloCartao: { fontSize: 24, fontWeight: '800', color: cores.texto },
     tituloSecao: { fontSize: 24, fontWeight: '800', color: cores.texto, flexShrink: 1 },
-    // Ícone do cartão de conversa (balão), no lugar do girassol da pasta
-    iconeConversa: { width: 44, height: 44, borderRadius: 22, backgroundColor: cores.fundoInfo, alignItems: 'center', justifyContent: 'center' },
     // Ponto de "mensagem nova": pequeno e azul (o azul passa de 3:1 sobre branco)
     pontoNova: { width: 10, height: 10, borderRadius: 5, backgroundColor: cores.link },
 });

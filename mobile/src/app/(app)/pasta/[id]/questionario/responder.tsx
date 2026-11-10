@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Alert, Animated, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { anunciar, Aviso, Botao, Carregando, estilos as base, focarLeitor, Paragrafo, Tela, Titulo } from "~/componentes/basicos";
 import { estilos } from "~/componentes/cartoes";
+import { Ilustracao } from "~/componentes/ilustracoes";
 import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { ItemPergunta, useReduzirAnimacoes } from "~/componentes/questionario";
 import { useAuth } from "~/contexto/AuthContext";
@@ -128,7 +128,7 @@ export default function ResponderQuestionario() {
         }
         setConcluido(true);
         anunciar('Questionário concluído. Obrigado por responder!');
-        // Animação curta do girassol; quem reduz animações vê direto
+        // Animação curta do girassol com a fita; quem reduz animações vê direto
         if (!reduzir) {
             escala.setValue(0.3);
             Animated.spring(escala, { toValue: 1, friction: 4, useNativeDriver: true }).start();
@@ -140,8 +140,9 @@ export default function ResponderQuestionario() {
             <Tela centralizar>
                 {titulo}
                 <View style={{ alignItems: 'center', gap: 12 }}>
-                    <Animated.View style={{ transform: [{ scale: escala }] }} importantForAccessibility="no-hide-descendants">
-                        <Ionicons name="flower" size={96} color="#FFC700" />
+                    {/* Girassol com a fita laranja (conscientização do TDAH): acolhe, sem comemorar resultado (decisão 11) */}
+                    <Animated.View style={{ transform: [{ scale: escala }] }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+                        <Ilustracao nome="girassolFita" altura={160} />
                     </Animated.View>
                     <Titulo>Questionário concluído</Titulo>
                     <Paragrafo>Obrigado por responder! O resultado já aparece para quem acompanha o aluno nesta pasta.</Paragrafo>
