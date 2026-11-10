@@ -78,7 +78,6 @@ export default function ResultadoQuestionario() {
                         {/* O resultado é dado de saúde: só com voz que roda no aparelho (decisão 9) */}
                         <BotaoOuvir rotulo="Ouvir resultado" pequeno conteudo disponivel={vozLocal} texto={lista.map(resultadoPorExtenso).join(' ')} />
                     </View>
-                    <Text style={estilos.suave}>Perguntas marcadas como “Muito” ou “Demais”, em cada data.</Text>
                     {vozLocal === false && <SemVozLocal oQue="o resultado" />}
                     {lista.map((q) => <BarrasSintomas key={q.id} questionario={q} />)}
                 </>
