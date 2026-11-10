@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { router } from "expo-router";
-import { Aviso, Botao, Carregando, Paragrafo, Tela } from "~/componentes/basicos";
+import { Aviso, Botao, Carregando, Paragrafo, Tela, TopoDaAba } from "~/componentes/basicos";
 import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { EstadoVazio, estilos } from "~/componentes/cartoes";
 import { ListaAlunos } from "~/componentes/alunos";
@@ -20,8 +20,11 @@ export default function Pastas() {
     const [novaPasta, setNovaPasta] = useState(false);
     const ehMae = user?.role === 'mae';
 
-    // O título "Minhas pastas" fica no cabeçalho do topo, com o girassol
-    const titulo = <Paragrafo suave>Acesse as pastas dos estudantes que você acompanha.</Paragrafo>;
+    // Título e girassol dentro da página (aba sem cabeçalho)
+    const titulo = <>
+        <TopoDaAba titulo="Minhas pastas" falado="Minhas pastas" />
+        <Paragrafo suave>Acesse as pastas dos estudantes que você acompanha.</Paragrafo>
+    </>;
     const instrucoes = (
         <BotaoInstrucoes texto={ehMae
             ? 'Aqui ficam as pastas dos seus filhos. Toque no nome do aluno para abrir a pasta. Para criar uma pasta nova, toque em Cadastrar estudante e escreva o nome da criança.'
@@ -34,7 +37,7 @@ export default function Pastas() {
 
     if (carregando || erro || !user) {
         return (
-            <Tela emAba>
+            <Tela emAba semCabecalho>
                 {titulo}
                 {instrucoes}
                 {carregando && <Carregando texto="Carregando as pastas..." />}

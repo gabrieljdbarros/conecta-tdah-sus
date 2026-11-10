@@ -87,7 +87,8 @@ export function ListaAlunos({ pastas, ultimas, vistas, meuUid, cabecalho, conver
     // A lista fica numa aba: o último cartão rola até acima da barra flutuante
     const espacoBarra = useEspacoBarraAbas();
     return (
-        <SafeAreaView style={base.tela} edges={['left', 'right']}>
+        // 'top': a aba não tem cabeçalho, então a lista desvia da barra de status
+        <SafeAreaView style={base.tela} edges={['top', 'left', 'right']}>
             <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
                 <FlatList data={achados} keyExtractor={(p) => p.id}
                     contentContainerStyle={[base.conteudo, { paddingBottom: espacoBarra }]} keyboardShouldPersistTaps="handled"

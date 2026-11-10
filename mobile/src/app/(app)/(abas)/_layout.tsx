@@ -2,7 +2,6 @@ import { Tabs } from "expo-router";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Cabecalho } from "~/componentes/basicos";
 import { cores, medidas } from "~/tema/cores";
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
@@ -39,8 +38,9 @@ export default function LayoutAbas() {
     const { bottom } = useSafeAreaInsets();
     return (
         <Tabs screenOptions={{
-            // Sem a barra cinza: o cabeçalho das telas novas, com o girassol
-            header: ({ options }) => <Cabecalho titulo={options.title ?? ''} />,
+            // Sem cabeçalho nas abas (10/11/2026): ali ele não volta para lugar
+            // nenhum. Cada aba mostra o título e o girassol na página (TopoDaAba)
+            headerShown: false,
             sceneStyle: { backgroundColor: cores.fundo },
             // Com o teclado aberto (ex.: Perfil), a barra some e não cobre o campo em uso
             tabBarHideOnKeyboard: true,
@@ -54,7 +54,7 @@ export default function LayoutAbas() {
             // altura e o espaço interno fixos acima substituem os da biblioteca
             tabBarItemStyle: { gap: 4, borderRadius: medidas.barraAbas / 2 },
         }}>
-            <Tabs.Screen name="inicio" options={{ ...aba('Início', 'home-outline', 'home'), headerShown: false }} />
+            <Tabs.Screen name="inicio" options={aba('Início', 'home-outline', 'home')} />
             <Tabs.Screen name="pastas" options={{ ...aba('Pastas', 'folder-outline', 'folder'), title: 'Minhas pastas', tabBarAccessibilityLabel: 'Pastas' }} />
             <Tabs.Screen name="perfil" options={{ ...aba('Perfil', 'person-outline', 'person'), title: 'Meu perfil', tabBarAccessibilityLabel: 'Perfil' }} />
         </Tabs>

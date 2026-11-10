@@ -15,6 +15,12 @@ const IMAGENS = {
     abelha: { fonte: require('../../assets/ilustracoes/abelha.png'), proporcao: 186 / 132 },
     brilho: { fonte: require('../../assets/ilustracoes/brilho.png'), proporcao: 48 / 72 },
     pastaVazia: { fonte: require('../../assets/ilustracoes/pasta-vazia.png'), proporcao: 462 / 360 },
+    // Pasta com o girassol (cartão da pasta) e girassol com a fita laranja da
+    // conscientização do TDAH (questionário concluído). Recortadas e reduzidas
+    pastaGirassol: { fonte: require('../../assets/ilustracoes/pasta-girassol.png'), proporcao: 168 / 168 },
+    girassolFita: { fonte: require('../../assets/ilustracoes/girassol-fita.png'), proporcao: 303 / 480 },
+    // Girassol com balão de conversa (cartão de conversa)
+    girassolConversa: { fonte: require('../../assets/ilustracoes/girassol-conversa.png'), proporcao: 163 / 168 },
     // Logos da tela Sobre (recortados e reduzidos: pouco peso no app)
     cesmacCitec: { fonte: require('../../assets/ilustracoes/cesmac-citec.png'), proporcao: 264 / 240 },
     cesmac: { fonte: require('../../assets/ilustracoes/cesmac.png'), proporcao: 600 / 172 },

@@ -3,7 +3,7 @@ import { Alert, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { anunciar, Aviso, Botao, Campo, Tela, Titulo } from "~/componentes/basicos";
+import { anunciar, Aviso, Botao, Campo, Tela, Titulo, TopoDaAba } from "~/componentes/basicos";
 import { BotaoInstrucoes } from "~/componentes/ouvir";
 import { useAuth } from "~/contexto/AuthContext";
 import UsuarioServicos from "~/servicos/usuario";
@@ -51,7 +51,8 @@ export default function Perfil() {
     });
 
     return (
-        <Tela emAba>
+        <Tela emAba semCabecalho>
+            <TopoDaAba titulo="Meu perfil" falado="Meu perfil" />
             <Formik initialValues={iniciais} validationSchema={esquema} enableReinitialize
                 onSubmit={async (v) => {
                     setAviso(null);

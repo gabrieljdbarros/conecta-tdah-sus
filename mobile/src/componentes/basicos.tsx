@@ -70,6 +70,30 @@ export function Cabecalho({ titulo, aoVoltar }: { titulo: string; aoVoltar?: () 
 }
 
 /**
+ * Topo das ABAS (Início, Pastas, Perfil), decidido em 10/11/2026: sem a
+ * faixa branca do cabeçalho, que nas abas não volta para lugar nenhum. O
+ * título grande e o girassol ficam dentro da página e rolam com ela.
+ * `marca`: o "CONECTA TDAH SUS" pequeno em cima (só na Início).
+ * `titulo` pode ter partes em destaque; `falado` é o que o leitor de tela lê
+ */
+export function TopoDaAba({ titulo, falado, marca = false, children }: {
+    titulo: ReactNode; falado: string; marca?: boolean; children?: ReactNode;
+}) {
+    return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1 }} accessible accessibilityRole="header" accessibilityLabel={marca ? `Conecta TDAH SUS, ${falado}` : falado}>
+                {marca && <Text maxFontSizeMultiplier={1.3} style={estilos.marca}>CONECTA TDAH SUS</Text>}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 28, fontWeight: '800', color: cores.texto, flexShrink: 1 }}>{titulo}</Text>
+                    {children}
+                </View>
+            </View>
+            <Ilustracao nome="girassol" altura={48} />
+        </View>
+    );
+}
+
+/**
  * Campo com foco: a Tela rola até ele ficar acima do teclado. Os campos
  * avisam quando recebem o foco (o teclado pode já estar aberto, ao passar
  * do e-mail para a senha)

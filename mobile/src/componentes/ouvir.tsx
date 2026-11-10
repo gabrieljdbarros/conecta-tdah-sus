@@ -60,13 +60,14 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
     // O rótulo troca entre "Ouvir" e "Parar": o leitor de tela fala o que o botão faz agora
     const titulo = falando ? 'Parar' : rotulo;
     if (soIcone) {
-        // Redondo, só o desenho do alto-falante (telas novas); 56 de toque.
-        // O nome continua sendo falado pelo leitor de tela
+        // Redondo, só o desenho do alto-falante (telas novas). 48: o mínimo de
+        // toque do projeto (era 56; diminuído a pedido em 10/11/2026, para
+        // pesar menos no topo das telas). O nome continua sendo falado
         return (
             <Pressable onPress={alternar} accessibilityRole="button" accessibilityLabel={titulo}
                 android_ripple={{ color: '#FFFFFF55', borderless: true }}
-                style={{ width: 56, height: 56, borderRadius: 28, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', backgroundColor: cores.secundaria }}>
-                <Ionicons name={falando ? 'stop' : 'volume-high'} size={28} color="#FFFFFF" importantForAccessibility="no" />
+                style={{ width: 48, height: 48, borderRadius: 24, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', backgroundColor: cores.secundaria }}>
+                <Ionicons name={falando ? 'stop' : 'volume-high'} size={24} color="#FFFFFF" importantForAccessibility="no" />
             </Pressable>
         );
     }
