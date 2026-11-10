@@ -84,7 +84,7 @@ export function TopoDaAba({ titulo, falado, marca = false, children }: {
             <View style={{ flex: 1 }} accessible accessibilityRole="header" accessibilityLabel={marca ? `Conecta TDAH SUS, ${falado}` : falado}>
                 {marca && <Text maxFontSizeMultiplier={1.3} style={estilos.marca}>CONECTA TDAH SUS</Text>}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 28, fontWeight: '800', color: cores.texto, flexShrink: 1 }}>{titulo}</Text>
+                    <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 28, fontWeight: '800', color: cores.texto, flexShrink: 1 }}>{titulo}</Text>
                     {children}
                 </View>
             </View>
