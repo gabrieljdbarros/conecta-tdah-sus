@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import PastaServices from "@/services/pasta";
 import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { Pasta } from "@/types/pasta";
+import { INSTRUCAO_BUSCA, ListaPastas, useBuscaAlunos } from "../pastas/_cartao";
 
 // Cor com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -19,6 +19,7 @@ export default function ConversasList() {
     const [pastas, setPastas] = useState<Pasta[]>([]);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState(false);
+    const { achadas, campo, comBusca } = useBuscaAlunos(pastas);
 
     const carregar = useCallback(async () => {
         setCarregando(true);
@@ -53,7 +54,7 @@ export default function ConversasList() {
         <>
             <h2 className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto) mb-3">Uma conversa para cada aluno</h2>
             <AppOuvir rotulo="Ouvir instruções" className="mb-3"
-                texto="Aqui fica uma conversa para cada aluno. Toque no nome do aluno para abrir a conversa." />
+                texto={`Aqui fica uma conversa para cada aluno. Toque no nome do aluno para abrir a conversa.${comBusca ? INSTRUCAO_BUSCA : ''}`} />
 
             {erro && (
                 <div className="flex flex-col items-start gap-3 mb-3">
@@ -70,22 +71,10 @@ export default function ConversasList() {
                 </p>
             )}
 
-            {pastas.length > 0 && (
-                <ul className="flex flex-col">
-                    {pastas.map((pasta) => (
-                        <li key={pasta.id} className="border-b border-gray-300">
-                            <Link href={`/admin/pastas/${pasta.id}/conversas`}
-                                className="flex items-center gap-4 min-h-[72px] py-2 ff-default">
-                                <span aria-hidden="true" className="flex items-center justify-center w-[48px] h-[48px] shrink-0 rounded-full bg-white border border-gray-300 text-(--cor-link) text-[24px]">
-                                    <i className="ion-chatbubbles" />
-                                </span>
-                                <span className="text-[18px] font-bold text-(--cor-texto)">Conversa de {pasta.nomeAluno}</span>
-                                <i className="ion-chevron-right ml-auto text-[20px] text-(--cor-texto-suave)" aria-hidden="true" />
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            )}
+            {campo}
+
+            {/* Mesmos cartões da aba Pastas (com a mãe e a escola), abrindo a conversa */}
+            {achadas.length > 0 && <ListaPastas pastas={achadas} conversas />}
         </>
     );
 }
