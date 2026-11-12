@@ -5,9 +5,10 @@ import { AppButton, AppLoader, AppMainContainer, AppOuvir } from "@/themes/compo
 import { useAuth } from "@/contexts/AuthContext";
 import PastaServices from "@/services/pasta";
 import { Pasta } from "@/types/pasta";
-import { CartaoCriarPasta, ListaPastas } from "../pastas/_cartao";
+import { CartaoCriarPasta } from "../pastas/_cartao";
 
 const COR_ERRO = 'text-[#B91C1C]';
+const AVISO_MENU = 'Para abrir as pastas e as conversas dos alunos, use Pastas ou Conversas, no menu.';
 
 // "Quarta-feira, 7 de outubro"
 function dataDeHoje(): string {
@@ -74,9 +75,7 @@ export default function InicioPage() {
                             ? ehMae
                                 ? 'Esta é a tela de início. Você ainda não tem pasta. Para começar, toque em Criar pasta do aluno.'
                                 : 'Esta é a tela de início. Você ainda não acompanha nenhum aluno. Peça à família o link de convite.'
-                            : ehMae
-                                ? 'Esta é a tela de início. Para falar com a escola e o médico, toque em Abrir conversa. Embaixo ficam as pastas: toque no nome do aluno para abrir. Para criar outra pasta, vá em Pastas, no menu.'
-                                : 'Esta é a tela de início. Para falar com a família e quem acompanha o aluno, toque em Abrir conversa. Embaixo ficam os alunos: toque no nome para abrir a pasta.'} />
+                            : `Esta é a tela de início. ${AVISO_MENU}`} />
 
                     {erro && (
                         <div className="flex flex-col items-start gap-3">
@@ -91,37 +90,10 @@ export default function InicioPage() {
                         <p className="ff-default text-[16px]">Você ainda não acompanha nenhum aluno. Peça à família o link de convite.</p>
                     )}
 
-                    {/* O chat é a função principal (RF08): atalho direto para a conversa.
-                        Sem aluno não aparece: só repetiria o aviso acima */}
+                    {/* Sem atalhos (12/11/2026): com dezenas de alunos (médico), a lista
+                        enchia a tela. As pastas e as conversas ficam no menu, com busca */}
                     {!erro && pastas.length > 0 && (
-                        <section aria-labelledby="titulo-conversar" className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-300 shadow-sm">
-                            <h2 id="titulo-conversar" className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">Conversar sobre o aluno</h2>
-                            <p className="ff-default text-[16px] text-(--cor-texto)">A família, a escola e os médicos da pasta veem todas as mensagens.</p>
-                            {pastas.length === 1 ? (
-                                <AppButton title="Abrir conversa" icon="chatbubbles" href={`/admin/pastas/${pastas[0].id}/conversas`} className="self-start" />
-                            ) : (
-                                // Mais de um aluno: a pessoa escolhe sobre quem vai conversar
-                                <ul className="flex flex-col gap-2">
-                                    {pastas.map((p) => (
-                                        <li key={p.id}>
-                                            <Link href={`/admin/pastas/${p.id}/conversas`}
-                                                className="min-h-[48px] px-4 inline-flex items-center gap-2 rounded-full border-2 border-(--cor-link) text-(--cor-link) ff-default text-[16px]">
-                                                <i className="ion-chatbubbles" aria-hidden="true" />Conversa sobre {p.nomeAluno}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </section>
-                    )}
-
-                    {pastas.length > 0 && (
-                        <section aria-labelledby="titulo-alunos" className="flex flex-col gap-3">
-                            <h2 id="titulo-alunos" className="ff-default text-[24px] font-extrabold leading-tight text-(--cor-texto)">
-                                {ehMae ? 'Pastas dos seus filhos' : 'Alunos que você acompanha'}
-                            </h2>
-                            <ListaPastas pastas={pastas} />
-                        </section>
+                        <p className="ff-default text-[16px] text-(--cor-texto-suave)">{AVISO_MENU}</p>
                     )}
                 </div>
             )}

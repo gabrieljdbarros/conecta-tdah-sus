@@ -6,7 +6,7 @@ import { AppButton, AppLoader, AppOuvir } from "@/themes/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFlashData } from "@/helpers/router";
 import { Pasta } from "@/types/pasta";
-import { CartaoCriarPasta, ListaPastas } from "./_cartao";
+import { CartaoCriarPasta, INSTRUCAO_BUSCA, ListaPastas, useBuscaAlunos } from "./_cartao";
 
 // Cores com contraste mínimo de 4,5:1 sobre fundo claro (WCAG AA)
 const COR_ERRO = 'text-[#B91C1C]';
@@ -19,6 +19,7 @@ export default function PastaList() {
     const [erro, setErro] = useState(false);
     const [sucesso, setSucesso] = useState<string | null>(null);
     const sucessoRef = useRef<HTMLParagraphElement>(null);
+    const { achadas, campo, comBusca } = useBuscaAlunos(pastas);
 
     // ======================================================================
     useEffect(() => {
@@ -82,9 +83,10 @@ export default function PastaList() {
             </div>
 
             <AppOuvir rotulo="Ouvir instruções" className="mb-3"
-                texto={ehMae
+                texto={(ehMae
                     ? 'Aqui ficam as pastas dos seus filhos. Toque no nome do aluno para abrir a pasta. Para criar uma pasta nova, toque em Nova pasta.'
-                    : 'Aqui ficam as pastas dos alunos que você acompanha. Toque no nome do aluno para abrir a pasta. Para entrar numa pasta nova, peça o link de convite à família.'} />
+                    : 'Aqui ficam as pastas dos alunos que você acompanha. Toque no nome do aluno para abrir a pasta. Para entrar numa pasta nova, peça o link de convite à família.')
+                    + (comBusca ? INSTRUCAO_BUSCA : '')} />
 
             <p ref={sucessoRef} tabIndex={-1} role="status" className={`${COR_SUCESSO} ff-default text-[16px] mb-3`}>
                 {sucesso && `Pronto: ${sucesso}`}
@@ -101,8 +103,10 @@ export default function PastaList() {
                 ? <CartaoCriarPasta />
                 : <p className="ff-default text-[16px]">Você ainda não tem nenhuma pasta. Peça à família o link de convite.</p>)}
 
+            {campo}
+
             {/* O cartão inteiro abre a pasta */}
-            {pastas.length > 0 && <ListaPastas pastas={pastas} />}
+            {achadas.length > 0 && <ListaPastas pastas={achadas} />}
             </div>
         </>
     )
