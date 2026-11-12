@@ -29,8 +29,8 @@ export function useVozDisponivel(somenteLocal: boolean): boolean | null {
  *  - `descricao`: complemento só para o leitor de tela (ex.: "mensagem de Ana")
  *  - `pequeno`: versão discreta, dentro do balão da conversa (alvo continua 48)
  */
-export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = false, disponivel, pequeno = false, soIcone = false }: {
-    texto: string; rotulo?: string; descricao?: string; conteudo?: boolean; disponivel?: boolean | null; pequeno?: boolean; soIcone?: boolean;
+export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = false, disponivel, pequeno = false, soIcone = false, noTopo = false }: {
+    texto: string; rotulo?: string; descricao?: string; conteudo?: boolean; disponivel?: boolean | null; pequeno?: boolean; soIcone?: boolean; noTopo?: boolean;
 }) {
     const id = useId();
     const verificado = useVozDisponivel(conteudo);
@@ -59,6 +59,18 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
 
     // O rótulo troca entre "Ouvir" e "Parar": o leitor de tela fala o que o botão faz agora
     const titulo = falando ? 'Parar' : rotulo;
+    if (noTopo) {
+        // No cabeçalho, igual ao botão "Pessoas" do chat: alto-falante com a
+        // palavra embaixo (12/11/2026: no corpo da tela, cortava as mensagens)
+        return (
+            <Pressable onPress={alternar} accessibilityRole="button" accessibilityLabel={titulo}
+                hitSlop={8} style={{ minWidth: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name={falando ? 'stop' : 'volume-high'} size={24} color={cores.link} importantForAccessibility="no" />
+                <Text maxFontSizeMultiplier={1.2} importantForAccessibility="no"
+                    style={{ fontSize: 12, fontWeight: '700', color: cores.link }}>{falando ? 'Parar' : 'Ouvir'}</Text>
+            </Pressable>
+        );
+    }
     if (soIcone) {
         // Redondo, só o desenho do alto-falante (telas novas). 48: o mínimo de
         // toque do projeto (era 56; diminuído a pedido em 10/11/2026, para
@@ -86,8 +98,8 @@ export function BotaoOuvir({ texto, rotulo = 'Ouvir', descricao, conteudo = fals
 }
 
 /** "Ouvir instruções" da tela: botão redondo só com o alto-falante */
-export function BotaoInstrucoes({ texto }: { texto: string }) {
-    return <BotaoOuvir rotulo="Ouvir instruções" texto={texto} soIcone />;
+export function BotaoInstrucoes({ texto, noTopo = false }: { texto: string; noTopo?: boolean }) {
+    return <BotaoOuvir rotulo="Ouvir instruções" texto={texto} soIcone={!noTopo} noTopo={noTopo} />;
 }
 
 /**

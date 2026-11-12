@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Keyboard, Pressable, Text, TextInput, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -46,12 +46,17 @@ export default function Conversas() {
     const controle = useRef<ControleConversa | null>(null);
     const lista = useRef<FlatList<Mensagem>>(null);
     const conhecidas = useRef<Set<string> | null>(null);
-    const pertoDoFim = useRef(true);
+    // A própria pessoa enviou: ao chegar a mensagem, volta para o fim mesmo se estava relendo
+    const rolarAoFim = useRef(false);
     const insets = useSafeAreaInsets();
     const [alturaTeclado, setAlturaTeclado] = useState(0);
     const tecladoAberto = alturaTeclado > 0;
     // Verificada uma vez para a lista inteira (não em cada mensagem)
     const vozLocal = useVozDisponivel(true);
+    // Lista INVERTIDA (12/11/2026): a mais nova primeiro, desenhada embaixo.
+    // A conversa já abre nas recentes, sem descer rolando pelas antigas, e
+    // desenha primeiro o que está na tela (as antigas só quando a pessoa sobe)
+    const invertidas = useMemo(() => mensagens && [...mensagens].reverse(), [mensagens]);
 
     // TECLADO: no Android "de ponta a ponta" a janela não encolhe e o
     // KeyboardAvoidingView não basta. Esta tela vai até o fim da tela do
@@ -71,7 +76,7 @@ export default function Conversas() {
     useEffect(() => {
         if (!pastaId) return;
         conhecidas.current = null;
-        pertoDoFim.current = true;
+        rolarAoFim.current = false;
         const conversa = MensagemServicos.ouvir(pastaId, (novas, anteriores) => {
             // Mensagens novas dos OUTROS (depois da primeira carga) são anunciadas,
             // só com o nome de quem mandou (o texto não é falado sem pedir)
@@ -98,8 +103,7 @@ export default function Conversas() {
         if (!controle.current || buscandoAnteriores) return;
         setBuscandoAnteriores(true);
         setErroAnteriores(false);
-        // A tela fica onde está (não desce para o fim)
-        pertoDoFim.current = false;
+        // As anteriores entram no topo: a tela fica onde está
         const ok = await controle.current.carregarAnteriores();
         setBuscandoAnteriores(false);
         if (!ok) { setErroAnteriores(true); return; }
@@ -120,7 +124,7 @@ export default function Conversas() {
         setEnviando(false);
         if (success) {
             setTexto('');
-            pertoDoFim.current = true;
+            rolarAoFim.current = true;
             anunciar('Mensagem enviada.');
         } else setErroEnvio(semConexao
             ? 'sem resposta da internet. Se a mensagem não aparecer na conversa, envie de novo.'
@@ -133,7 +137,7 @@ export default function Conversas() {
         if (!success) return semConexao
             ? 'sem resposta da internet. Se o áudio não aparecer na conversa, envie de novo.'
             : 'o áudio não foi enviado. Tente de novo.';
-        pertoDoFim.current = true;
+        rolarAoFim.current = true;
         anunciar('Áudio enviado.');
         return null;
     };
@@ -164,6 +168,10 @@ export default function Conversas() {
                 ),
                 headerStyle: { backgroundColor: '#FFFFFF' },
                 headerRight: () => (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    {/* Instruções no topo (12/11/2026): no corpo da tela, cortavam as mensagens */}
+                    <BotaoInstrucoes noTopo
+                        texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, deixe o campo vazio, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada. Para ver quem está na pasta, toque em Pessoas, no alto da tela.`} />
                     <Pressable onPress={() => router.push({ pathname: '/pasta/[id]/vinculos', params: { id: pasta.id } })}
                         accessibilityRole="button" accessibilityLabel="Pessoas da pasta" accessibilityHint="Mostra quem está na pasta e os convites"
                         hitSlop={8} style={{ minWidth: medidas.toque, height: medidas.toque, alignItems: 'center', justifyContent: 'center' }}>
@@ -171,32 +179,23 @@ export default function Conversas() {
                         {/* A palavra embaixo do ícone: nem todo mundo reconhece o desenho */}
                         <Text maxFontSizeMultiplier={1.2} style={{ fontSize: 12, fontWeight: '700', color: cores.link }}>Pessoas</Text>
                     </Pressable>
+                    </View>
                 ),
             }} />
             <View style={{ flex: 1 }}>
-                {/* Com o teclado aberto as instruções saem, para sobrar espaço para as mensagens */}
-                {!tecladoAberto && (
-                    <View style={{ padding: medidas.espaco, paddingBottom: 8 }}>
-                        <BotaoInstrucoes
-                            texto={`Aqui você conversa sobre o aluno com a família, a escola e os médicos da pasta. Todos veem todas as mensagens.${vozLocal ? ' Para ouvir uma mensagem, toque em Ouvir, dentro dela.' : ''} Para mandar uma mensagem, escreva no campo de baixo e toque em Enviar. Para mandar um áudio de até 2 minutos, deixe o campo vazio, toque em Gravar áudio, fale e toque em Parar. Ouça a gravação e toque em Enviar áudio. Para desistir, toque em Descartar. Depois de enviada, a mensagem não pode ser apagada.`} />
-                    </View>
-                )}
-
                 {/* MENSAGENS */}
                 {mensagens === null && !erroCanal && <Carregando texto="Carregando as mensagens..." />}
                 {erroCanal && <View style={{ paddingHorizontal: medidas.espaco }}><Aviso tipo="erro" texto="não deu para carregar as mensagens. Confira a internet, volte e abra de novo." /></View>}
-                {mensagens !== null && (
-                    <FlatList ref={lista} data={mensagens} keyExtractor={(m) => m.id}
+                {invertidas !== null && (
+                    <FlatList ref={lista} data={invertidas} keyExtractor={(m) => m.id} inverted
                         style={{ flex: 1 }} contentContainerStyle={{ padding: medidas.espaco, gap: 10 }}
-                        // Só desce sozinho se a pessoa já estava no fim: quem relê
-                        // mensagens antigas não é puxado para baixo
-                        onScroll={({ nativeEvent: e }) => { pertoDoFim.current = e.contentOffset.y + e.layoutMeasurement.height >= e.contentSize.height - 80; }}
-                        scrollEventThrottle={200}
-                        onContentSizeChange={() => { if (pertoDoFim.current) lista.current?.scrollToEnd({ animated: false }); }}
-                        // Ao carregar as anteriores (no topo), a mensagem que estava na tela continua no lugar
-                        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-                        // No começo da conversa (sobe junto com ela)
-                        ListHeaderComponent={
+                        // Invertida: posição 0 = o fim da conversa (embaixo)
+                        onContentSizeChange={() => { if (rolarAoFim.current) { rolarAoFim.current = false; lista.current?.scrollToOffset({ offset: 0, animated: false }); } }}
+                        // Mensagem nova: quem está no fim vê; quem relê as antigas
+                        // não é puxado para baixo (a mensagem na tela fica no lugar)
+                        maintainVisibleContentPosition={{ minIndexForVisible: 0, autoscrollToTopThreshold: 80 }}
+                        // No começo da conversa, em cima (na lista invertida, o rodapé fica no topo)
+                        ListFooterComponent={
                             <View style={{ gap: 8 }}>
                                 {vozLocal === false && <SemVozLocal oQue="mensagens" />}
                                 {/* Histórico (RF12): as anteriores vêm de 100 em 100, só quando a pessoa pede (pouca internet) */}
@@ -205,13 +204,15 @@ export default function Conversas() {
                                         carregando={buscandoAnteriores} aoTocar={verAnteriores} />
                                 )}
                                 {erroAnteriores && <Aviso tipo="erro" texto="não deu para carregar as mensagens anteriores. Confira a internet e tente de novo." />}
-                                {!temAnteriores && mensagens.length > 0 && <Text style={[estilos.suave, { textAlign: 'center' }]}>Início da conversa</Text>}
+                                {!temAnteriores && invertidas.length > 0 && <Text style={[estilos.suave, { textAlign: 'center' }]}>Início da conversa</Text>}
                             </View>
                         }
                         ListEmptyComponent={<Text style={[estilos.texto, { textAlign: 'center' }]}>Ainda não há mensagens. Escreva a primeira!</Text>}
                         renderItem={({ item: m, index }) => {
                             const minha = m.autorUid === user.uid;
-                            const novoDia = index === 0 || dia(mensagens[index - 1].criadoEm) !== dia(m.criadoEm);
+                            // A anterior no tempo é a próxima da lista invertida
+                            const anterior = invertidas[index + 1];
+                            const novoDia = !anterior || dia(anterior.criadoEm) !== dia(m.criadoEm);
                             const autor = minha ? 'Você' : `${m.autorNome} (${ROLE_LABELS[m.autorPapel]})`;
                             const voz = m.tipo === 'audio';
                             return (
