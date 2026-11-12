@@ -1,37 +1,38 @@
 # Conecta TDAH SUS
 
-> 🚧 **Projeto em desenvolvimento.** Trabalho de Conclusão de Curso (TCC) em andamento. Funcionalidades, modelo de dados e telas ainda podem mudar.
+Trabalho de Conclusão de Curso (TCC) de Sistemas de Informação do Centro Universitário CESMAC. Versão apresentada à banca em 17/11/2026: tag [`v3.0-banca`](../../tree/v3.0-banca).
 
 **Ponte de comunicação** entre **família** (mães/responsáveis), **escola** e **profissionais de psiquiatria do SUS** no acompanhamento de estudantes com TDAH.
 
-**Fluxo central:** a família cria a pasta do aluno e convida a escola e o médico → todos conversam no **chat em grupo da pasta**, sem a família precisar repetir o histórico a cada consulta.
-
-> **Mudança de escopo (20/10/2026):** a pedido da equipe da cliente, o sistema passou a ter só o chat em grupo. Os relatórios, as categorias e o canal privado mãe–médico saíram. A versão apresentada na pré-banca, com eles, está na tag [`v2.0-pre-banca`](../../tree/v2.0-pre-banca). Depois disso, a pasta passou a guardar só o nome da criança e o backend migrou do Firebase para o Supabase. Próximo passo: mensagens de voz.
+**Fluxo central:** a família cria a pasta do aluno e convida a escola e o médico → todos conversam no **chat em grupo da pasta**, por texto e por voz, sem a família precisar repetir o histórico a cada consulta.
 
 > **Escopo acadêmico:** este é um produto acadêmico. **Não há integração real com sistemas do SUS**, e todos os dados usados em desenvolvimento e testes são **fictícios**.
 
 ---
 
-## Status
+## Funcionalidades
 
-| Funcionalidade | Situação |
-|---|---|
-| Cadastro multiperfil (mãe/responsável, escola, médico) e login | ✅ Pronto |
-| Edição do próprio perfil | ✅ Pronto |
-| Pasta do aluno, criada pela mãe/responsável (RF03) | ✅ Pronto |
-| Ajustes de privacidade do perfil (nome da criança só na pasta; admin sem troca de perfil) | ✅ Pronto |
-| Convite por link para vincular escola e médico, com expiração e uso único (RN01, RN02) | ✅ Pronto |
-| Lista de quem acompanha o aluno e cancelamento de convite | ✅ Pronto |
-| Remover participante e sair da pasta | ✅ Pronto |
-| Chat em grupo por aluno, em tempo real (RN05, RF08) | ✅ Pronto |
-| Mensagens de voz no chat (RF16) | 🚧 Banco e arquivos prontos; telas em andamento |
-| Aplicativo instalável no celular (PWA) | ✅ Pronto |
-| Leitura em voz alta: instruções das telas e mensagens | ✅ Pronto |
-| App nativo em React Native (Expo) para mãe, escola e médico | ✅ Pronto (testado no Android, sem publicação nas lojas) |
+O sistema tem duas interfaces sobre o mesmo banco: o **painel web**, que também pode ser instalado como aplicativo (PWA), e o **app nativo** para Android e iPhone. Professores e médicos não precisam instalar nada, porque tudo funciona no navegador.
+
+- **Cadastro por perfil** (mãe/responsável, escola, médico), login, "Esqueci minha senha" e edição do próprio perfil.
+- **Pasta do aluno** criada pela mãe/responsável, só com o nome da criança (RF03).
+- **Convite** para a escola e o médico entrarem na pasta, por link (no app, também por QR code). O convite vale 48 horas e só funciona uma vez (RN01, RN02, RF04). A mãe vê quem participa da pasta e pode cancelar convites ou remover pessoas.
+- **Chat em grupo** de cada aluno, em tempo real, com histórico (RN05, RF08, RF12). As mensagens não podem ser editadas nem apagadas (RN08). Cada mensagem mostra quem escreveu, com ícone, cor e nome do papel.
+- **Mensagens de voz** de até 2 minutos (RF16), gravadas no app. Elas podem ser ouvidas no app e na web, e o arquivo é apagado automaticamente após 90 dias.
+- **Leitura em voz alta** (TTS): um botão "Ouvir instruções" em cada tela e um botão "Ouvir" em cada mensagem de texto.
+- **Questionário SNAP-IV** no app: a mãe responde, e os membros da pasta veem a contagem de sintomas por grupo, comparando as datas. É uma triagem, não um diagnóstico: quem interpreta é o médico.
+- **Início pensada para quem acompanha muitos alunos:** busca pelo nome do aluno, da mãe ou da escola, conversas recentes e um ponto discreto de "mensagem nova". **Não há notificações**, a pedido da equipe da cliente.
+- **Sobre o aplicativo:** equipe do projeto, instituição e o aviso de que este é um trabalho acadêmico, sem ligação com o sistema do SUS.
+- **Administrador:** gerencia os usuários, mas **não acessa as pastas nem as conversas** (RF13).
+
+**Acessibilidade.** O público inclui pessoas com baixa alfabetização. Por isso o sistema usa:
+- letras grandes, alvos de toque de pelo menos 48 px e ícones com o nome escrito embaixo;
+- cores com contraste WCAG AA;
+- leitura em voz alta e rótulos para leitores de tela.
 
 ## Perfis e acesso
 
-Cada aluno tem uma **pasta**, criada pela mãe/responsável. A escola e o médico entram por convite. Cada pasta tem **um chat em grupo**: todos os membros da pasta leem e escrevem, e as mensagens não podem ser editadas nem apagadas. O **administrador** gerencia os usuários, mas **não acessa as pastas nem as conversas**.
+Cada aluno tem uma **pasta**, criada pela mãe/responsável. A escola e o médico entram por convite. Cada pasta tem **um chat em grupo**: todos os membros da pasta leem e escrevem, e as mensagens não podem ser editadas nem apagadas. No **questionário SNAP-IV**, só a mãe dona da pasta responde, e todos os membros veem o resultado. O **administrador** gerencia os usuários, mas **não acessa as pastas, as conversas nem os questionários**.
 
 ## Segurança e LGPD
 
@@ -45,14 +46,16 @@ O sistema lida com **dados de saúde de crianças e adolescentes**, que a LGPD c
   - **Limite (para a defesa):** quem informa se a voz roda no aparelho é o próprio navegador (`localService`), e o app não consegue conferir isso. Alguns motores de voz de fabricantes no Android podem se declarar locais e ainda usar a internet.
   - **Para ouvir as mensagens no computador,** é preciso ter uma voz em português instalada no sistema. No Windows: Configurações → Hora e idioma → Fala → Adicionar vozes → Português (Brasil), voz "Microsoft Maria". Depois, reinicie o navegador. Sem ela, o botão de ouvir o conteúdo não aparece, e as instruções continuam podendo ser ouvidas.
   - **Ditado pelo microfone do teclado:** a dica na tela sugere usar o microfone do teclado para falar em vez de digitar. Esse ditado é um recurso do teclado do celular (Google, Apple etc.), escolhido pela pessoa no aparelho dela, e pode enviar o áudio para os servidores desse teclado. O app não recebe nem guarda áudio.
-- **As mensagens de voz são tratadas como dado de saúde.** Ficam num armazenamento de arquivos **privado**, com no máximo 2 minutos e 1 MB cada. Só os membros da pasta enviam e ouvem, e o nome do arquivo não tem o nome da criança. Para ouvir, o sistema primeiro **registra no log quem ouviu e quando** (RN09) e só então libera um link que vale 5 minutos. O log também registra quem enviou cada áudio. Ninguém troca nem apaga um áudio. O prazo de guarda é de **90 dias**; a exclusão automática ainda está em desenvolvimento.
+- **As mensagens de voz são tratadas como dado de saúde.** Ficam num armazenamento de arquivos **privado**, com no máximo 2 minutos e 1 MB cada. Só os membros da pasta enviam e ouvem, e o nome do arquivo não tem o nome da criança. Para ouvir, o sistema primeiro **registra no log quem ouviu e quando** (RN09) e só então libera um link que vale 5 minutos. O log também registra quem enviou cada áudio. Ninguém troca nem apaga um áudio. O prazo de guarda é de **90 dias**. Todo dia, uma tarefa agendada no banco (`pg_cron`) apaga os arquivos vencidos, e a mensagem fica no chat com o aviso de áudio apagado. Os detalhes estão em [`docs/retencao-audios.md`](docs/retencao-audios.md).
+- **As respostas do SNAP-IV são dado de saúde.** O banco guarda só as respostas e a versão do questionário, e a pontuação é calculada no aparelho. A resposta concluída não pode ser editada nem apagada, e nada é salvo antes de concluir.
+- **"Mensagem nova" sem rastrear leitura.** A marca de até onde a pessoa leu fica **só no aparelho**, e o servidor nunca sabe quem leu o quê. A limitação aceita é que ler na web não apaga o ponto no app. A busca de alunos também roda no aparelho, sem enviar o que foi digitado.
 - **O convite é um link que vale 48 horas e só funciona uma vez.** O banco guarda só o *hash* do link, então nem quem acessa o banco consegue montar um link válido. O vínculo é feito por uma função no banco, numa transação, que confere se a conta é do perfil certo (escola ou médico).
 
 ## Tecnologias
 
 - **Painel web:** [Next.js 15](https://nextjs.org/), TypeScript, Tailwind CSS, Formik e Yup
 - **App nativo:** [Expo](https://expo.dev/) (React Native) com expo-router, na pasta `mobile/`
-- **Backend:** [Supabase](https://supabase.com/) (Auth, Postgres com RLS e Realtime), o mesmo para o painel e o app
+- **Backend:** [Supabase](https://supabase.com/) (Auth, Postgres com RLS, Realtime, Storage, Edge Functions e `pg_cron`), o mesmo para o painel e o app
 - **Testes:** Supabase local e o executor de testes nativo do Node.js
 
 ### Por que o Supabase (e não mais o Firebase)
@@ -118,8 +121,6 @@ O painel pode ser instalado como um aplicativo, com ícone na tela inicial, sem 
 - **Android (Chrome):** abra o site, toque nos **três pontinhos** no canto de cima e depois em **"Instalar aplicativo"**. Em alguns celulares o nome é **"Adicionar à tela inicial"**.
 - **iPhone:** abra o site no **Safari**, porque o Chrome do iPhone não instala. Toque no botão **Compartilhar**, o quadrado com uma seta na barra de baixo, e depois em **"Adicionar à Tela de Início"**.
 
-> TODO: levar essas instruções para dentro do app, numa tela "Como instalar" com passos e imagens, em linguagem simples.
-
 Professores e médicos não precisam instalar nada: o mesmo endereço funciona no navegador.
 
 > **Privacidade:** o aplicativo **não guarda dados no aparelho**, nem pastas, nem conversas. Ele guarda só os arquivos fixos do site, para abrir mais rápido. Sem internet, mostra a tela "Você está sem internet". Muitas famílias dividem o celular, e dados de saúde de crianças não devem ficar salvos nele.
@@ -130,7 +131,7 @@ Para testar no computador, com o `npm run dev` **parado**: rode `npm run preview
 
 Na pasta `mobile/` fica um app **Expo** para **mãe, escola e médico**. O administrador continua usando só o painel web. O app usa **o mesmo Supabase, as mesmas políticas RLS e as mesmas funções do banco** da web, e importa os tipos e a lógica pura de `src/types` e `src/helpers`. Assim, as regras de acesso existem num lugar só.
 
-O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, pastas, convites e vínculos, chat e leitura em voz alta.
+O app tem as funcionalidades da web para esses perfis (cadastro e login, pastas, convites e vínculos, chat e leitura em voz alta). Só no app ficam a **gravação de mensagens de voz** e o **questionário SNAP-IV**.
 
 > O app **não é publicado nas lojas**: ele roda pelo **Expo Go**, ligado ao Supabase local do computador pela rede Wi-Fi. No convite, a escola e o médico **colam o link** recebido. Abrir o app direto pelo link (deep link) exige o site publicado e fica para depois.
 
@@ -148,13 +149,16 @@ O app tem as mesmas funcionalidades da web para esses perfis: cadastro e login, 
    - `EXPO_PUBLIC_SUPABASE_ANON_KEY` com a ANON_KEY de `npx supabase status`.
 
    O `.env.local` **não** é versionado.
-6. Em outro terminal, inicie o app:
+6. Em outro terminal, inicie o app **dentro da pasta `mobile/`**:
    ```bash
    cd mobile
    npm install
    npx expo start --clear
    ```
+   Se o comando for rodado na raiz do projeto, o `npx` oferece baixar outra versão do Expo: cancele e rode dentro de `mobile/`.
 7. Abra o Expo Go e leia o QR code que aparece no terminal.
+
+> **Versão do Expo Go:** o app usa o **SDK 57** do Expo. Se o Expo Go do celular se atualizar para uma versão mais nova, ele recusa o projeto. Nesse caso, instale o Expo Go do SDK 57 pela página [expo.dev/go](https://expo.dev/go).
 
 **Se der erro de conexão:**
 - *"Sem conexão"* ou o login fica parado em "Entrando...": o endereço do computador mudou, porque o roteador às vezes troca. Rode `ipconfig` de novo, corrija o endereço em `EXPO_PUBLIC_SUPABASE_URL` e reinicie com `npx expo start --clear`. Para não acontecer mais, reserve um endereço fixo para o computador no roteador ("reserva de DHCP").
@@ -183,24 +187,56 @@ Os botões "Ouvir instruções" usam qualquer voz em português. Já as mensagen
 
 ```
 src/
-  app/            Telas (login, cadastro, convite e área /admin)
-  contexts/       Sessão do usuário (AuthContext)
-  services/       Acesso ao Supabase (usuários, pastas, convites, chat)
-  themes/         Componentes visuais do template
-  types/          Modelos de dados
-mobile/           App nativo Expo (mãe, escola e médico)
-  src/app/        Telas (expo-router)
-  src/servicos/   Acesso ao Supabase e leitura em voz alta
-supabase/         Banco: migrações (tabelas, RLS e funções) e configuração local
-tests/supabase/   Testes do banco (RLS, funções e tempo real)
-tests/unit/       Testes de lógica (sem banco)
+  app/              Telas (login, cadastro, convite e área /admin)
+  contexts/         Sessão do usuário (AuthContext)
+  helpers/          Lógica pura, usada pela web e pelo app (busca, SNAP-IV, textos da tela Sobre)
+  services/         Acesso ao Supabase (usuários, pastas, convites, chat)
+  themes/           Componentes visuais do template
+  types/            Modelos de dados, usados pela web e pelo app
+mobile/             App nativo Expo (mãe, escola e médico)
+  src/app/          Telas (expo-router)
+  src/componentes/  Componentes visuais do app
+  src/servicos/     Acesso ao Supabase, gravação de áudio e leitura em voz alta
+supabase/
+  migrations/       Tabelas, RLS, funções, armazenamento dos áudios e retenção
+  functions/        Edge Function que apaga os áudios vencidos
+docs/               Paleta de cores e retenção dos áudios
+tests/supabase/     Testes do banco (RLS, funções, tempo real, áudios e retenção)
+tests/unit/         Testes de lógica (sem banco)
 ```
 
-## Autoria
+## Limitações e trabalhos futuros
 
-- **Autor(es):** Gabriel José Dias Barros
-- **Orientador(a):** Wagner Palmeira
-- **Curso:** Sistemas de Informação, CESMAC
+- **Consentimento no cadastro (RN07):** o consentimento já foi desenhado como granular: uma caixa obrigatória para os termos e os dados sensíveis, e outra opcional para gravar mensagens de voz. Ele depende do texto dos termos, que cabe à equipe responsável pelo projeto (controladora dos dados). Até lá, a gravação de voz fica liberada.
+- **Prazos de guarda** das mensagens de texto e do log de áudios: a definir com a orientação e a cliente.
+- **Exclusão da pasta a pedido da família** (LGPD): hoje ninguém apaga uma pasta.
+- **Publicação:** gerar o APK e usar um projeto do Supabase na nuvem, na região de São Paulo. Abrir o app direto pelo link do convite (deep link) depende disso.
+- **Login com Google:** dispensaria a senha, mas exige uma etapa para completar o cadastro (perfil e campos de cada perfil).
+- **SNAP-IV:** o texto oficial dos itens ainda será confirmado com a idealizadora do projeto (o texto atual é resumido).
+
+## Histórico de versões
+
+| Tag | Marco |
+|---|---|
+| [`v1.0-web`](../../tree/v1.0-web) | Painel web concluído, com PWA e design integrado, antes do app nativo |
+| [`v2.0-pre-banca`](../../tree/v2.0-pre-banca) | Versão da pré-banca (15/10/2026): web, PWA e app nativo, com relatórios, chat e voz, no Firebase |
+| [`v2.1-escopo-chat`](../../tree/v2.1-escopo-chat) | Escopo novo, definido com a equipe da cliente em 20/10/2026: só o chat em grupo, e a pasta só com o nome do aluno |
+| [`v2.2-supabase`](../../tree/v2.2-supabase) | Fim da migração do Firebase para o Supabase |
+| [`v2.3-voz`](../../tree/v2.3-voz) | Mensagens de voz e retenção de 90 dias |
+| [`v2.4-snap-iv`](../../tree/v2.4-snap-iv) | Questionário SNAP-IV no app |
+| [`v2.5-telas-novas`](../../tree/v2.5-telas-novas) | Telas novas, ajustes visuais e a tela Sobre o aplicativo |
+| [`v3.0-banca`](../../tree/v3.0-banca) | Versão apresentada à banca (17/11/2026) |
+
+## Equipe
+
+- **Gabriel José Dias Barros:** desenvolvedor e autor do sistema (Sistemas de Informação, CESMAC)
+- **Prof. Me. Wagner Palmeira:** orientador
+- **Jordana Farias:** idealizadora do projeto (mestranda)
+- **Profa. Dra. Evanisa Brum:** gerente de projeto
+- **Profa. Dra. Sonia Maria Soares Ferreira:** colaboradora
+- **Karina Jucá:** colaboradora (Psicologia, CESMAC)
+
+Projeto do Centro Universitário CESMAC, com o CITEC.
 
 ## Créditos
 
