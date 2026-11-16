@@ -39,7 +39,8 @@ function Nivel({ nota, cor }: { nota: number; cor: string }) {
 /**
  * Uma pergunta: o texto, o botão de ouvir e as 4 opções lado a lado (radio),
  * compactas, com rótulo curto e um círculo que enche conforme a nota. Com a
- * fonte grande do celular, as opções viram duas linhas de duas.
+ * fonte grande do celular, as opções viram duas linhas de duas; o rótulo
+ * nunca quebra no meio da palavra.
  * O texto das perguntas é fixo e não é dado pessoal: pode ser lido com
  * qualquer voz. Cada opção diz o número da pergunta e os dois rótulos
  * ("Pergunta 3: Muito, bastante"): o TalkBack nem sempre anuncia o grupo, e
@@ -73,12 +74,14 @@ export function ItemPergunta({ pergunta, valor, aoEscolher, bloqueado = false, r
                             accessibilityLabel={`Pergunta ${pergunta.numero}: ${curto}${curto === ESCALA[nota] ? '' : `, ${ESCALA[nota].toLowerCase()}`}`}
                             style={({ pressed }) => [{
                                 flexBasis: duasLinhas ? '48%' : 0, flexGrow: 1, minHeight: medidas.toque,
-                                flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
-                                paddingHorizontal: 4, borderRadius: 14, borderWidth: 2, borderColor: cores.secundaria,
+                                flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3,
+                                paddingHorizontal: 2, borderRadius: 14, borderWidth: 2, borderColor: cores.secundaria,
                                 backgroundColor: marcado ? cores.secundaria : '#FFFFFF',
                             }, pressed && { opacity: 0.85 }]}>
                             <Nivel nota={nota} cor={cor} />
-                            <Text style={{ fontSize: 15, fontWeight: '700', color: cor, flexShrink: 1 }}>{curto}</Text>
+                            {/* Uma linha só: "Demais" quebrava em "Demai/s" na fonte padrão de alguns celulares; encolhe até 85% em vez de quebrar */}
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}
+                                style={{ fontSize: 15, fontWeight: '700', color: cor, flexShrink: 1 }}>{curto}</Text>
                         </Pressable>
                     );
                 })}
